@@ -4,7 +4,7 @@
   var ov = document.createElement("div");
   ov.id = "ht-auth-overlay";
   ov.style.cssText =
-    "position:fixed;inset:0;z-index:2147483647;background:#141829;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
+    "position:fixed;inset:0;z-index:9000;background:#141829;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
   ov.innerHTML =
     '<div style="text-align:center;color:#aeb6d4;">' +
     '<div style="font-family:ui-monospace,monospace;letter-spacing:.22em;font-size:12px;color:#5b6390;">ACCESO INTERNO · HYDRATECH</div>' +
@@ -14,18 +14,24 @@
   function mount() { (document.body || document.documentElement).appendChild(ov); }
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 
+  function blocked() {
+    var m = document.getElementById("ht-auth-msg"), b = document.getElementById("ht-auth-login");
+    if (m) m.textContent = "Esta sección es privada.";
+    if (b) { b.style.display = "inline-block"; b.onclick = function () { window.netlifyIdentity && window.netlifyIdentity.open("login"); }; }
+  }
+
   var s = document.createElement("script");
   s.src = "https://identity.netlify.com/v1/netlify-identity-widget.js";
   s.onload = function () {
     var id = window.netlifyIdentity;
-    function blocked() {
-      var m = document.getElementById("ht-auth-msg"), b = document.getElementById("ht-auth-login");
-      if (m) m.textContent = "Esta sección es privada.";
-      if (b) { b.style.display = "inline-block"; b.onclick = function () { id.open("login"); }; }
-    }
     id.on("init", function (user) {
-      if (user) { ov.remove(); } else { id.open("login"); blocked(); }
+      if (user) { ov.remove(); }
+      else { blocked(); id.open("login"); }
     });
+    // Cuando se abre el formulario de Netlify, ocultamos la pantalla azul para que SÍ se vea.
+    id.on("open", function () { ov.style.display = "none"; });
+    // Si cierran el formulario sin entrar, volvemos a bloquear.
+    id.on("close", function () { if (!id.currentUser()) { ov.style.display = "flex"; } });
     id.on("login", function () { id.close(); location.reload(); });
     id.on("logout", function () { location.href = "index.html"; });
     id.init();
