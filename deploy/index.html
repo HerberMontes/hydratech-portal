@@ -18,8 +18,8 @@
   ::selection { background: #263370; color: #fff; }
   @keyframes htRise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
   @keyframes htFlow { from { background-position: 0 0; } to { background-position: 0 -220px; } }
-  #ht-page [data-r="lock"]{ color:#8088ad; }
-  #ht-page [data-r="lock"]:hover{ color:#fff; background:#263370 !important; border-color:#3a52a8 !important; transform:translateY(-2px); box-shadow:0 10px 24px -10px rgba(58,82,168,0.85); }
+  #ht-page [data-r="lock"]{ color:#333a5c; transition:color .2s ease; }
+  #ht-page [data-r="lock"]:hover{ color:#7b84ad; }
   @media (max-width: 980px){
     [data-r="hero"], [data-r="banco"], [data-r="contacto"]{ grid-template-columns:1fr !important; gap:40px !important; }
     [data-r="hero"]{ padding-top:52px !important; padding-bottom:58px !important; }
@@ -440,16 +440,14 @@
         </div>
       </div>
       <div style="border-top:1px solid #242b45;">
-        <div style="max-width:1240px; margin:0 auto; padding:20px 32px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="max-width:1240px; margin:0 auto; padding:18px 32px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <span style="font-size:13px; color:#5b6390;">© 2023 HydraTech Group. Todos los derechos reservados.</span>
-          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#41496e;">HIDRÁULICA INDUSTRIAL · MX</span>
-        </div>
-      </div>
-      <div style="border-top:1px solid #242b45;">
-        <div style="padding:18px 32px 26px; display:flex; justify-content:center;">
-          <a href="acceso.html" data-r="lock" title="Acceso interno" aria-label="Acceso interno" style="display:inline-flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:13px; border:1px solid #2a3358; background:#1a2138; text-decoration:none; transition:transform .2s, background .2s, border-color .2s, box-shadow .2s;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.6A5.4 5.4 0 0 0 6.6 7v2.2H5.3A1.3 1.3 0 0 0 4 10.5v9.1a1.3 1.3 0 0 0 1.3 1.3h13.4a1.3 1.3 0 0 0 1.3-1.3v-9.1a1.3 1.3 0 0 0-1.3-1.3h-1.3V7A5.4 5.4 0 0 0 12 1.6ZM15 9.2H9V7a3 3 0 0 1 6 0v2.2ZM12 13a1.7 1.7 0 0 1 .9 3.1V18a.9.9 0 0 1-1.8 0v-1.9A1.7 1.7 0 0 1 12 13Z"></path></svg>
-          </a>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#41496e;">HIDRÁULICA INDUSTRIAL · MX</span>
+            <a href="acceso.html" data-r="lock" title="Acceso interno" aria-label="Acceso interno" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; text-decoration:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
@@ -517,65 +515,6 @@ class Component extends DCLogic {
     };
   }
 }
-</script>
-<!-- Panel de acceso interno: parte de la página principal, abierto por el candado del footer -->
-<script>
-(function(){
-  var CSS = ''
-   + '#ht-access{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;'
-   + 'background:rgba(12,16,28,0.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;transition:opacity .2s ease;'
-   + "font-family:'IBM Plex Sans',system-ui,sans-serif;}"
-   + '#ht-access.open{display:flex;opacity:1;}'
-   + '#ht-access .panel{position:relative;width:100%;max-width:460px;background:#fff;border-radius:18px;padding:24px 22px 16px;'
-   + 'box-shadow:0 30px 80px -20px rgba(8,12,24,0.6);transform:translateY(10px);transition:transform .2s ease;}'
-   + '#ht-access.open .panel{transform:none;}'
-   + '#ht-access .kclose{position:absolute;top:16px;right:18px;width:34px;height:34px;border-radius:9px;border:1px solid #e3e8f1;'
-   + 'background:#fff;color:#5a647d;font-size:20px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}'
-   + '#ht-access .kclose:hover{background:#f3f5fa;color:#1b2138;}'
-   + "#ht-access .kick{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8088ad;}"
-   + "#ht-access h3{font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;color:#263370;margin:6px 0 16px;}"
-   + '#ht-access a.opt{display:flex;align-items:center;gap:14px;text-decoration:none;padding:13px 12px;border-radius:12px;'
-   + 'border:1px solid #eef1f6;margin-bottom:10px;transition:border-color .15s,background .15s,transform .15s;}'
-   + '#ht-access a.opt:hover{border-color:#bcd0ff;background:#f7f9ff;transform:translateX(2px);}'
-   + '#ht-access a.opt .n{flex:none;width:30px;height:30px;border-radius:8px;background:#eef2ff;color:#3a52a8;'
-   + "font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}"
-   + '#ht-access a.opt .t{flex:1;}'
-   + "#ht-access a.opt .t b{display:block;font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;color:#1b2138;}"
-   + '#ht-access a.opt .t small{font-size:12px;color:#8088ad;}'
-   + '#ht-access a.opt .ar{color:#bcd0ff;font-size:18px;}'
-   + '#ht-access a.opt:hover .ar{color:#3a52a8;}'
-   + "#ht-access .soon{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;"
-   + 'color:#b07d2a;border:1px solid #e8d4ad;background:#fdf6e8;padding:1px 6px;border-radius:5px;margin-left:6px;}';
-
-  var HTML = ''
-   + '<div class="panel">'
-   + '<button class="kclose" aria-label="Cerrar">&times;</button>'
-   + '<div class="kick">Acceso interno</div><h3>Herramientas</h3>'
-   + '<a class="opt" href="reportes.html"><span class="n">01</span><span class="t"><b>Reportes de servicios</b><small>Registra el servicio en la orden de Odoo</small></span><span class="ar">&#8594;</span></a>'
-   + '<a class="opt" href="configurador.html"><span class="n">02</span><span class="t"><b>Cotizador de mangueras</b><small>Arma ensambles y obtén precio y materiales</small></span><span class="ar">&#8594;</span></a>'
-   + '<a class="opt" href="reportes-ventas.html"><span class="n">03</span><span class="t"><b>Reportes de ventas <span class="soon">Por configurar</span></b><small>Resumen de ventas desde Odoo</small></span><span class="ar">&#8594;</span></a>'
-   + '</div>';
-
-  function build(){
-    if(document.getElementById('ht-access')) return document.getElementById('ht-access');
-    if(!document.getElementById('ht-access-css')){
-      var st=document.createElement('style'); st.id='ht-access-css'; st.textContent=CSS; document.head.appendChild(st);
-    }
-    var m=document.createElement('div'); m.id='ht-access'; m.setAttribute('role','dialog');
-    m.setAttribute('aria-modal','true'); m.setAttribute('aria-label','Acceso a herramientas'); m.innerHTML=HTML;
-    document.body.appendChild(m); return m;
-  }
-  function open(){ build().classList.add('open'); }
-  function close(){ var m=document.getElementById('ht-access'); if(m) m.classList.remove('open'); }
-
-  document.addEventListener('click', function(e){
-    var t=e.target; if(!t||!t.closest) return;
-    if(t.closest('[data-r="lock"]')){ e.preventDefault(); open(); return; }
-    if(t.closest('#ht-access .kclose')){ e.preventDefault(); close(); return; }
-    var m=document.getElementById('ht-access'); if(m && t===m) close();
-  });
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
-})();
 </script>
 </body>
 </html>
