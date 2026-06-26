@@ -119,19 +119,26 @@ export default async (req) => {
 
   try {
     const body = await req.json();
+    const hn = (body.hallazgos_notas || "").toString().trim();
+    const an = (body.actividades_notas || "").toString().trim();
+    const pn = (body.plan_notas || "").toString().trim();
     const raw = (body.raw || "").toString().trim();
     const imgs = parseImages(body.images);
-    if (!raw && !imgs.length) return json({ ok: false, error: "Faltan las notas del técnico (texto o dictado)." }, 400);
+    if (!hn && !an && !pn && !raw && !imgs.length) return json({ ok: false, error: "Faltan las notas del técnico (texto o dictado)." }, 400);
 
     const cliente = body.cliente || "", orden = body.orden || "";
     const fecha = body.fecha || new Date().toISOString().slice(0, 10);
-    const equipo = body.equipo || "", planta = body.planta || "";
+    const equipo = body.equipo || "", planta = body.planta || "", tipo = body.tipo || "";
     const tecnicos = Array.isArray(body.tecnicos) ? body.tecnicos.filter(Boolean) : [];
+
+    const notas = (hn || an || pn)
+      ? `[HALLAZGOS / cómo se encontró]\n${hn || "(sin notas)"}\n\n[ACTIVIDADES REALIZADAS]\n${an || "(sin notas)"}\n\n[PLAN DE ACCIÓN / pendientes]\n${pn || "(sin notas)"}`
+      : raw;
 
     const userText =
       `Contexto:\n- Cliente: ${cliente || "(de la orden)"}\n- Orden: ${orden || "(n/d)"}\n- Fecha: ${fecha}\n` +
-      `- Planta/Ubicación: ${planta || "(n/d)"}\n- Equipo: ${equipo || "(n/d)"}\n- Técnicos: ${tecnicos.join(", ") || "(n/d)"}\n\n` +
-      `Notas del técnico:\n${raw || "(sin texto; usa las imágenes)"}`;
+      `- Planta/Ubicación: ${planta || "(n/d)"}\n- Tipo de servicio: ${tipo || "(n/d)"}\n- Técnicos: ${tecnicos.join(", ") || "(n/d)"}\n\n` +
+      `Notas del técnico:\n${notas}`;
 
     let parsed;
     if (provider === "gemini") parsed = await callGemini(userText, imgs);
