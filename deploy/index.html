@@ -37,6 +37,19 @@
     #ht-page h1{ font-size:40px !important; }
     #ht-page h2{ font-size:30px !important; }
     #ht-page header > div, #ht-page section > div, #ht-page footer > div { padding-left:20px !important; padding-right:20px !important; }
+  @media (max-width: 640px){
+    html, body { overflow-x: hidden; }
+    #ht-page h1{ font-size:36px !important; line-height:1.05 !important; }
+    #ht-page h2{ font-size:28px !important; }
+    #ht-page header > div{ height:60px !important; padding:0 18px !important; }
+    #ht-page section > div{ padding-top:46px !important; padding-bottom:50px !important; }
+    #ht-page [data-r="hero"]{ padding-top:34px !important; padding-bottom:44px !important; gap:30px !important; }
+  }
+  @media (max-width: 440px){
+    #ht-page h1{ font-size:31px !important; }
+    #ht-page h2{ font-size:24px !important; }
+    #ht-page p{ font-size:15.5px !important; }
+    #ht-page [data-r="hero"] a[href]{ width:100% !important; justify-content:center !important; }
   }
 </style>
 </helmet>
