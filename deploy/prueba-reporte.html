@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba · Generador de reporte (IA) · HydraTech</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; font-family:'IBM Plex Sans',system-ui,sans-serif; color:#1b2138; background:#f3f5fa; padding:24px;}
+  .wrap{max-width:880px; margin:0 auto;}
+  a.back{color:#5a647d; font-size:13px; font-weight:600; text-decoration:none;}
+  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:24px; color:#263370; margin:12px 0 2px;}
+  p.sub{color:#5a647d; font-size:14px; margin:0 0 18px;}
+  .card{background:#fff; border:1px solid #e3e8f1; border-radius:12px; padding:18px; margin-bottom:16px;}
+  label{display:block; font-size:12px; font-weight:600; color:#404a63; margin:0 0 5px;}
+  input,textarea{width:100%; border:1px solid #e3e8f1; border-radius:8px; padding:9px 11px; font-size:14px; font-family:inherit; color:#1b2138;}
+  input:focus,textarea:focus{outline:none; border-color:#263370;}
+  textarea{resize:vertical; min-height:120px;}
+  .grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  @media(max-width:640px){ .grid{grid-template-columns:1fr;} }
+  .rowbtns{display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;}
+  button{border:0; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer;}
+  .primary{background:#263370; color:#fff;} .primary:hover{background:#1c2858;} .primary:disabled{opacity:.5;}
+  .ghost{background:#eef2ff; color:#263370;} .ghost.rec{background:#fdecec; color:#b4232a;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:#8a93a8;}
+  .err{color:#b4232a;}
+  h2{font-family:'Archivo',sans-serif; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:#263370; margin:0 0 8px;}
+  .sec{margin-bottom:16px;}
+  .sec p{white-space:pre-wrap; font-size:14px; line-height:1.6; color:#2a3047; margin:0;}
+  .sec ul{margin:0; padding-left:18px;} .sec li{font-size:14px; line-height:1.6; color:#2a3047;}
+  .imgs{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .imgs img{width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid #e3e8f1;}
+</style>
+  <script defer src="auth-gate.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="acceso.html">&#8592; Volver a herramientas</a>
+  <h1>Generador de reporte de servicio (prueba de IA)</h1>
+  <p class="sub">Escribe o dicta las notas del servicio; la IA lo estructura en Hallazgos, Qué se hizo y Plan de acción. Pantalla de prueba para validar el motor.</p>
+
+  <div class="card">
+    <div class="grid" style="margin-bottom:12px;">
+      <div><label>Cliente</label><input id="cliente" placeholder="Opcional en prueba"></div>
+      <div><label>Orden</label><input id="orden" placeholder="S00012"></div>
+      <div><label>Técnicos (coma)</label><input id="tecnicos" placeholder="Juan P., Luis G."></div>
+    </div>
+    <label>Notas del técnico (escribe o dicta)</label>
+    <textarea id="raw" placeholder="Ej. Llegamos a la planta, la bomba tiraba aceite por el sello principal, la manguera de presión estaba reventada en el codo..."></textarea>
+    <div class="rowbtns">
+      <button id="mic" class="ghost" type="button">🎤 Dictar</button>
+      <label class="ghost" style="display:inline-block; padding:10px 16px; border-radius:8px; cursor:pointer;">📷 Fotos
+        <input id="fotos" type="file" accept="image/*" multiple style="display:none;"></label>
+      <button id="gen" class="primary" type="button">Generar reporte</button>
+      <span id="status" class="status"></span>
+    </div>
+    <div class="imgs" id="imgsPrev"></div>
+    <details style="margin-top:10px;"><summary class="status" style="cursor:pointer;">Token del portal</summary>
+      <input id="tok" placeholder="x-portal-token (si aplica)" style="margin-top:6px;"></details>
+  </div>
+
+  <div class="card" id="out" style="display:none;">
+    <div class="sec"><h2>Hallazgos</h2><p id="oHall"></p></div>
+    <div class="sec"><h2>Qué se hizo</h2><p id="oRep"></p></div>
+    <div class="sec"><h2>Plan de acción</h2><ul id="oPlan"></ul></div>
+    <button class="ghost" id="copiar" type="button">Copiar reporte</button>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let images = [], lastMd = "";
+  const tok = () => $("tok").value.trim();
+
+  // Fotos -> dataURL (reducidas)
+  $("fotos").addEventListener("change", (e) => {
+    images = []; $("imgsPrev").innerHTML = "";
+    [...e.target.files].slice(0,8).forEach((f) => {
+      const r = new FileReader();
+      r.onload = () => { resize(r.result, (d) => { images.push(d);
+        const im = document.createElement("img"); im.src = d; $("imgsPrev").appendChild(im); }); };
+      r.readAsDataURL(f);
+    });
+  });
+  function resize(dataUrl, cb) {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1100, sc = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = img.width*sc; c.height = img.height*sc;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL("image/jpeg", 0.8));
+    };
+    img.src = dataUrl;
+  }
+
+  // Dictado por voz (Chrome/Edge)
+  let rec = null, reccing = false;
+  $("mic").addEventListener("click", () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { $("status").textContent = "Tu navegador no soporta dictado; usa Chrome o escribe."; return; }
+    if (reccing) { rec && rec.stop(); return; }
+    rec = new SR(); rec.lang = "es-MX"; rec.interimResults = true; rec.continuous = true;
+    let base = $("raw").value;
+    rec.onresult = (ev) => {
+      let t = "";
+      for (let i = ev.resultIndex; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+      $("raw").value = (base ? base + " " : "") + t;
+    };
+    rec.onend = () => { reccing = false; $("mic").classList.remove("rec"); $("mic").textContent = "🎤 Dictar"; base = $("raw").value; };
+    rec.onerror = () => { $("status").textContent = "No se pudo activar el micrófono."; };
+    rec.start(); reccing = true; $("mic").classList.add("rec"); $("mic").textContent = "⏹ Detener";
+  });
+
+  $("gen").addEventListener("click", async () => {
+    const raw = $("raw").value.trim();
+    if (!raw && !images.length) { $("status").textContent = "Escribe/dicta notas o sube fotos."; return; }
+    $("gen").disabled = true; $("status").className = "status"; $("status").textContent = "Generando con IA…";
+    try {
+      const headers = { "Content-Type": "application/json" }; const t = tok(); if (t) headers["x-portal-token"] = t;
+      const r = await fetch("/api/generar-reporte", { method: "POST", headers, body: JSON.stringify({
+        raw, cliente: $("cliente").value, orden: $("orden").value,
+        tecnicos: $("tecnicos").value.split(",").map(s=>s.trim()).filter(Boolean), images,
+      })});
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || ("HTTP " + r.status));
+      $("oHall").textContent = d.report.hallazgos || "";
+      $("oRep").textContent = d.report.reparacion || "";
+      $("oPlan").innerHTML = (d.report.plan || []).map(p => "<li>"+ p.replace(/</g,"&lt;") +"</li>").join("");
+      lastMd = d.markdown || "";
+      $("out").style.display = "block"; $("status").textContent = "✓ Listo.";
+    } catch (e) {
+      $("status").className = "status err"; $("status").textContent = "✗ " + (e.message || e);
+    } finally { $("gen").disabled = false; }
+  });
+
+  $("copiar").addEventListener("click", () => navigator.clipboard?.writeText(lastMd));
+</script>
+</body>
+</html>

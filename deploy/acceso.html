@@ -23,7 +23,14 @@
   h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:38px; margin:10px 0 6px; color:#fff; letter-spacing:-0.01em;}
   .sub{color:#8a93bd; font-size:15px; max-width:520px; margin:0 auto;}
   .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(270px,1fr)); gap:22px; margin-top:42px;}
-  @media (max-width:560px){ h1{font-size:30px;} }
+  @media (max-width:560px){
+    .wrap{padding:20px 16px 48px;}
+    h1{font-size:27px;}
+    .head{margin:22px 0 6px;}
+    .grid{gap:14px; margin-top:28px;}
+    .card{min-height:0; padding:20px 18px 18px;}
+    .ct{font-size:20px;}
+  }
   .card{position:relative; display:flex; flex-direction:column; min-height:230px; padding:26px 26px 22px;
         border-radius:16px; border:1px solid #2a3458; background:linear-gradient(180deg,#1a2140 0%,#161b34 100%);
         transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;}
@@ -39,6 +46,7 @@
         text-transform:uppercase; color:#c9a14a; border:1px solid #5a4a22; background:#241d10; padding:2px 7px; border-radius:5px; vertical-align:middle;}
   .foot{padding:18px 24px; text-align:center; color:#444c74; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase;}
 </style>
+  <script defer src="auth-gate.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -51,28 +59,28 @@
     </div>
 
     <div class="grid">
-      <a class="card" href="configurador.html">
-        <span class="num">01</span>
-        <span class="tag">Cotización</span>
-        <div class="ct">Configurador de mangueras</div>
-        <p class="cd">Arma ensambles de manguera hidráulica por largo y presión, selecciona los conectores y obtén precio al cliente y lista de materiales para compras.</p>
-        <span class="go">Abrir configurador <span style="font-size:16px;">&#8594;</span></span>
-      </a>
-
       <a class="card" href="reportes.html">
-        <span class="num">02</span>
+        <span class="num">01</span>
         <span class="tag">Operación</span>
-        <div class="ct">Reportes de actividad</div>
-        <p class="cd">Busca una orden de venta de Odoo, revisa su detalle e historial, y registra el reporte de actividad del trabajo realizado directo en la orden.</p>
+        <div class="ct">Reportes de servicios</div>
+        <p class="cd">Busca una orden en Odoo, revisa su detalle e historial y registra el reporte del servicio realizado directo en la orden.</p>
         <span class="go">Abrir reportes <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
-      <a class="card" href="portal.html">
+      <a class="card" href="configurador.html">
+        <span class="num">02</span>
+        <span class="tag">Cotización</span>
+        <div class="ct">Cotizador de mangueras</div>
+        <p class="cd">Arma ensambles de manguera hidráulica por largo y presión, elige los conectores y obtén precio al cliente y lista de materiales.</p>
+        <span class="go">Abrir cotizador <span style="font-size:16px;">&#8594;</span></span>
+      </a>
+
+      <a class="card" href="reportes-ventas.html">
         <span class="num">03</span>
-        <span class="tag">Plataforma</span>
-        <div class="ct">Portal Irontech <span class="soon">Por conectar</span></div>
-        <p class="cd">Acceso al portal Irontech. Pendiente de enlazar con la API de HydraTech para inventario, pedidos y seguimiento.</p>
-        <span class="go">Entrar al portal <span style="font-size:16px;">&#8594;</span></span>
+        <span class="tag">Comercial</span>
+        <div class="ct">Reportes de ventas <span class="soon">Por configurar</span></div>
+        <p class="cd">Resumen de ventas desde Odoo: órdenes, importes y seguimiento por periodo, cliente o vendedor. En construcción.</p>
+        <span class="go">Abrir reportes <span style="font-size:16px;">&#8594;</span></span>
       </a>
     </div>
   </div>
