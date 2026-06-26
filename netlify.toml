@@ -1,0 +1,13 @@
+# Configuración de Netlify para HydraTech
+[build]
+  publish = "deploy"                 # el sitio estático
+  functions = "netlify/functions"    # las funciones que hablan con Odoo
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# URLs amigables: /api/<funcion>  ->  /.netlify/functions/<funcion>
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

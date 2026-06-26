@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acceso · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; font-family:'IBM Plex Sans',system-ui,sans-serif; color:#e7eaf5;
+       background:radial-gradient(900px 600px at 70% -10%, #20294a 0%, #141829 55%, #0f1322 100%);
+       display:flex; flex-direction:column;}
+  a{text-decoration:none;}
+  .wrap{flex:1; max-width:1040px; margin:0 auto; width:100%; padding:30px 24px 60px;}
+  .back{display:inline-flex; align-items:center; gap:8px; color:#7b84ad; font-size:13px; font-weight:600; padding:8px 0;}
+  .back:hover{color:#aeb6d4;}
+  .head{text-align:center; margin:36px 0 8px;}
+  .kicker{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.22em; text-transform:uppercase; color:#5f6aa0;}
+  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:38px; margin:10px 0 6px; color:#fff; letter-spacing:-0.01em;}
+  .sub{color:#8a93bd; font-size:15px; max-width:520px; margin:0 auto;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(270px,1fr)); gap:22px; margin-top:42px;}
+  @media (max-width:560px){ h1{font-size:30px;} }
+  .card{position:relative; display:flex; flex-direction:column; min-height:230px; padding:26px 26px 22px;
+        border-radius:16px; border:1px solid #2a3458; background:linear-gradient(180deg,#1a2140 0%,#161b34 100%);
+        transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;}
+  .card:hover{transform:translateY(-4px); border-color:#3a52a8; box-shadow:0 18px 40px -18px rgba(58,82,168,0.6);}
+  .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6b76ad;}
+  .ct{font-family:'Archivo',sans-serif; font-weight:800; font-size:23px; color:#fff; margin:14px 0 8px;}
+  .cd{color:#9aa3cc; font-size:14px; line-height:1.55; flex:1;}
+  .go{display:inline-flex; align-items:center; gap:8px; align-self:flex-start; margin-top:18px;
+      font-size:14px; font-weight:700; color:#bcd0ff;}
+  .card:hover .go{color:#fff;}
+  .num{position:absolute; top:22px; right:24px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#39406a;}
+  .soon{display:inline-block; margin-left:8px; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em;
+        text-transform:uppercase; color:#c9a14a; border:1px solid #5a4a22; background:#241d10; padding:2px 7px; border-radius:5px; vertical-align:middle;}
+  .foot{padding:18px 24px; text-align:center; color:#444c74; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html"><span style="font-size:16px;">&#8592;</span> Volver al sitio</a>
+
+    <div class="head">
+      <div class="kicker">Acceso interno</div>
+      <h1>Herramientas HydraTech</h1>
+      <p class="sub">Selecciona la herramienta que deseas utilizar.</p>
+    </div>
+
+    <div class="grid">
+      <a class="card" href="configurador.html">
+        <span class="num">01</span>
+        <span class="tag">Cotización</span>
+        <div class="ct">Configurador de mangueras</div>
+        <p class="cd">Arma ensambles de manguera hidráulica por largo y presión, selecciona los conectores y obtén precio al cliente y lista de materiales para compras.</p>
+        <span class="go">Abrir configurador <span style="font-size:16px;">&#8594;</span></span>
+      </a>
+
+      <a class="card" href="reportes.html">
+        <span class="num">02</span>
+        <span class="tag">Operación</span>
+        <div class="ct">Reportes de actividad</div>
+        <p class="cd">Busca una orden de venta de Odoo, revisa su detalle e historial, y registra el reporte de actividad del trabajo realizado directo en la orden.</p>
+        <span class="go">Abrir reportes <span style="font-size:16px;">&#8594;</span></span>
+      </a>
+
+      <a class="card" href="portal.html">
+        <span class="num">03</span>
+        <span class="tag">Plataforma</span>
+        <div class="ct">Portal Irontech <span class="soon">Por conectar</span></div>
+        <p class="cd">Acceso al portal Irontech. Pendiente de enlazar con la API de HydraTech para inventario, pedidos y seguimiento.</p>
+        <span class="go">Entrar al portal <span style="font-size:16px;">&#8594;</span></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="foot">HydraTech Group · Solutions through innovation</div>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reportes de actividad por orden · HydraTech</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; font-family:'IBM Plex Sans',system-ui,sans-serif; color:#1b2138; background:#f3f5fa;}
+  .topbar{background:#141829; border-bottom:3px solid #263370;}
+  .topbar .in{max-width:1180px; margin:0 auto; padding:10px 20px; display:flex; align-items:center; justify-content:space-between;}
+  .topbar a{display:inline-flex; align-items:center; gap:9px; text-decoration:none;}
+  .topbar img{height:18px;}
+  .topbar .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#5b6390;}
+  .wrap{max-width:1180px; margin:0 auto; padding:20px; display:grid; grid-template-columns:360px 1fr; gap:18px;}
+  @media (max-width:900px){ .wrap{grid-template-columns:1fr;} }
+  .card{background:#fff; border:1px solid #e3e8f1; border-radius:12px; padding:16px;}
+  h2{font-family:'Archivo',sans-serif; font-weight:800; font-size:15px; margin:0 0 12px; color:#263370; text-transform:uppercase; letter-spacing:0.04em;}
+  label{display:block; font-size:12px; font-weight:600; color:#404a63; margin-bottom:5px;}
+  input,textarea{width:100%; border:1px solid #e3e8f1; border-radius:8px; padding:9px 11px; font-size:14px; font-family:inherit; color:#1b2138;}
+  input:focus,textarea:focus{outline:none; border-color:#263370;}
+  textarea{resize:vertical; min-height:90px;}
+  button{background:#263370; color:#fff; border:0; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer;}
+  button:hover{background:#1c2858;} button:disabled{opacity:.5; cursor:default;}
+  .ord{padding:10px 11px; border:1px solid #eef1f6; border-radius:9px; margin-bottom:8px; cursor:pointer; transition:border-color .15s, background .15s;}
+  .ord:hover{border-color:#bcd0ff; background:#f7f9ff;}
+  .ord.sel{border-color:#263370; background:#eef2ff;}
+  .ord .n{font-family:'IBM Plex Mono',monospace; font-weight:600; color:#263370;}
+  .ord .p{font-size:13px; color:#404a63;}
+  .ord .m{font-size:11px; color:#8a93a8; display:flex; justify-content:space-between; margin-top:3px;}
+  .pill{display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:2px 7px; border-radius:20px; background:#eef2ff; color:#3a52a8;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:8px 11px; border-radius:8px; margin-top:10px;}
+  .ok{background:#e7f6ec; color:#1f7a44; border:1px solid #bce3c9;}
+  .err{background:#fdecec; color:#b4232a; border:1px solid #f3c4c4;}
+  .muted{color:#8a93a8; font-size:13px;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{text-align:left; padding:6px 7px; border-bottom:1px solid #eef1f6;}
+  th{font-size:10px; text-transform:uppercase; color:#8a93a8;}
+  td.num{text-align:right; font-variant-numeric:tabular-nums;}
+  .logrow{padding:9px 0; border-bottom:1px solid #f0f2f7;}
+  .logrow .h{font-size:11px; color:#8a93a8; display:flex; justify-content:space-between;}
+  .logrow .b{font-size:13px; color:#2a3047; margin-top:2px; white-space:pre-wrap;}
+  .kv{display:flex; gap:18px; flex-wrap:wrap; font-size:13px; color:#404a63; margin-bottom:6px;}
+  .kv b{color:#1b2138;}
+</style>
+</head>
+<body>
+  <div class="topbar"><div class="in">
+    <a href="acceso.html"><span style="color:#aeb6d4; font-size:18px;">&#8592;</span><img src="assets/hydratech-wordmark-white.png" alt="HydraTech"></a>
+    <span class="tag">Reportes de actividad por orden</span>
+  </div></div>
+
+  <div class="wrap">
+    <!-- Columna izquierda: buscar orden -->
+    <div>
+      <div class="card">
+        <h2>Buscar orden</h2>
+        <label>Número de orden o cliente</label>
+        <div style="display:flex; gap:8px;">
+          <input id="q" placeholder="S00012 o nombre del cliente">
+          <button id="buscar">Buscar</button>
+        </div>
+        <details style="margin-top:10px;"><summary class="muted" style="cursor:pointer;">Token del portal</summary>
+          <input id="tok" placeholder="x-portal-token (si aplica)" style="margin-top:6px;"></details>
+        <div id="sStatus" class="muted" style="margin-top:10px;">Escribe y busca una orden.</div>
+        <div id="list" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- Columna derecha: detalle + reporte -->
+    <div id="detail">
+      <div class="card"><p class="muted">Selecciona una orden de la izquierda para ver su detalle y registrar un reporte.</p></div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let current = null;
+  const tok = () => $("tok").value.trim();
+  const headers = (extra) => { const h = Object.assign({}, extra || {}); const t = tok(); if (t) h["x-portal-token"] = t; return h; };
+  const money = (n) => "$" + Number(n||0).toLocaleString("es-MX",{minimumFractionDigits:2});
+  const esc = (s) => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const fdate = (s) => s ? String(s).replace("T"," ").slice(0,16) : "";
+
+  async function buscar() {
+    const q = $("q").value.trim();
+    $("sStatus").className = "muted"; $("sStatus").textContent = "Buscando…";
+    try {
+      const r = await fetch("/api/odoo-sale-orders?limit=30&q=" + encodeURIComponent(q), { headers: headers() });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || ("HTTP " + r.status));
+      $("sStatus").textContent = d.count + " orden(es).";
+      $("list").innerHTML = d.orders.map((o) =>
+        '<div class="ord" data-id="'+o.id+'">' +
+          '<div class="n">'+esc(o.name)+'</div>' +
+          '<div class="p">'+esc(o.partner)+'</div>' +
+          '<div class="m"><span>'+fdate(o.date)+'</span><span class="pill">'+esc(o.stateLabel)+'</span></div>' +
+        '</div>').join("") || '<p class="muted">Sin resultados.</p>';
+      document.querySelectorAll(".ord").forEach((el) => el.addEventListener("click", () => abrir(parseInt(el.dataset.id,10), el)));
+    } catch (e) {
+      $("sStatus").className = "err status"; $("sStatus").textContent = "✗ " + (e.message||e);
+    }
+  }
+
+  async function abrir(id, el) {
+    document.querySelectorAll(".ord").forEach((x) => x.classList.remove("sel"));
+    if (el) el.classList.add("sel");
+    $("detail").innerHTML = '<div class="card"><p class="muted">Cargando…</p></div>';
+    try {
+      const r = await fetch("/api/odoo-order-activity?id=" + id, { headers: headers() });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || ("HTTP " + r.status));
+      current = d.order;
+      render(d);
+    } catch (e) {
+      $("detail").innerHTML = '<div class="card"><div class="err status">✗ ' + esc(e.message||e) + '</div></div>';
+    }
+  }
+
+  function render(d) {
+    const o = d.order;
+    const lines = d.lines.map((l) =>
+      '<tr><td>'+esc(l.product||l.name)+'</td><td class="num">'+l.qty+'</td><td class="num">'+money(l.price)+'</td><td class="num">'+money(l.subtotal)+'</td></tr>'
+    ).join("");
+    const acts = d.activities.length ? d.activities.map((a) =>
+      '<div class="logrow"><div class="h"><span>'+esc(a.type)+' · '+esc(a.user)+'</span><span>vence '+esc(a.deadline)+'</span></div><div class="b">'+esc(a.summary)+'</div></div>'
+    ).join("") : '<p class="muted">Sin actividades pendientes.</p>';
+    const log = d.log.length ? d.log.map((m) =>
+      '<div class="logrow"><div class="h"><span>'+esc(m.author)+'</span><span>'+fdate(m.date)+'</span></div><div class="b">'+esc(m.text)+'</div></div>'
+    ).join("") : '<p class="muted">Sin registros en la bitácora.</p>';
+
+    $("detail").innerHTML =
+      '<div class="card" style="margin-bottom:18px;">' +
+        '<h2>'+esc(o.name)+' — '+esc(o.partner)+'</h2>' +
+        '<div class="kv"><span>Fecha: <b>'+fdate(o.date)+'</b></span><span>Estado: <b>'+esc(o.stateLabel)+'</b></span><span>Vendedor: <b>'+esc(o.seller||"—")+'</b></span><span>Total: <b>'+money(o.total)+'</b></span></div>' +
+        '<table><thead><tr><th>Producto</th><th style="text-align:right;">Cant.</th><th style="text-align:right;">Precio</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>'+lines+'</tbody></table>' +
+      '</div>' +
+      '<div class="card" style="margin-bottom:18px;">' +
+        '<h2>Registrar reporte de actividad</h2>' +
+        '<label>¿Qué se hizo en esta orden? (queda en la bitácora de la orden en Odoo)</label>' +
+        '<textarea id="reporte" placeholder="Ej. Se desarmó la bomba, se reemplazaron sellos y se probó en banco a 210 bar. OK."></textarea>' +
+        '<div style="display:flex; align-items:center; gap:12px; margin-top:10px;">' +
+          '<button id="enviar">Registrar reporte</button><span id="rStatus" class="muted"></span></div>' +
+      '</div>' +
+      '<div class="card" style="margin-bottom:18px;"><h2>Actividades pendientes</h2>'+acts+'</div>' +
+      '<div class="card"><h2>Bitácora de la orden</h2>'+log+'</div>';
+
+    $("enviar").addEventListener("click", enviar);
+  }
+
+  async function enviar() {
+    const text = $("reporte").value.trim();
+    if (!text || !current) return;
+    $("enviar").disabled = true;
+    $("rStatus").className = "muted"; $("rStatus").textContent = "Registrando…";
+    try {
+      const r = await fetch("/api/odoo-order-activity", {
+        method: "POST",
+        headers: headers({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ order_id: current.id, text }),
+      });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error || ("HTTP " + r.status));
+      $("rStatus").className = "ok status"; $("rStatus").textContent = "✓ Reporte registrado en la orden.";
+      abrir(current.id); // recarga para mostrarlo en la bitácora
+    } catch (e) {
+      $("enviar").disabled = false;
+      $("rStatus").className = "err status"; $("rStatus").textContent = "✗ " + (e.message||e);
+    }
+  }
+
+  $("buscar").addEventListener("click", buscar);
+  $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") buscar(); });
+</script>
+</body>
+</html>

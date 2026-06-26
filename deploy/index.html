@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; }
+  ::selection { background: #263370; color: #fff; }
+  @keyframes htRise { from { opacity:0; transform: translateY(14px);} to {opacity:1; transform:none;} }
+  @keyframes htFlow { from { background-position: 0 0; } to { background-position: 0 -220px; } }
+  #ht-page [data-r="lock"]{ color:#3a4063; border-color:#262d4a; }
+  #ht-page [data-r="lock"]:hover{ color:#aeb6d4; border-color:#3a52a8; }
+  @media (max-width: 980px){
+    [data-r="hero"], [data-r="banco"], [data-r="contacto"]{ grid-template-columns:1fr !important; gap:40px !important; }
+    [data-r="hero"]{ padding-top:52px !important; padding-bottom:58px !important; }
+    [data-r="servicios"], [data-r="dif"], [data-r="ademas"], [data-r="proceso"]{ grid-template-columns:repeat(2,1fr) !important; }
+    [data-r="proceso"]{ row-gap:38px !important; }
+    [data-r="procline"]{ display:none !important; }
+    [data-r="footer"]{ grid-template-columns:1fr 1fr !important; }
+    [data-r="galeria"]{ grid-template-columns:1fr 1fr !important; grid-template-rows:auto !important; }
+    [data-r="galeria"] > *{ grid-area:auto !important; height:200px !important; }
+  }
+  @media (max-width: 640px){
+    [data-r="navlinks"]{ display:none !important; }
+    [data-r="servicios"], [data-r="dif"], [data-r="ademas"], [data-r="proceso"], [data-r="footer"], [data-r="banco-specs"]{ grid-template-columns:1fr !important; }
+    [data-r="galeria"]{ grid-template-columns:1fr !important; }
+    #ht-page h1{ font-size:40px !important; }
+    #ht-page h2{ font-size:30px !important; }
+    #ht-page header > div, #ht-page section > div, #ht-page footer > div { padding-left:20px !important; padding-right:20px !important; }
+  }
+</style>
+</helmet>
+<div id="ht-page" style="font-family:'IBM Plex Sans',system-ui,sans-serif; color:#1b2138; background:#ffffff; -webkit-font-smoothing:antialiased; overflow-x:hidden;">
+
+  <header style="position:sticky; top:0; z-index:50; background:rgba(255,255,255,0.88); backdrop-filter:blur(10px); border-bottom:1px solid #e6e9f0;">
+    <div style="max-width:1240px; margin:0 auto; padding:0 32px; height:74px; display:flex; align-items:center; justify-content:space-between; gap:24px;">
+      <a href="#top" style="display:flex; align-items:center; gap:11px; text-decoration:none;">
+        <img src="assets/hydratech-icon.png" alt="HydraTech" style="width:34px; height:34px; display:block;">
+        <img src="assets/hydratech-wordmark.png" alt="HydraTech Group" style="height:19px; display:block;">
+      </a>
+      <nav style="display:flex; align-items:center; gap:30px;">
+        <span data-r="navlinks" style="display:flex; align-items:center; gap:30px;">
+        <a href="#servicios" style="font-size:14px; font-weight:500; color:#404a63; text-decoration:none; letter-spacing:0.01em;">Servicios</a>
+        <a href="#banco" style="font-size:14px; font-weight:500; color:#404a63; text-decoration:none; letter-spacing:0.01em;">Banco de pruebas</a>
+        <a href="#proceso" style="font-size:14px; font-weight:500; color:#404a63; text-decoration:none; letter-spacing:0.01em;">Proceso</a>
+        <a href="#contacto" style="font-size:14px; font-weight:500; color:#404a63; text-decoration:none; letter-spacing:0.01em;">Contacto</a>
+        </span>
+        <a href="{{ waUrl }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:8px; background:#fff; color:#16a34a; font-size:14px; font-weight:700; padding:10px 17px; border-radius:7px; text-decoration:none; border:1.5px solid #16a34a;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#16a34a"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.5c-.2.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+          WhatsApp
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section style="position:relative; background:#f7f9fc; border-bottom:1px solid #e6e9f0; overflow:hidden;">
+      <div style="position:absolute; inset:0; background-image:linear-gradient(#e4e9f2 1px, transparent 1px), linear-gradient(90deg, #e4e9f2 1px, transparent 1px); background-size:44px 44px; opacity:0.6; pointer-events:none;"></div>
+      <div style="position:absolute; top:-180px; right:-120px; width:520px; height:520px; background:radial-gradient(circle, rgba(38,51,112,0.07), transparent 68%); pointer-events:none;"></div>
+      <div data-r="hero" style="position:relative; max-width:1240px; margin:0 auto; padding:78px 32px 84px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center;">
+
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:9px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.14em; color:#263370; background:#fff; border:1px solid #d8deea; padding:7px 13px; border-radius:6px;">
+            <span style="width:7px; height:7px; border-radius:50%; background:#1f9d55; box-shadow:0 0 0 3px rgba(31,157,85,0.18);"></span>
+            ESPECIALISTAS HIDRÁULICOS · NUEVO LEÓN
+          </div>
+          <h1 style="font-family:'Archivo',sans-serif; font-weight:800; font-size:60px; line-height:1.02; letter-spacing:-0.025em; color:#1b2138; margin:22px 0 0;">
+            Potencia hidráulica<br>que <span style="color:#263370;">no se detiene</span>.
+          </h1>
+          <p style="font-size:18px; line-height:1.6; color:#4a5267; max-width:520px; margin:22px 0 0;">
+            Reparación, fabricación y soporte de sistemas hidráulicos para la industria. Diagnóstico con equipo de vanguardia y validación en banco de pruebas propio.
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:13px; margin-top:32px;">
+            <a href="{{ waUrl }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:#fff; color:#16a34a; font-size:15px; font-weight:700; padding:14px 23px; border-radius:8px; text-decoration:none; border:1.5px solid #16a34a; box-shadow:0 4px 14px rgba(22,163,74,0.14);">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="#16a34a"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.5c-.2.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+              Cotizar por WhatsApp
+            </a>
+            <a href="#servicios" style="display:inline-flex; align-items:center; gap:8px; background:#fff; color:#263370; font-size:15px; font-weight:600; padding:15px 22px; border-radius:8px; text-decoration:none; border:1px solid #cdd5e4;">
+              Ver servicios
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:26px; margin-top:38px; padding-top:26px; border-top:1px solid #e1e6f0;">
+            <div>
+              <div style="font-family:'Archivo',sans-serif; font-weight:800; font-size:26px; color:#263370; line-height:1;">24/7</div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:#717a90; margin-top:6px;">SERVICIO EN CAMPO</div>
+            </div>
+            <div style="width:1px; background:#e1e6f0;"></div>
+            <div>
+              <div style="font-family:'Archivo',sans-serif; font-weight:800; font-size:26px; color:#263370; line-height:1;">Banco</div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:#717a90; margin-top:6px;">DE PRUEBAS PROPIO</div>
+            </div>
+            <div style="width:1px; background:#e1e6f0;"></div>
+            <div>
+              <div style="font-family:'Archivo',sans-serif; font-weight:800; font-size:26px; color:#263370; line-height:1;">100%</div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; color:#717a90; margin-top:6px;">VALIDADO Y MEDIDO</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:relative;">
+          <div style="position:relative; border:1px solid #d8deea; border-radius:16px; overflow:hidden; background:#10162b; box-shadow:0 26px 64px -28px rgba(27,33,56,0.55);">
+            <div style="aspect-ratio:5/4; position:relative;">
+              <video data-mv="0" data-mv-type="video" muted loop playsinline preload="auto" src="assets/videos/diag-banco.mp4" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center; display:block; opacity:1; transition:opacity 0.7s ease;"></video>
+              <video data-mv="1" data-mv-type="video" muted loop playsinline preload="auto" src="assets/videos/pruebas-bomba.mp4" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block; opacity:0; transition:opacity 0.7s ease;"></video>
+              <img data-mv="2" data-mv-type="img" src="assets/valvula-checker.jpg" alt="Recalibración de servoválvula" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center; display:block; opacity:0; transition:opacity 0.7s ease;">
+              <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(16,22,43,0.30) 0%, rgba(16,22,43,0) 28%, rgba(16,22,43,0.10) 55%, rgba(16,22,43,0.90) 100%); pointer-events:none;"></div>
+              <div style="position:absolute; top:16px; left:16px; display:inline-flex; align-items:center; gap:8px; background:rgba(16,22,43,0.55); backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.2); padding:7px 12px; border-radius:8px;">
+                <span style="width:8px; height:8px; border-radius:50%; background:#e5484d; box-shadow:0 0 0 4px rgba(229,72,77,0.25);"></span>
+                <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; color:#fff;">EN ACCIÓN</span>
+              </div>
+              <div style="position:absolute; left:0; right:0; bottom:0; padding:26px;">
+                <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#9db0e8;">HYDRATECH · TALLER + CAMPO</div>
+                <div data-mv-cap style="font-family:'Archivo',sans-serif; font-weight:800; font-size:25px; line-height:1.12; letter-spacing:-0.01em; color:#fff; margin-top:9px; text-shadow:0 2px 16px rgba(0,0,0,0.5); transition:opacity 0.4s ease; min-height:84px;">Banco de pruebas para calibración de tus equipos</div>
+                <div data-mv-dots style="display:flex; gap:7px; margin-top:14px;">
+                  <span style="width:26px; height:4px; border-radius:2px; background:#fff;"></span>
+                  <span style="width:26px; height:4px; border-radius:2px; background:rgba(255,255,255,0.35);"></span>
+                  <span style="width:26px; height:4px; border-radius:2px; background:rgba(255,255,255,0.35);"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section style="background:#263370;">
+      <div data-r="dif" style="max-width:1240px; margin:0 auto; padding:30px 32px; display:grid; grid-template-columns:repeat(4,1fr); gap:18px;">
+        <div style="display:flex; gap:13px; align-items:flex-start;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="1.7" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:15px;">Respuesta 24/7</div>
+            <div style="color:#b3bce0; font-size:13px; line-height:1.45; margin-top:3px;">Soporte en campo para paros de producción.</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:13px; align-items:flex-start;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="1.7" style="flex-shrink:0; margin-top:1px;"><path d="M5 19h14M7 19V9l5-4 5 4v10"/><path d="M10 19v-5h4v5"/></svg>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:15px;">Banco de pruebas</div>
+            <div style="color:#b3bce0; font-size:13px; line-height:1.45; margin-top:3px;">Validamos flujo y presión antes de entregar.</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:13px; align-items:flex-start;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="1.7" style="flex-shrink:0; margin-top:1px;"><path d="M12 3l8 4v5c0 4.5-3.4 7.5-8 9-4.6-1.5-8-4.5-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:15px;">Equipo de vanguardia</div>
+            <div style="color:#b3bce0; font-size:13px; line-height:1.45; margin-top:3px;">Diagnóstico de precisión con tecnología actual.</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:13px; align-items:flex-start;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="1.7" style="flex-shrink:0; margin-top:1px;"><path d="M14 6l4 4-8 8H6v-4z"/><path d="M3 21h18"/></svg>
+          <div>
+            <div style="color:#fff; font-weight:700; font-size:15px;">Personal capacitado</div>
+            <div style="color:#b3bce0; font-size:13px; line-height:1.45; margin-top:3px;">Especialistas en sistemas hidráulicos.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="servicios" style="background:#ffffff;">
+      <div style="max-width:1240px; margin:0 auto; padding:88px 32px 30px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.16em; color:#3a52a8;">01 / SERVICIOS</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px; margin-top:14px;">
+          <h2 style="font-family:'Archivo',sans-serif; font-weight:800; font-size:42px; line-height:1.05; letter-spacing:-0.02em; color:#1b2138; margin:0; max-width:620px;">Soluciones integrales en sistemas hidráulicos</h2>
+          <p style="font-size:16px; line-height:1.6; color:#5a647d; max-width:380px; margin:0;">Del componente individual a la unidad completa: reparamos, fabricamos y suministramos.</p>
+        </div>
+      </div>
+
+      <div data-r="servicios" style="max-width:1240px; margin:0 auto; padding:18px 32px 30px; display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">
+
+        <div style="border:1px solid #e3e8f1; border-top:3px solid #263370; border-radius:12px; padding:26px; background:#fff; transition:box-shadow .2s, transform .2s;" style-hover="box-shadow:0 18px 40px -22px rgba(27,33,56,0.35); transform:translateY(-3px);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3"/></svg>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#b8c0d4; font-weight:600;">01</span>
+          </div>
+          <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:19px; color:#1b2138; margin:18px 0 0;">Reparación de bombas</h3>
+          <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:9px 0 0;">Bombas de pistones axiales y de paletas. Desarmado, inspección dimensional, reemplazo de componentes y rearmado certificado.</p>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.07em; color:#3a52a8; margin-top:16px;">PISTONES · PALETAS</div>
+        </div>
+
+        <div style="border:1px solid #e3e8f1; border-top:3px solid #263370; border-radius:12px; padding:26px; background:#fff; transition:box-shadow .2s, transform .2s;" style-hover="box-shadow:0 18px 40px -22px rgba(27,33,56,0.35); transform:translateY(-3px);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="1.6"><path d="M4 13a8 8 0 0 1 16 0"/><path d="M12 13l4-3"/><circle cx="12" cy="13" r="1.4" fill="#263370" stroke="none"/><path d="M4 17h16"/></svg>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#b8c0d4; font-weight:600;">02</span>
+          </div>
+          <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:19px; color:#1b2138; margin:18px 0 0;">Banco de pruebas y flujo</h3>
+          <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:9px 0 0;">Mediciones de caudal, presión y rendimiento. Cada equipo se valida contra especificación antes de su entrega.</p>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.07em; color:#3a52a8; margin-top:16px;">CAUDAL · PRESIÓN · TEMP</div>
+        </div>
+
+        <div style="border:1px solid #e3e8f1; border-top:3px solid #263370; border-radius:12px; padding:26px; background:#fff; transition:box-shadow .2s, transform .2s;" style-hover="box-shadow:0 18px 40px -22px rgba(27,33,56,0.35); transform:translateY(-3px);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="1.6"><path d="M5 8a3 3 0 0 1 3-3h2a3 3 0 0 1 0 6H8"/><path d="M19 16a3 3 0 0 1-3 3h-2a3 3 0 0 1 0-6h2"/><path d="M8 11l8 2"/></svg>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#b8c0d4; font-weight:600;">03</span>
+          </div>
+          <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:19px; color:#1b2138; margin:18px 0 0;">Mangueras y conectores</h3>
+          <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:9px 0 0;">Fabricación y venta de mangueras hidráulicas a medida, con conectores y adaptadores para cada aplicación.</p>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.07em; color:#3a52a8; margin-top:16px;">A MEDIDA · EN SITIO</div>
+        </div>
+
+        <div style="border:1px solid #e3e8f1; border-top:3px solid #263370; border-radius:12px; padding:26px; background:#fff; transition:box-shadow .2s, transform .2s;" style-hover="box-shadow:0 18px 40px -22px rgba(27,33,56,0.35); transform:translateY(-3px);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="1.6"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="5"/><path d="M12 9v3l2 1"/></svg>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#b8c0d4; font-weight:600;">04</span>
+          </div>
+          <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:19px; color:#1b2138; margin:18px 0 0;">Servicio en campo 24/7</h3>
+          <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:9px 0 0;">Soporte técnico y atención de fallas en sitio para resolver problemas y reducir el tiempo de paro de tu planta.</p>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.07em; color:#3a52a8; margin-top:16px;">DIAGNÓSTICO · EN PLANTA</div>
+        </div>
+
+        <div style="border:1px solid #e3e8f1; border-top:3px solid #263370; border-radius:12px; padding:26px; background:#fff; transition:box-shadow .2s, transform .2s;" style-hover="box-shadow:0 18px 40px -22px rgba(27,33,56,0.35); transform:translateY(-3px);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="1.6"><rect x="4" y="9" width="16" height="6" rx="1.5"/><path d="M12 9V5M12 19v-4M8 9V6M16 9V6"/></svg>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:#b8c0d4; font-weight:600;">05</span>
+          </div>
+          <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:19px; color:#1b2138; margin:18px 0 0;">Válvulas: venta y reparación</h3>
+          <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:9px 0 0;">Suministro y reparación de válvulas direccionales, servoválvulas y proporcionales para todo tipo de circuito.</p>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.07em; color:#3a52a8; margin-top:16px;">SERVO · PROPORCIONAL</div>
+        </div>
+
+        <a href="{{ waUrl }}" target="_blank" rel="noopener" style="border:1px dashed #c2cbe0; border-radius:12px; padding:26px; background:#f7f9fc; text-decoration:none; display:flex; flex-direction:column; justify-content:center; transition:background .2s;" style-hover="background:#eef2fa;">
+          <div style="font-family:'Archivo',sans-serif; font-weight:700; font-size:19px; color:#263370;">¿No ves tu servicio?</div>
+          <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:9px 0 16px;">También recalibramos servoválvulas, reparamos manifolds, sellos, tubería, bridas y diseñamos unidades hidráulicas.</p>
+          <span style="display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; color:#263370;">Cuéntanos tu caso
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+
+      </div>
+
+      <div style="max-width:1240px; margin:0 auto; padding:14px 32px 88px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#8893ad; margin-bottom:14px;">ADEMÁS</div>
+        <div data-r="ademas" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
+          <div style="border:1px solid #eaeef5; border-radius:10px; padding:16px 18px; background:#fff;">
+            <div style="font-weight:700; font-size:15px; color:#1b2138;">Recalibración de servoválvulas</div>
+            <div style="font-size:13px; color:#6b7488; margin-top:4px;">Ajuste de precisión y respuesta.</div>
+          </div>
+          <div style="border:1px solid #eaeef5; border-radius:10px; padding:16px 18px; background:#fff;">
+            <div style="font-weight:700; font-size:15px; color:#1b2138;">Manifolds y sellos</div>
+            <div style="font-size:13px; color:#6b7488; margin-top:4px;">Repacado a fondo, cero fugas.</div>
+          </div>
+          <div style="border:1px solid #eaeef5; border-radius:10px; padding:16px 18px; background:#fff;">
+            <div style="font-weight:700; font-size:15px; color:#1b2138;">Tubería y bridas</div>
+            <div style="font-size:13px; color:#6b7488; margin-top:4px;">Fabricación, reparación y suministro.</div>
+          </div>
+          <div style="border:1px solid #eaeef5; border-radius:10px; padding:16px 18px; background:#fff;">
+            <div style="font-weight:700; font-size:15px; color:#1b2138;">Unidades hidráulicas</div>
+            <div style="font-size:13px; color:#6b7488; margin-top:4px;">Ingeniería y diseño de power units.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="banco" style="position:relative; background:#f7f9fc; border-top:1px solid #e6e9f0; border-bottom:1px solid #e6e9f0; overflow:hidden;">
+      <div style="position:absolute; inset:0; background-image:linear-gradient(#e4e9f2 1px, transparent 1px), linear-gradient(90deg, #e4e9f2 1px, transparent 1px); background-size:44px 44px; opacity:0.5; pointer-events:none;"></div>
+      <div data-r="banco" style="position:relative; max-width:1240px; margin:0 auto; padding:88px 32px; display:grid; grid-template-columns:1fr 1fr; gap:54px; align-items:center;">
+
+        <div style="position:relative;">
+          <div style="border:1px solid #d8deea; border-radius:14px; overflow:hidden; background:#eef2f8; box-shadow:0 24px 60px -30px rgba(27,33,56,0.4);">
+            <div style="aspect-ratio:4/5; position:relative;">
+              <img src="assets/banco-pruebas.jpg" alt="Banco de pruebas HydraTech" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; display:block;">
+            </div>
+          </div>
+          <div style="position:absolute; top:-16px; right:-16px; background:#263370; color:#fff; border-radius:10px; padding:13px 16px; box-shadow:0 14px 34px -14px rgba(38,51,112,0.6);">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#9db0e8;">EN VIVO</div>
+            <div style="font-family:'Archivo',sans-serif; font-weight:800; font-size:22px; line-height:1.1; margin-top:3px;">Reporte de prueba</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.16em; color:#3a52a8;">02 / CAPACIDADES</div>
+          <h2 style="font-family:'Archivo',sans-serif; font-weight:800; font-size:40px; line-height:1.06; letter-spacing:-0.02em; color:#1b2138; margin:14px 0 0;">Validado en banco, no a ojo</h2>
+          <p style="font-size:16px; line-height:1.65; color:#4a5267; margin:18px 0 0; max-width:480px;">Nuestro banco de pruebas mide el desempeño real de cada bomba y válvula. Entregamos el equipo con datos, no con suposiciones — y con un reporte que respalda la reparación.</p>
+
+          <div data-r="banco-specs" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:28px;">
+            <div style="background:#fff; border:1px solid #e3e8f1; border-radius:10px; padding:16px;">
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8893ad;">MEDIMOS</div>
+              <div style="font-weight:700; color:#1b2138; font-size:15px; margin-top:5px;">Caudal · L/min</div>
+            </div>
+            <div style="background:#fff; border:1px solid #e3e8f1; border-radius:10px; padding:16px;">
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8893ad;">MEDIMOS</div>
+              <div style="font-weight:700; color:#1b2138; font-size:15px; margin-top:5px;">Presión · bar</div>
+            </div>
+            <div style="background:#fff; border:1px solid #e3e8f1; border-radius:10px; padding:16px;">
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8893ad;">MEDIMOS</div>
+              <div style="font-weight:700; color:#1b2138; font-size:15px; margin-top:5px;">Rendimiento volumétrico</div>
+            </div>
+            <div style="background:#fff; border:1px solid #e3e8f1; border-radius:10px; padding:16px;">
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8893ad;">MEDIMOS</div>
+              <div style="font-weight:700; color:#1b2138; font-size:15px; margin-top:5px;">Fugas internas y temp.</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px; margin-top:22px; font-size:14px; color:#1f9d55; font-weight:600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f9d55" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>
+            Cada entrega incluye su reporte de validación
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section id="proceso" style="background:#ffffff;">
+      <div style="max-width:1240px; margin:0 auto; padding:88px 32px;">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; letter-spacing:0.16em; color:#3a52a8;">03 / PROCESO</div>
+        <h2 style="font-family:'Archivo',sans-serif; font-weight:800; font-size:40px; line-height:1.05; letter-spacing:-0.02em; color:#1b2138; margin:14px 0 0; max-width:600px;">Un flujo de trabajo que reduce tu tiempo de paro</h2>
+
+        <div data-r="proceso" style="display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:48px; position:relative;">
+          <div data-r="procline" style="position:absolute; top:23px; left:6%; right:6%; height:2px; background:repeating-linear-gradient(90deg,#cdd5e4 0 8px, transparent 8px 16px);"></div>
+
+          <div style="position:relative; padding-right:22px;">
+            <div style="width:46px; height:46px; border-radius:50%; background:#263370; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Archivo',sans-serif; font-weight:800; font-size:17px; box-shadow:0 0 0 6px #fff;">01</div>
+            <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:18px; color:#1b2138; margin:20px 0 0;">Diagnóstico</h3>
+            <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:8px 0 0;">Recepción en taller o atención en campo. Inspección y detección de la falla.</p>
+          </div>
+          <div style="position:relative; padding-right:22px;">
+            <div style="width:46px; height:46px; border-radius:50%; background:#263370; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Archivo',sans-serif; font-weight:800; font-size:17px; box-shadow:0 0 0 6px #fff;">02</div>
+            <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:18px; color:#1b2138; margin:20px 0 0;">Reparación</h3>
+            <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:8px 0 0;">Desarmado, reemplazo de componentes y rearmado — o fabricación a medida.</p>
+          </div>
+          <div style="position:relative; padding-right:22px;">
+            <div style="width:46px; height:46px; border-radius:50%; background:#263370; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Archivo',sans-serif; font-weight:800; font-size:17px; box-shadow:0 0 0 6px #fff;">03</div>
+            <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:18px; color:#1b2138; margin:20px 0 0;">Pruebas</h3>
+            <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:8px 0 0;">Validación en banco: caudal, presión y rendimiento dentro de especificación.</p>
+          </div>
+          <div style="position:relative;">
+            <div style="width:46px; height:46px; border-radius:50%; background:#1f9d55; color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Archivo',sans-serif; font-weight:800; font-size:17px; box-shadow:0 0 0 6px #fff;">04</div>
+            <h3 style="font-family:'Archivo',sans-serif; font-weight:700; font-size:18px; color:#1b2138; margin:20px 0 0;">Entrega</h3>
+            <p style="font-size:14px; line-height:1.55; color:#5a647d; margin:8px 0 0;">Equipo listo con reporte de validación y soporte técnico posterior.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#f7f9fc; border-top:1px solid #e6e9f0;">
+        <div style="max-width:1240px; margin:0 auto; padding:54px 32px;">
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.14em; color:#8893ad;">SECTORES QUE ATENDEMOS</span>
+            <span style="flex:1; height:1px; background:#e1e6f0; min-width:40px;"></span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:22px;">
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Manufactura</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Acero y metalurgia</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Alimentos y bebidas</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Plástico e inyección</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Cemento y minería</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Automotriz</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Energía</span>
+            <span style="background:#fff; border:1px solid #dde3ef; color:#2b3450; font-weight:600; font-size:14px; padding:10px 16px; border-radius:8px;">Maquinaria industrial</span>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="contacto" style="position:relative; background:#1b2138; overflow:hidden;">
+      <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size:44px 44px; pointer-events:none;"></div>
+      <div style="position:absolute; top:-160px; left:-120px; width:480px; height:480px; background:radial-gradient(circle, rgba(58,82,168,0.4), transparent 68%); pointer-events:none;"></div>
+      <div data-r="contacto" style="position:relative; max-width:1240px; margin:0 auto; padding:84px 32px; display:grid; grid-template-columns:1.1fr 0.9fr; gap:54px; align-items:center;">
+
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:#7e8cc4;">SOLUTIONS THROUGH INNOVATION</div>
+          <h2 style="font-family:'Archivo',sans-serif; font-weight:800; font-size:46px; line-height:1.04; letter-spacing:-0.025em; color:#fff; margin:16px 0 0;">¿Tienes una falla<br>hidráulica? Hablemos.</h2>
+          <p style="font-size:17px; line-height:1.6; color:#aeb6d4; max-width:460px; margin:20px 0 0;">Cotiza una reparación, solicita soporte en campo o pide asesoría técnica. Respondemos rápido por WhatsApp.</p>
+          <div style="display:flex; flex-wrap:wrap; gap:13px; margin-top:30px;">
+            <a href="{{ waUrl }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; background:#fff; color:#16a34a; font-size:15px; font-weight:700; padding:14px 23px; border-radius:8px; text-decoration:none; border:1.5px solid #16a34a;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#16a34a"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 .9-2.2.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.5c-.2.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.2.1.4.1.5-.1l.7-.8c.2-.2.3-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>
+              Escríbenos por WhatsApp
+            </a>
+            <a href="{{ telUrl }}" style="display:inline-flex; align-items:center; gap:9px; background:transparent; color:#fff; font-size:15px; font-weight:600; padding:15px 22px; border-radius:8px; text-decoration:none; border:1px solid #41496e;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+              Llamar ahora
+            </a>
+          </div>
+        </div>
+
+        <div style="background:#222a47; border:1px solid #353e63; border-radius:16px; padding:30px;">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; color:#7e8cc4;">CONTACTO DIRECTO</div>
+          <a href="{{ telUrl }}" style="display:flex; align-items:center; gap:14px; margin-top:18px; padding:15px 0; border-bottom:1px solid #353e63; text-decoration:none;">
+            <div style="width:42px; height:42px; border-radius:10px; background:#2d3658; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8089b0;">TELÉFONO / WHATSAPP</div>
+              <div style="color:#fff; font-weight:700; font-size:16px; margin-top:2px;">81 2904 9481</div>
+            </div>
+          </a>
+          <a href="{{ mailUrl }}" style="display:flex; align-items:center; gap:14px; padding:15px 0; border-bottom:1px solid #353e63; text-decoration:none;">
+            <div style="width:42px; height:42px; border-radius:10px; background:#2d3658; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8089b0;">CORREO</div>
+              <div style="color:#fff; font-weight:700; font-size:16px; margin-top:2px;">ventas@hydratechgroup.mx</div>
+            </div>
+          </a>
+          <div style="display:flex; align-items:center; gap:14px; padding:15px 0;">
+            <div style="width:42px; height:42px; border-radius:10px; background:#2d3658; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9db0e8" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#8089b0;">UBICACIÓN</div>
+              <div style="color:#fff; font-weight:700; font-size:16px; margin-top:2px;">Nuevo León, México</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <footer style="background:#141829;">
+      <div data-r="footer" style="max-width:1240px; margin:0 auto; padding:54px 32px 30px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px;">
+        <div>
+          <img src="assets/hydratech-wordmark-white.png" alt="HydraTech Group" style="height:22px; display:block;">
+          <p style="font-size:14px; line-height:1.6; color:#8089b0; max-width:320px; margin:18px 0 0;">Reparación, fabricación y soporte de sistemas hidráulicos para la industria. Especialistas con banco de pruebas propio en Nuevo León.</p>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.16em; color:#4f5780; margin-top:20px;">SOLUTIONS THROUGH INNOVATION</div>
+        </div>
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; color:#5b6390;">NAVEGACIÓN</div>
+          <div style="display:flex; flex-direction:column; gap:11px; margin-top:16px;">
+            <a href="#servicios" style="font-size:14px; color:#aeb6d4; text-decoration:none;">Servicios</a>
+            <a href="#banco" style="font-size:14px; color:#aeb6d4; text-decoration:none;">Banco de pruebas</a>
+            <a href="#proceso" style="font-size:14px; color:#aeb6d4; text-decoration:none;">Proceso</a>
+            <a href="#contacto" style="font-size:14px; color:#aeb6d4; text-decoration:none;">Contacto</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; color:#5b6390;">CONTACTO</div>
+          <div style="display:flex; flex-direction:column; gap:11px; margin-top:16px;">
+            <a href="{{ waUrl }}" target="_blank" rel="noopener" style="font-size:14px; color:#25d366; font-weight:600; text-decoration:none;">WhatsApp · 81 2904 9481</a>
+            <a href="{{ mailUrl }}" style="font-size:14px; color:#aeb6d4; text-decoration:none;">ventas@hydratechgroup.mx</a>
+            <span style="font-size:14px; color:#aeb6d4;">hydratechgroup.mx</span>
+            <span style="font-size:14px; color:#aeb6d4;">Nuevo León, México</span>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #242b45;">
+        <div style="max-width:1240px; margin:0 auto; padding:20px 32px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <span style="font-size:13px; color:#5b6390;">© 2023 HydraTech Group. Todos los derechos reservados.</span>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#41496e;">HIDRÁULICA INDUSTRIAL · MX</span>
+            <a href="acceso.html" data-r="lock" title="Acceso" aria-label="Acceso" style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:7px; border:1px solid #262d4a; background:transparent; text-decoration:none; transition:color .2s, border-color .2s;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900},&quot;waPhone&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;528129049481&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;waMessage&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Hola HydraTech, me gustaría solicitar información sobre sus servicios hidráulicos.&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;ventas@hydratechgroup.mx&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() {
+    this._captions = [
+      "Banco de pruebas para calibración de tus equipos",
+      "Pruebas a motores y bombas hidráulicas",
+      "Recalibración de servoválvulas y proporcionales",
+    ];
+    this._mvIndex = 0;
+    setTimeout(() => this._startMontage(), 200);
+  }
+  componentWillUnmount() {
+    if (this._mvTimer) clearTimeout(this._mvTimer);
+  }
+  _startMontage() {
+    const root = document.querySelector('#ht-page');
+    if (!root) return;
+    const layers = Array.from(root.querySelectorAll('[data-mv]'));
+    if (layers.length < 3) { setTimeout(() => this._startMontage(), 300); return; }
+    if (this._mvRunning) return;
+    this._mvRunning = true;
+    layers.forEach(el => { if (el.tagName === 'VIDEO') { el.muted = true; el.setAttribute('muted', ''); el.playsInline = true; } });
+    const SEG = 5200; // ms per clip
+    const show = (i) => {
+      const cap = root.querySelector('[data-mv-cap]');
+      const dots = root.querySelectorAll('[data-mv-dots] span');
+      layers.forEach((el, k) => {
+        const isVid = el.tagName === 'VIDEO';
+        if (k === i) {
+          el.style.opacity = '1';
+          if (isVid) { try { el.currentTime = 0; } catch (e) {} const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+        } else {
+          el.style.opacity = '0';
+          if (isVid) el.pause && el.pause();
+        }
+      });
+      if (cap) {
+        cap.style.opacity = '0';
+        setTimeout(() => { cap.textContent = this._captions[i]; cap.style.opacity = '1'; }, 350);
+      }
+      dots.forEach((d, k) => { d.style.background = k === i ? '#fff' : 'rgba(255,255,255,0.35)'; });
+      this._mvTimer = setTimeout(() => {
+        this._mvIndex = (i + 1) % layers.length;
+        show(this._mvIndex);
+      }, SEG);
+    };
+    show(0);
+  }
+  renderVals() {
+    const phone = (this.props.waPhone ?? "528129049481").replace(/[^0-9]/g, "");
+    const email = this.props.contactEmail ?? "ventas@hydratechgroup.mx";
+    const msg = encodeURIComponent(this.props.waMessage ?? "Hola HydraTech, me gustaría solicitar información sobre sus servicios hidráulicos.");
+    return {
+      waUrl: `https://wa.me/${phone}?text=${msg}`,
+      telUrl: `tel:+${phone}`,
+      mailUrl: `mailto:${email}`,
+      year: new Date().getFullYear(),
+    };
+  }
+}
+</script>
+</body>
+</html>
