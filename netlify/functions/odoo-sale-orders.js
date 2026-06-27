@@ -39,9 +39,25 @@ export default async (req) => {
       "sale.order", "search_read", [domain],
       { fields: ["id", "name", "partner_id", "date_order", "amount_total", "state", "user_id"], limit, order: "date_order desc" }
     );
+
+    // Traer la primera línea de NOTA de cada orden (título de la actividad) en una sola consulta.
+    const ids = orders.map((o) => o.id);
+    const notaMap = {};
+    if (ids.length) {
+      const notas = await executeKw(
+        "sale.order.line", "search_read", [[["order_id", "in", ids], ["display_type", "=", "line_note"]]],
+        { fields: ["order_id", "name", "sequence"], order: "sequence asc" }
+      ).catch(() => []);
+      for (const n of notas) {
+        const oid = Array.isArray(n.order_id) ? n.order_id[0] : n.order_id;
+        if (notaMap[oid] === undefined) notaMap[oid] = (n.name || "").trim();
+      }
+    }
+
     const rows = orders.map((o) => ({
       id: o.id, name: o.name,
       partner: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
+      nota: notaMap[o.id] || "",
       date: o.date_order || "",
       total: o.amount_total || 0,
       state: o.state, stateLabel: STATE_ES[o.state] || o.state,

@@ -24,19 +24,29 @@ export default async (req) => {
       }
     }
 
-    // Tipo de servicio = nombre del producto de servicio de la orden (primera línea de servicio)
-    let tipo = "";
-    const serv = await executeKw(
-      "sale.order.line", "search_read", [[["order_id", "=", id], ["product_id.type", "=", "service"]]],
-      { fields: ["name", "product_id"], order: "sequence", limit: 1 }
+    // Título de la actividad = primera LÍNEA DE NOTA de la orden (lo que el técnico debe ver).
+    let nota = "";
+    const notas = await executeKw(
+      "sale.order.line", "search_read", [[["order_id", "=", id], ["display_type", "=", "line_note"]]],
+      { fields: ["name"], order: "sequence", limit: 1 }
     ).catch(() => []);
-    if (serv.length) tipo = Array.isArray(serv[0].product_id) ? serv[0].product_id[1] : (serv[0].name || "");
+    if (notas.length) nota = (notas[0].name || "").trim();
+
+    // Si no hay nota, usa el nombre del producto de servicio como respaldo.
+    let tipo = nota;
+    if (!tipo) {
+      const serv = await executeKw(
+        "sale.order.line", "search_read", [[["order_id", "=", id], ["product_id.type", "=", "service"]]],
+        { fields: ["name", "product_id"], order: "sequence", limit: 1 }
+      ).catch(() => []);
+      if (serv.length) tipo = Array.isArray(serv[0].product_id) ? serv[0].product_id[1] : (serv[0].name || "");
+    }
 
     return json({ ok: true, info: {
       folio: o.name,
       cliente: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
       fecha: (o.date_order || "").slice(0, 10),
-      direccion, tipo,
+      direccion, tipo, nota,
     }});
   } catch (e) {
     return json({ ok: false, error: String(e.message || e) }, 500);
