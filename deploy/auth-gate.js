@@ -55,12 +55,12 @@
   s.onload = function () {
     var id = window.netlifyIdentity;
     id.on("init", function (user) {
-      setTimeout(hideWidget, 0);
-      if (!user) { loginUI(); id.open("login"); return; }
+      hideWidget();
+      if (!user) { loginUI(); return; }
       // Validar que la sesión siga siendo válida (rechaza usuarios borrados/expirados).
       if (user.jwt) {
         user.jwt().then(function () { proceed(user); })
-                  .catch(function () { try { id.logout(); } catch (e) {} loginUI(); id.open("login"); });
+                  .catch(function () { try { id.logout(); } catch (e) {} loginUI(); });
       } else { proceed(user); }
     });
     id.on("open", function () { showWidget(); });            // NO ocultamos la pantalla de bloqueo
