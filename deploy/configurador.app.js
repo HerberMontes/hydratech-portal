@@ -82,9 +82,13 @@ function quoteLine(line) {
   const cA = connsForSide(line.A), cB = connsForSide(line.B);
   if (!cA.length) return { error: "Sin conector para el lado A en cat\xE1logo." };
   if (!cB.length) return { error: "Sin conector para el lado B en cat\xE1logo." };
+  const thA = line.A.th, thB = line.B.th;
+  const sameSize = thA === thB;
+  const allowedDash = sameSize ? /* @__PURE__ */ new Set([thA]) : /* @__PURE__ */ new Set([thA, thB]);
   let best = null;
   for (const h of HOSES) {
     if (!h.wp || h.wp < reqPsi) continue;
+    if (!allowedDash.has(h.dash)) continue;
     for (const sys of h.sys) {
       const a = cA.filter((c) => c.sys === sys && c.hd === h.dash).sort((x, y) => x.s - y.s)[0];
       const b = cB.filter((c) => c.sys === sys && c.hd === h.dash).sort((x, y) => x.s - y.s)[0];
@@ -110,7 +114,7 @@ function quoteLine(line) {
       }
     }
   }
-  if (!best) return { error: "Hay presi\xF3n cubierta pero no hay conector PRE para ambos lados en el mismo sistema. Ajusta lado A/B." };
+  if (!best) return { error: "No hay combinaci\xF3n v\xE1lida de espigas para estos dos extremos. Ajusta el lado A/B o la presi\xF3n." };
   if (best.short) return { error: "El largo total es menor que los conectores; aumenta el largo.", soft: best };
   return best;
 }
