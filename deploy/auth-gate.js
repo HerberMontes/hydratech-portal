@@ -14,6 +14,11 @@
   function mount() { (document.body || document.documentElement).appendChild(ov); }
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 
+  // Oculta el contenedor del widget cuando NO está abierto (evita el recuadro gris suelto).
+  function widgetEl() { return document.getElementById("netlify-identity-widget"); }
+  function hideWidget() { var w = widgetEl(); if (w) w.style.display = "none"; }
+  function showWidget() { var w = widgetEl(); if (w) w.style.display = ""; }
+
   function blocked() {
     var m = document.getElementById("ht-auth-msg"), b = document.getElementById("ht-auth-login");
     if (m) m.textContent = "Esta sección es privada.";
@@ -25,13 +30,12 @@
   s.onload = function () {
     var id = window.netlifyIdentity;
     id.on("init", function (user) {
+      setTimeout(hideWidget, 0);
       if (user) { ov.remove(); }
       else { blocked(); id.open("login"); }
     });
-    // Cuando se abre el formulario de Netlify, ocultamos la pantalla azul para que SÍ se vea.
-    id.on("open", function () { ov.style.display = "none"; });
-    // Si cierran el formulario sin entrar, volvemos a bloquear.
-    id.on("close", function () { if (!id.currentUser()) { ov.style.display = "flex"; } });
+    id.on("open", function () { ov.style.display = "none"; showWidget(); });
+    id.on("close", function () { hideWidget(); if (!id.currentUser()) { ov.style.display = "flex"; } });
     id.on("login", function () { id.close(); location.reload(); });
     id.on("logout", function () { location.href = "index.html"; });
     id.init();

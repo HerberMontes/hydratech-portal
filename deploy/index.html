@@ -530,6 +530,6 @@ class Component extends DCLogic {
 }
 </script>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>window.netlifyIdentity && window.netlifyIdentity.init();</script>
+<script>(function(){var id=window.netlifyIdentity;if(!id)return;function w(){return document.getElementById("netlify-identity-widget");}function hide(){var e=w();if(e)e.style.display="none";}id.on("init",function(){setTimeout(hide,0);});id.on("open",function(){var e=w();if(e)e.style.display="";});id.on("close",hide);id.init();})();</script>
 </body>
 </html>
