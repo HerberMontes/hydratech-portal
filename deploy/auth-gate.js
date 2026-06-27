@@ -60,10 +60,14 @@
   document.head.appendChild(s);
 
   window.cerrarSesion = function () {
-    var go = function () { try { localStorage.removeItem("gotrue.user"); } catch (e) {} location.href = "index.html"; };
+    var clear = function () {
+      try { Object.keys(localStorage).forEach(function (k) { if (/gotrue|netlify|identity/i.test(k)) localStorage.removeItem(k); }); } catch (e) {}
+      try { Object.keys(sessionStorage).forEach(function (k) { if (/gotrue|netlify|identity/i.test(k)) sessionStorage.removeItem(k); }); } catch (e) {}
+    };
+    var go = function () { clear(); location.href = "index.html"; };
     try {
       var id = window.netlifyIdentity;
-      if (id && id.logout) { var p = id.logout(); if (p && p.then) p.then(go, go); setTimeout(go, 600); }
+      if (id && id.logout) { var p = id.logout(); if (p && p.then) p.then(go, go); setTimeout(go, 800); }
       else go();
     } catch (e) { go(); }
   };
