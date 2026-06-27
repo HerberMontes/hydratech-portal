@@ -54,7 +54,23 @@ export default async (req) => {
       }
     }
 
-    const rows = orders.map((o) => ({
+    // Ocultar de la lista las órdenes con reporte ya ENVIADO o APROBADO (siguen visibles las de borrador/canceladas/sin reporte).
+    const ocultas = {};
+    if (ids.length) {
+      const atts = await executeKw(
+        "ir.attachment", "search_read",
+        [[["res_model", "=", "sale.order"], ["res_id", "in", ids], ["name", "=", "portal_reporte.json"]]],
+        { fields: ["res_id", "datas"] }
+      ).catch(() => []);
+      for (const a of atts) {
+        try {
+          const r = JSON.parse(Buffer.from(a.datas || "", "base64").toString("utf8"));
+          if (r && (r.status === "submitted" || r.status === "approved")) ocultas[a.res_id] = true;
+        } catch (e) {}
+      }
+    }
+
+    const rows = orders.filter((o) => !ocultas[o.id]).map((o) => ({
       id: o.id, name: o.name,
       partner: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
       nota: notaMap[o.id] || "",
