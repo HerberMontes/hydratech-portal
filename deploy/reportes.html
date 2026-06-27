@@ -150,9 +150,6 @@
           <span id="genStatus" class="status"></span>
         </div>
       </div>
-
-      <details style="margin-top:12px;"><summary class="status" style="cursor:pointer;">Token del portal</summary>
-        <input id="tok" placeholder="x-portal-token (si aplica)" style="margin-top:6px;"></details>
     </div>
 
     <div class="preview-wrap">
@@ -168,7 +165,7 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-const tok = () => $("tok").value.trim();
+const tok = () => { var e = $("tok"); return e ? e.value.trim() : ""; };
 const headers = (extra) => { const h = Object.assign({}, extra||{}); const t = tok(); if(t) h["x-portal-token"]=t; return h; };
 const esc = (s) => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 let images = [], lastContent = null, selectedOrder = null, empleados = [], allOrders = [];
