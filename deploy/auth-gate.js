@@ -60,14 +60,15 @@
   document.head.appendChild(s);
 
   window.cerrarSesion = function () {
-    var clear = function () {
-      try { Object.keys(localStorage).forEach(function (k) { if (/gotrue|netlify|identity/i.test(k)) localStorage.removeItem(k); }); } catch (e) {}
-      try { Object.keys(sessionStorage).forEach(function (k) { if (/gotrue|netlify|identity/i.test(k)) sessionStorage.removeItem(k); }); } catch (e) {}
+    var nuke = function () {
+      try { localStorage.clear(); } catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
+      try { document.cookie.split(";").forEach(function (c) { var n = c.split("=")[0].trim(); document.cookie = n + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"; }); } catch (e) {}
     };
-    var go = function () { clear(); location.href = "index.html"; };
+    var go = function () { nuke(); location.href = "index.html"; };
     try {
       var id = window.netlifyIdentity;
-      if (id && id.logout) { var p = id.logout(); if (p && p.then) p.then(go, go); setTimeout(go, 800); }
+      if (id && id.logout) { var p = id.logout(); if (p && p.then) p.then(go, go); setTimeout(go, 700); }
       else go();
     } catch (e) { go(); }
   };
