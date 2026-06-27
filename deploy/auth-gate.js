@@ -59,5 +59,12 @@
   s.onerror = function () { setMsg("No se pudo cargar el acceso. Revisa tu conexión."); };
   document.head.appendChild(s);
 
-  window.cerrarSesion = function () { window.netlifyIdentity && window.netlifyIdentity.logout(); };
+  window.cerrarSesion = function () {
+    var go = function () { try { localStorage.removeItem("gotrue.user"); } catch (e) {} location.href = "index.html"; };
+    try {
+      var id = window.netlifyIdentity;
+      if (id && id.logout) { var p = id.logout(); if (p && p.then) p.then(go, go); setTimeout(go, 600); }
+      else go();
+    } catch (e) { go(); }
+  };
 })();
