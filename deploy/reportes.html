@@ -249,10 +249,10 @@ async function cargarOrdenes(){
   }catch(e){ $("ordStatus").className="status err"; $("ordStatus").textContent="✗ "+(e.message||e); }
 }
 function pintarOrdenes(list){
-  $("ordList").innerHTML = list.map(o=>'<div class="ord" data-id="'+o.id+'"><div class="n">'+esc(o.name)+'</div><div class="p">'+esc(o.partner)+'</div><div class="d">'+(o.date||"").slice(0,10)+' · '+esc(o.stateLabel)+'</div></div>').join("") || '<div class="ord">Sin órdenes pendientes.</div>';
+  $("ordList").innerHTML = list.map(o=>'<div class="ord" data-id="'+o.id+'"><div class="n">'+esc(o.name)+(o.nota?' · <span style="font-weight:600; color:#1b2138;">'+esc(o.nota)+'</span>':"")+'</div><div class="p">'+esc(o.partner)+'</div><div class="d">'+(o.date||"").slice(0,10)+' · '+esc(o.stateLabel)+'</div></div>').join("") || '<div class="ord">Sin órdenes pendientes.</div>';
   $("ordList").querySelectorAll(".ord[data-id]").forEach(el=>el.addEventListener("click",()=>seleccionarOrden(el)));
 }
-$("q").addEventListener("input",()=>{ const q=$("q").value.trim().toLowerCase(); pintarOrdenes(!q?allOrders:allOrders.filter(o=>(o.name+" "+o.partner).toLowerCase().includes(q))); });
+$("q").addEventListener("input",()=>{ const q=$("q").value.trim().toLowerCase(); pintarOrdenes(!q?allOrders:allOrders.filter(o=>(o.name+" "+o.partner+" "+(o.nota||"")).toLowerCase().includes(q))); });
 
 async function seleccionarOrden(el){
   $("ordList").querySelectorAll(".ord").forEach(x=>x.classList.remove("sel")); el.classList.add("sel");
