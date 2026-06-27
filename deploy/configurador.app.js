@@ -180,18 +180,23 @@ function SideCells({ side, onChange, borderStart }) {
   ] });
 }
 function App() {
-  const [lines, setLines] = useState([newLine()]);
+  const [lines, setLines] = useState([]);
   const [tab, setTab] = useState("cotizacion");
   const [copied, setCopied] = useState(false);
   const [clientes, setClientes] = useState([]);
   const [clienteId, setClienteId] = useState("");
   const [cotizando, setCotizando] = useState(false);
   const [cotMsg, setCotMsg] = useState(null);
+  const [saved, setSaved] = useState([]);
   const results = useMemo(() => lines.map(quoteLine), [lines]);
   useEffect(() => {
     fetch("/api/odoo-clientes").then((r) => r.json()).then((d) => {
       if (d.ok && Array.isArray(d.clientes)) setClientes(d.clientes);
     }).catch(() => {});
+    try {
+      const raw = localStorage.getItem("ht_configs_v1");
+      if (raw) setSaved(JSON.parse(raw));
+    } catch (e) {}
   }, []);
   const cotizar = async () => {
     setCotMsg(null);
@@ -226,6 +231,26 @@ function App() {
     const c = { ...ls[i], id: _id++, A: { ...ls[i].A }, B: { ...ls[i].B } };
     return [...ls.slice(0, i + 1), c, ...ls.slice(i + 1)];
   });
+  const persistSaved = (arr) => { try { localStorage.setItem("ht_configs_v1", JSON.stringify(arr)); } catch (e) {} };
+  const guardar = () => {
+    if (lines.length === 0) return;
+    const nombre = (window.prompt("Nombre para guardar esta configuraci\xF3n:") || "").trim();
+    if (!nombre) return;
+    const item = { id: Date.now(), nombre, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId };
+    const arr = [item, ...saved];
+    setSaved(arr); persistSaved(arr);
+  };
+  const cargarGuardado = (id) => {
+    const it = saved.find((s) => s.id === id);
+    if (!it) return;
+    setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
+    if (it.clienteId !== void 0) setClienteId(it.clienteId);
+    setTab("cotizacion");
+  };
+  const borrarGuardado = (id) => {
+    const arr = saved.filter((s) => s.id !== id);
+    setSaved(arr); persistSaved(arr);
+  };
   const norm = (r) => r.error ? r.soft || null : r;
   const customerTotal = results.reduce((s, r) => s + (norm(r)?.customer || 0), 0);
   const purchaseTotal = results.reduce((s, r) => s + (norm(r)?.purchaseCost || 0), 0);
@@ -396,11 +421,13 @@ function App() {
           ]
         }
       ),
+      lines.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-2 flex justify-end", children: /* @__PURE__ */ jsx("button", { onClick: guardar, className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-700 hover:bg-slate-50", children: "\uD83D\uDCBE Guardar configuraci\xF3n" }) }),
       /* @__PURE__ */ jsxs("div", { className: "mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm", children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-slate-200 bg-slate-50 pr-3", children: [
           /* @__PURE__ */ jsxs("div", { className: "flex", children: [
             /* @__PURE__ */ jsx(TabBtn, { on: tab === "cotizacion", onClick: () => setTab("cotizacion"), children: "Detalle de cotizaci\xF3n" }),
-            /* @__PURE__ */ jsx(TabBtn, { on: tab === "compra", onClick: () => setTab("compra"), children: "Lista de compra (BOM)" })
+            /* @__PURE__ */ jsx(TabBtn, { on: tab === "compra", onClick: () => setTab("compra"), children: "Lista de compra (BOM)" }),
+            /* @__PURE__ */ jsx(TabBtn, { on: tab === "guardados", onClick: () => setTab("guardados"), children: saved.length ? "Guardados (" + saved.length + ")" : "Guardados" })
           ] }),
           tab === "cotizacion" ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
             /* @__PURE__ */ jsxs("select", { value: clienteId, onChange: (e) => setClienteId(e.target.value), className: "rounded border border-slate-300 bg-white px-2 py-1.5 text-[12px] text-slate-700", style: { minWidth: 180 }, children: [
@@ -408,7 +435,7 @@ function App() {
               ...clientes.map((c) => /* @__PURE__ */ jsx("option", { value: c.id, children: c.name }, c.id))
             ] }),
             /* @__PURE__ */ jsx("button", { onClick: cotizar, disabled: cotizando, className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 disabled:opacity-50", children: cotizando ? "Cotizando\u2026" : "Cotizar en Odoo" })
-          ] }) : bom.length > 0 && /* @__PURE__ */ jsx("button", { onClick: copyBOM, className: "rounded bg-slate-800 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-700", children: copied ? "\u2713 Copiado" : "Copiar para compras" })
+          ] }) : tab === "compra" && bom.length > 0 && /* @__PURE__ */ jsx("button", { onClick: copyBOM, className: "rounded bg-slate-800 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-700", children: copied ? "\u2713 Copiado" : "Copiar para compras" })
         ] }),
         cotMsg && /* @__PURE__ */ jsx("div", { className: "border-b px-3 py-2 text-[12px] " + (cotMsg.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"), children: cotMsg.ok ? /* @__PURE__ */ jsxs(Fragment, { children: ["Cotizaci\xF3n ", cotMsg.folio, " creada en Odoo. ", /* @__PURE__ */ jsx("a", { href: cotMsg.link, target: "_blank", rel: "noreferrer", className: "font-bold underline", children: "Abrir en Odoo \u2192" })] }) : cotMsg.err }),
         tab === "compra" ? /* @__PURE__ */ jsx("div", { className: "overflow-x-auto p-3", children: bom.length === 0 ? /* @__PURE__ */ jsx("p", { className: "p-4 text-sm text-slate-400", children: "A\xFAn no hay materiales resueltos." }) : /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", style: { minWidth: 720 }, children: [
@@ -439,7 +466,16 @@ function App() {
               /* @__PURE__ */ jsx("td", { className: "px-2 py-2 text-right text-base font-extrabold tabular-nums text-slate-900", children: money(bomCostTotal) })
             ] })
           ] })
-        ] }) }) : /* @__PURE__ */ jsx("div", { className: "overflow-x-auto p-3", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", style: { minWidth: 820 }, children: [
+        ] }) }) : tab === "guardados" ? /* @__PURE__ */ jsx("div", { className: "p-3", children: saved.length === 0 ? /* @__PURE__ */ jsx("p", { className: "p-4 text-sm text-slate-400", children: "No tienes configuraciones guardadas. Arma una manguera y usa \u201CGuardar configuraci\xF3n\u201D." }) : /* @__PURE__ */ jsx("div", { className: "divide-y divide-slate-100", children: saved.map((s) => /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-3 py-2", children: [
+          /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+            /* @__PURE__ */ jsx("div", { className: "truncate text-sm font-bold text-slate-800", children: s.nombre }),
+            /* @__PURE__ */ jsxs("div", { className: "text-[11px] text-slate-400", children: [s.fecha, " \xB7 ", s.lines.length, " manguera(s)"] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex shrink-0 items-center gap-2", children: [
+            /* @__PURE__ */ jsx("button", { onClick: () => cargarGuardado(s.id), className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700", children: "Cargar" }),
+            /* @__PURE__ */ jsx("button", { onClick: () => borrarGuardado(s.id), className: "rounded border border-red-200 px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-50", children: "Eliminar" })
+          ] })
+        ] }, s.id)) }) }) : /* @__PURE__ */ jsx("div", { className: "overflow-x-auto p-3", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", style: { minWidth: 820 }, children: [
           /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-200 text-left text-[10px] uppercase tracking-wide text-slate-400", children: [
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "#" }),
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "Manguera" }),
