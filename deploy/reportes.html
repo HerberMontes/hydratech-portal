@@ -97,6 +97,9 @@
       <div id="ordList" class="ordbox"></div>
 
       <div id="rest" style="display:none;">
+        <div id="adminBanner" style="display:none; background:#143020; border:1px solid #1e7d4f; color:#9ce0bb; border-radius:9px; padding:10px 13px; font-size:13px; margin-bottom:14px;">
+          <strong>Modo revisión (admin).</strong> Revisa o edita este reporte. Usa <em>Guardar cambios</em> para dejarlo pendiente, o <em>Aprobar y archivar</em> para cerrarlo en la orden de Odoo.
+        </div>
         <div class="two">
           <div><label>Cliente</label><input id="cliente" readonly></div>
           <div><label>Fecha</label><input id="fecha" readonly></div>
@@ -147,6 +150,10 @@
         <div class="rowbtns" style="margin-top:14px;">
           <button class="btn primary" id="gen" type="button">Generar reporte con IA</button>
           <button class="btn ghost" id="pdf" type="button" style="display:none;">Descargar PDF</button>
+          <button class="btn ghost" id="saveDraft" type="button" style="display:none;">Guardar borrador</button>
+          <button class="btn primary" id="submitRep" type="button" style="display:none; background:#1e7d4f;">Enviar a aprobación</button>
+          <button class="btn ghost" id="adminSave" type="button" style="display:none;">Guardar cambios</button>
+          <button class="btn primary" id="adminApprove" type="button" style="display:none; background:#1e7d4f;">Aprobar y archivar</button>
           <span id="genStatus" class="status"></span>
         </div>
       </div>
@@ -253,17 +260,50 @@ $("q").addEventListener("input",()=>{ const q=$("q").value.trim().toLowerCase();
 
 async function seleccionarOrden(el){
   $("ordList").querySelectorAll(".ord").forEach(x=>x.classList.remove("sel")); el.classList.add("sel");
-  const id = el.dataset.id; selectedOrder = { id };
+  await abrirOrden(el.dataset.id, { admin:false });
+}
+
+async function abrirOrden(id, opts){
+  opts = opts || {};
+  selectedOrder = { id: String(id) };
   $("rest").style.display="block";
   $("cliente").value="…"; $("folio").value="…";
+  // Botones según modo
+  if(opts.admin){
+    $("saveDraft").style.display="none"; $("submitRep").style.display="none";
+    $("adminSave").style.display="inline-block"; $("adminApprove").style.display="inline-block";
+    $("adminBanner").style.display="block";
+  } else {
+    $("saveDraft").style.display="inline-block"; $("submitRep").style.display="inline-block";
+    $("adminSave").style.display="none"; $("adminApprove").style.display="none";
+    $("adminBanner").style.display="none";
+  }
   try{
     const r = await fetch("/api/odoo-order-info?id="+id, { headers: headers() });
     const d = await r.json();
     if(!d.ok) throw new Error(d.error||("HTTP "+r.status));
     $("cliente").value = d.info.cliente||""; $("fecha").value = d.info.fecha||"";
     $("planta").value = d.info.direccion||""; $("tipo").value = d.info.tipo||""; $("folio").value = d.info.folio||"";
+    await cargarBorrador(id);
     rerender();
   }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+}
+
+/* ===== Cargar borrador/reporte guardado (si existe) ===== */
+async function cargarBorrador(id){
+  try{
+    const r = await fetch("/api/reporte-obtener?id="+id, { headers: headers() });
+    const d = await r.json();
+    if(!d.ok || !d.report) return;
+    const rep = d.report;
+    if(rep.notas){ $("n1").value=rep.notas.hallazgos||""; $("n2").value=rep.notas.actividades||""; $("n3").value=rep.notas.plan||""; }
+    if(rep.brand) $("brand").value=rep.brand;
+    if(rep.planta) $("planta").value=rep.planta;
+    if(rep.tipo) $("tipo").value=rep.tipo;
+    if(Array.isArray(rep.images)){ images = rep.images.slice(); drawThumbs(); }
+    if(rep.content){ lastContent = rep.content; $("pdf").style.display="inline-block"; }
+    $("genStatus").className="status"; $("genStatus").textContent="↩ Reporte recuperado.";
+  }catch(e){ /* sin borrador, normal */ }
 }
 
 /* ===== Empleados (técnicos) ===== */
@@ -314,7 +354,15 @@ document.querySelectorAll('[data-mic]').forEach(btn=>btn.addEventListener("click
   const ta=$(btn.dataset.mic); recBtn=btn;
   rec=new SR(); rec.lang="es-MX"; rec.interimResults=true; rec.continuous=true;
   let base=ta.value;
-  rec.onresult=(ev)=>{ let t=""; for(let i=ev.resultIndex;i<ev.results.length;i++) t+=ev.results[i][0].transcript; ta.value=(base?base+" ":"")+t; };
+  rec.onresult=(ev)=>{
+    let interim="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const res=ev.results[i];
+      if(res.isFinal){ base=(base?base.replace(/\s+$/,"")+" ":"")+(res[0].transcript||"").trim(); }
+      else interim+=res[0].transcript;
+    }
+    ta.value = base + (interim ? (base?" ":"")+interim : "");
+  };
   rec.onend=()=>{ reccing=false; btn.classList.remove("rec"); btn.textContent="🎤 Dictar"; };
   rec.start(); reccing=true; btn.classList.add("rec"); btn.textContent="⏹ Detener";
 }));
@@ -343,6 +391,75 @@ $("gen").addEventListener("click", async ()=>{
   }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
   finally{ $("gen").disabled=false; }
 });
+
+/* ===== Guardar borrador / Enviar a aprobación ===== */
+function buildReportPayload(status){
+  const d = gatherData();
+  return { id: selectedOrder && selectedOrder.id, status, report: {
+    brand: $("brand").value,
+    cliente: d.cliente, planta: d.planta, tipo: d.tipo, folio: d.folio, fecha: d.fecha,
+    tecnicos: d.tecnicos,
+    notas: { hallazgos:$("n1").value, actividades:$("n2").value, plan:$("n3").value },
+    content: lastContent || null,
+    images: images.slice(),
+  }};
+}
+async function guardarReporte(status){
+  if(!selectedOrder || !selectedOrder.id){ $("genStatus").className="status err"; $("genStatus").textContent="Selecciona una orden primero."; return false; }
+  const payload = buildReportPayload(status);
+  const r = await fetch("/api/reporte-guardar", { method:"POST", headers: headers({"Content-Type":"application/json"}), body: JSON.stringify(payload) });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || ("HTTP "+r.status));
+  return true;
+}
+$("saveDraft").addEventListener("click", async ()=>{
+  $("saveDraft").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Guardando borrador…";
+  try{ await guardarReporte("draft"); $("genStatus").textContent="✓ Borrador guardado. Puedes volver a editarlo más tarde."; }
+  catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("saveDraft").disabled=false; }
+});
+$("submitRep").addEventListener("click", async ()=>{
+  if(!lastContent){ $("genStatus").className="status err"; $("genStatus").textContent="Genera el reporte con IA antes de enviarlo a aprobación."; return; }
+  if(!confirm("Al enviar a aprobación, el reporte se bloquea y esta orden ya no aparecerá en tu lista. ¿Continuar?")) return;
+  $("submitRep").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Enviando a aprobación…";
+  try{
+    await guardarReporte("submitted");
+    $("genStatus").textContent="✓ Enviado a aprobación. El administrador lo revisará.";
+    // limpiar y refrescar lista (la orden enviada desaparece)
+    setTimeout(()=>{ $("rest").style.display="none"; selectedOrder=null; lastContent=null; images=[]; cargarOrdenes(); }, 1200);
+  }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("submitRep").disabled=false; }
+});
+
+/* ===== Acciones de admin (modo revisión) ===== */
+$("adminSave").addEventListener("click", async ()=>{
+  $("adminSave").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Guardando cambios…";
+  try{ await guardarReporte("submitted"); $("genStatus").textContent="✓ Cambios guardados. Sigue pendiente de aprobación."; }
+  catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("adminSave").disabled=false; }
+});
+$("adminApprove").addEventListener("click", async ()=>{
+  if(!lastContent){ $("genStatus").className="status err"; $("genStatus").textContent="No hay reporte generado para aprobar."; return; }
+  if(!confirm("Aprobar guarda el reporte como aprobado y lo archiva en la orden de Odoo. ¿Continuar?")) return;
+  $("adminApprove").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Aprobando…";
+  try{
+    await guardarReporte("approved");
+    $("genStatus").textContent="✓ Reporte aprobado y archivado. Regresando al panel…";
+    setTimeout(()=>{ location.href="reportes-admin.html"; }, 1100);
+  }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); $("adminApprove").disabled=false; }
+});
+
+/* ===== Arranque en modo revisión si viene ?id=NN&admin=1 ===== */
+window.onAuthReady = function(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const id = p.get("id");
+    if(id){
+      const isAdmin = (p.get("admin")==="1") && !!window.HT_IS_ADMIN;
+      abrirOrden(id, { admin: isAdmin });
+    }
+  }catch(e){}
+};
 
 function fitPreview(){
   const stage=$("stage"), pv=$("preview"); if(!stage||!pv) return;

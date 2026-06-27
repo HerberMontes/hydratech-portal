@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revisión de reportes · HydraTech</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>window.REQUIRE_ROLE = "admin";</script>
+<script defer src="auth-gate.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; background:#0e1220; color:#e7eaf3; font-family:'IBM Plex Sans',system-ui,sans-serif;}
+  .wrap{max-width:1040px; margin:0 auto; padding:26px 22px 70px;}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .back{color:#9aa3cc; text-decoration:none; font-size:14px; font-weight:600;}
+  .logout{background:transparent; border:1px solid #2c3350; color:#9aa3cc; border-radius:7px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .kicker{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; color:#5b6390; margin-top:26px;}
+  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:34px; margin:8px 0 4px;}
+  .sub{color:#9aa3cc; font-size:15px; margin:0 0 22px;}
+  .panel{background:#161c30; border:1px solid #232a45; border-radius:14px; padding:18px; margin-top:16px;}
+  .panel h2{font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.05em; color:#aeb6d4; margin:0 0 4px;}
+  .panel .h2sub{color:#6a739c; font-size:13px; margin:0 0 14px;}
+  .btn{border:0; border-radius:8px; padding:9px 15px; font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; text-decoration:none; display:inline-block;}
+  .primary{background:#3a52a8; color:#fff;} .primary:hover{background:#324a9b;}
+  .approve{background:#1e7d4f; color:#fff;} .approve:hover{background:#1a6c44;}
+  .view{background:#222a47; color:#cdd5ef;}
+  .danger{background:transparent; border:1px solid #5a2a2a; color:#e1928f;}
+  .btn:disabled{opacity:.5; cursor:default;}
+  .item{border:1px solid #232a45; border-radius:11px; padding:14px 16px; margin-bottom:12px; background:#12182a;}
+  .item .folio{font-family:'IBM Plex Mono',monospace; font-weight:600; color:#9db0e8; font-size:13px;}
+  .item .ttl{font-weight:700; font-size:16px; margin:3px 0;}
+  .item .meta{color:#8a93b8; font-size:13px;}
+  .item .rowbtns{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;}
+  .pill{font-family:'IBM Plex Mono',monospace; font-size:10px; padding:3px 9px; border-radius:20px; letter-spacing:0.05em;}
+  .pend{background:#3a2f12; color:#e0b765;} .ok{background:#143020; color:#69d49a;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:#8a93b8; margin-top:6px; min-height:16px;}
+  .status.err{color:#e1928f;} .status.ok{color:#69d49a;}
+  .empty{color:#6a739c; font-size:14px; padding:8px 2px;}
+  @media (max-width:680px){ h1{font-size:27px;} .item .rowbtns .btn{flex:1; text-align:center;} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="acceso.html">&#8592; Volver a herramientas</a>
+      <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+
+    <div class="kicker">Revisión</div>
+    <h1>Aprobación de reportes</h1>
+    <p class="sub">Aquí ves los reportes que envían los técnicos. Ábrelos para revisarlos o editarlos, apruébalos para archivarlos en la orden de Odoo, o cancélalos para que se rehagan desde cero.</p>
+
+    <div class="panel">
+      <h2>Pendientes de aprobar</h2>
+      <p class="h2sub">Reportes enviados por los técnicos, esperando tu revisión.</p>
+      <div id="pendList"><div class="empty">Cargando…</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Aprobados</h2>
+      <p class="h2sub">Reportes ya aprobados y archivados en la orden.</p>
+      <div id="okList"><div class="empty">Cargando…</div></div>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    var $ = function (id) { return document.getElementById(id); };
+    var headers = function (extra) { return Object.assign({}, extra || {}); };
+    function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]; }); }
+    function setStatus(t, cls){ var s=$("status"); s.className="status"+(cls?(" "+cls):""); s.textContent=t||""; }
+
+    function itemHTML(r, kind){
+      var tecs = Array.isArray(r.tecnicos) ? r.tecnicos.join(", ") : "";
+      var pill = kind === "pend"
+        ? '<span class="pill pend">PENDIENTE</span>'
+        : '<span class="pill ok">APROBADO</span>';
+      var fecha = (r.fecha || "").slice(0,10);
+      var actualizado = (r.updatedAt || "").slice(0,10);
+      var btns = '<a class="btn view" href="reportes.html?id='+encodeURIComponent(r.orderId)+'&amp;admin=1">Ver / Editar</a>';
+      if (kind === "pend") btns += '<button class="btn approve" data-approve="'+r.orderId+'">Aprobar</button>';
+      btns += '<button class="btn danger" data-cancel="'+r.orderId+'">Cancelar</button>';
+      return '<div class="item" data-id="'+r.orderId+'">' +
+        '<div class="folio">'+esc(r.folio||("Orden "+r.orderId))+' '+pill+'</div>' +
+        '<div class="ttl">'+esc(r.tipo||"(sin título)")+'</div>' +
+        '<div class="meta">'+esc(r.cliente||"")+(fecha?(' · '+esc(fecha)):"")+(tecs?(' · '+esc(tecs)):"")+'</div>' +
+        (actualizado?('<div class="meta" style="margin-top:2px; font-size:12px;">Actualizado: '+esc(actualizado)+'</div>'):"") +
+        '<div class="rowbtns">'+btns+'</div>' +
+      '</div>';
+    }
+
+    async function cargar(){
+      setStatus("Cargando reportes…");
+      try{
+        var r = await fetch("/api/reporte-listar?status=submitted,approved", { headers: headers() });
+        var d = await r.json();
+        if(!d.ok) throw new Error(d.error || ("HTTP "+r.status));
+        var pend = d.reportes.filter(function(x){ return x.status === "submitted"; });
+        var ok = d.reportes.filter(function(x){ return x.status === "approved"; });
+        $("pendList").innerHTML = pend.length ? pend.map(function(x){ return itemHTML(x,"pend"); }).join("") : '<div class="empty">No hay reportes pendientes.</div>';
+        $("okList").innerHTML = ok.length ? ok.map(function(x){ return itemHTML(x,"ok"); }).join("") : '<div class="empty">Aún no hay reportes aprobados.</div>';
+        wire();
+        setStatus(pend.length+" pendiente(s) · "+ok.length+" aprobado(s).");
+      }catch(e){ setStatus("✗ "+(e.message||e), "err"); }
+    }
+
+    function wire(){
+      document.querySelectorAll("[data-approve]").forEach(function(b){
+        b.onclick = function(){ accion(b.getAttribute("data-approve"), "approve", b); };
+      });
+      document.querySelectorAll("[data-cancel]").forEach(function(b){
+        b.onclick = function(){ accion(b.getAttribute("data-cancel"), "cancel", b); };
+      });
+    }
+
+    async function accion(id, action, btn){
+      if (action === "cancel" && !confirm("Cancelar borra este reporte por completo. La orden volverá a aparecerle al técnico para rehacerla desde cero. ¿Continuar?")) return;
+      if (action === "approve" && !confirm("Aprobar archiva el reporte en la orden de Odoo. ¿Continuar?")) return;
+      btn.disabled = true; setStatus(action === "approve" ? "Aprobando…" : "Cancelando…");
+      try{
+        var r = await fetch("/api/reporte-accion", { method:"POST", headers: headers({"Content-Type":"application/json"}), body: JSON.stringify({ id: id, action: action }) });
+        var d = await r.json();
+        if(!d.ok) throw new Error(d.error || ("HTTP "+r.status));
+        setStatus(action === "approve" ? "✓ Reporte aprobado." : "✓ Reporte cancelado. La orden vuelve a la lista del técnico.", "ok");
+        cargar();
+      }catch(e){ btn.disabled=false; setStatus("✗ "+(e.message||e), "err"); }
+    }
+
+    window.onAuthReady = function(){ cargar(); };
+    // por si el gate ya autenticó antes de definir onAuthReady
+    if (window.HT_USER) cargar();
+  </script>
+</body>
+</html>
