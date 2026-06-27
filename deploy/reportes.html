@@ -174,7 +174,7 @@ const BRANDS = {
   hydratech: { name:"HydraTech Group",
     coverGrad:"linear-gradient(160deg,#161c33 0%,#1b2138 55%,#222a47 100%)", glow:"rgba(58,82,168,0.45)",
     metaBg:"#1b2138", metaLabel:"#7e8cc4", folioColor:"#9db0e8", accent:"#3a52a8", rule:"#263370",
-    logoWhite:"assets/hydratech-wordmark-white.png", logoWhiteH:26, logoDark:"assets/hydratech-wordmark.png",
+    logoWhite:"assets/hydratech-icon-white.png", logoWhiteH:48, logoDark:"assets/hydratech-icon.png",
     footL:"SOLUTIONS THROUGH INNOVATION", footR:"hidratechgroup.mx", phone:"81 2904 9481", email:"ventas@hydratechgroup.mx" },
   tubemac: { name:"Tube-Mac",
     coverGrad:"linear-gradient(160deg,#2a1850 0%,#341e60 55%,#3f2470 100%)", glow:"rgba(207,10,115,0.36)",
@@ -220,7 +220,7 @@ function renderReport(brandKey, d, c, imgs){
       '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.1em; color:'+b.metaLabel+';"><span>'+esc(b.footL)+'</span><span>'+esc(b.footR)+'</span></div></div></section>';
 
   const content = '<main class="doc sheet" style="width:8.5in; max-width:100%; margin:0; background:#fff; box-shadow:0 12px 40px -12px rgba(20,24,41,0.3); padding:0.7in 0.75in 0.9in;">'+
-    '<div class="avoid" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:14px; border-bottom:2px solid '+b.rule+'; margin-bottom:30px;"><img src="'+b.logoDark+'" alt="'+esc(b.name)+'" style="height:20px; display:block;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.1em; color:#8893ad;">REPORTE '+esc(d.folio||"")+'</div></div>'+
+    '<div class="avoid" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:14px; border-bottom:2px solid '+b.rule+'; margin-bottom:30px;"><img src="'+b.logoDark+'" alt="'+esc(b.name)+'" style="height:30px; display:block;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.1em; color:#8893ad;">REPORTE '+esc(d.folio||"")+'</div></div>'+
     '<div class="avoid" style="display:flex; align-items:flex-start; gap:16px; margin-top:6px;"><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:42px; line-height:0.9; color:#dfe4ee;">01</div><div style="flex:1;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.accent+';">DIAGNÓSTICO</div><h2 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:27px; letter-spacing:-0.02em; color:#1b2138; margin:4px 0 0;">Hallazgos</h2></div></div>'+
     (hallCards || '<p style="font-size:14px; color:#8a93a8; margin-top:14px;">Sin hallazgos.</p>')+gallery(hallImgs)+
     '<div class="pbreak avoid" style="display:flex; align-items:flex-start; gap:16px; margin-top:40px;"><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:42px; line-height:0.9; color:#dfe4ee;">02</div><div style="flex:1;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.accent+';">REPARACIÓN</div><h2 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:27px; letter-spacing:-0.02em; color:#1b2138; margin:4px 0 0;">Actividades y evidencias</h2></div></div>'+
