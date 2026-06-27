@@ -62,7 +62,7 @@
     </div>
 
     <div class="grid">
-      <a class="card" href="reportes.html">
+      <a class="card" href="reportes.html" data-role="reportes">
         <span class="num">01</span>
         <span class="tag">Operación</span>
         <div class="ct">Reportes de servicios</div>
@@ -70,7 +70,7 @@
         <span class="go">Abrir reportes <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
-      <a class="card" href="configurador.html">
+      <a class="card" href="configurador.html" data-role="cotizador">
         <span class="num">02</span>
         <span class="tag">Cotización</span>
         <div class="ct">Cotizador de mangueras</div>
@@ -78,16 +78,42 @@
         <span class="go">Abrir cotizador <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
-      <a class="card" href="reportes-ventas.html">
+      <a class="card" href="reportes-ventas.html" data-role="ventas">
         <span class="num">03</span>
         <span class="tag">Comercial</span>
         <div class="ct">Reportes de ventas <span class="soon">Por configurar</span></div>
         <p class="cd">Resumen de ventas desde Odoo: órdenes, importes y seguimiento por periodo, cliente o vendedor. En construcción.</p>
         <span class="go">Abrir reportes <span style="font-size:16px;">&#8594;</span></span>
       </a>
+
+      <a class="card" href="admin.html" data-role="admin" style="display:none;">
+        <span class="num">04</span>
+        <span class="tag">Administración</span>
+        <div class="ct">Usuarios y permisos</div>
+        <p class="cd">Da de alta personas, invítalas por correo y marca qué herramientas puede ver cada una. Solo administradores.</p>
+        <span class="go">Administrar <span style="font-size:16px;">&#8594;</span></span>
+      </a>
+    </div>
+    <div id="noTools" class="status" style="display:none; text-align:center; color:#6a739c; font-family:'IBM Plex Mono',monospace; font-size:13px; margin-top:24px;">
+      Tu cuenta aún no tiene herramientas asignadas. Pídele acceso al administrador.
     </div>
   </div>
 
   <div class="foot">HydraTech Group · Solutions through innovation</div>
+  <script>
+    window.onAuthReady = function (user) {
+      var roles = (window.HT_ROLES) || [];
+      var admin = !!window.HT_IS_ADMIN;
+      var visibles = 0;
+      document.querySelectorAll(".card[data-role]").forEach(function (c) {
+        var need = c.getAttribute("data-role");
+        var ok = admin || roles.indexOf(need) >= 0;
+        c.style.display = ok ? "" : "none";
+        if (ok) visibles++;
+      });
+      var none = document.getElementById("noTools");
+      if (none) none.style.display = visibles ? "none" : "block";
+    };
+  </script>
 </body>
 </html>
