@@ -1,12 +1,13 @@
 // auth-gate.js — Login + permisos por rol con Netlify Identity.
-// En páginas internas:            <script defer src="auth-gate.js"></script>
-// En páginas que exigen un rol:   <script>window.REQUIRE_ROLE='reportes';</script>  (antes del include)
-// Roles usados: admin (ve todo), reportes, cotizador, ventas.
+// Páginas internas:           <script defer src="auth-gate.js"></script>
+// Páginas que exigen un rol:   <script>window.REQUIRE_ROLE='reportes';</script>  (antes del include)
 (function () {
+  var REQ = window.REQUIRE_ROLE;
+
   var ov = document.createElement("div");
   ov.id = "ht-auth-overlay";
   ov.style.cssText =
-    "position:fixed;inset:0;z-index:9000;background:#141829;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
+    "position:fixed;inset:0;z-index:2147483000;background:#141829;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
   ov.innerHTML =
     '<div style="text-align:center;color:#aeb6d4;max-width:340px;padding:20px;">' +
     '<div style="font-family:ui-monospace,monospace;letter-spacing:.22em;font-size:12px;color:#5b6390;">ACCESO INTERNO · HYDRATECH</div>' +
@@ -15,6 +16,11 @@
     "</div>";
   function mount() { (document.body || document.documentElement).appendChild(ov); }
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
+
+  // El formulario de Netlify SIEMPRE por encima de nuestra pantalla de bloqueo.
+  var st = document.createElement("style");
+  st.textContent = "#netlify-identity-widget{z-index:2147483647 !important;}";
+  document.head.appendChild(st);
 
   function widgetEl() { return document.getElementById("netlify-identity-widget"); }
   function hideWidget() { var w = widgetEl(); if (w) w.style.display = "none"; }
@@ -25,7 +31,7 @@
   var lnkCss = "display:inline-block;color:#8a93b8;font-size:13px;margin-top:10px;text-decoration:underline;cursor:pointer;";
 
   function loginUI() {
-    setMsg("Esta sección es privada.");
+    setMsg("Esta sección es privada. Inicia sesión para continuar.");
     actions('<button id="ht-login-btn" style="' + btnCss + '">Iniciar sesión</button>');
     var b = document.getElementById("ht-login-btn");
     if (b) b.onclick = function () { window.netlifyIdentity && window.netlifyIdentity.open("login"); };
@@ -36,6 +42,14 @@
             '<div onclick="cerrarSesion()" style="' + lnkCss + '">Cerrar sesión</div>');
   }
 
+  function proceed(user) {
+    var roles = (user.app_metadata && user.app_metadata.roles) || [];
+    window.HT_USER = user; window.HT_ROLES = roles; window.HT_IS_ADMIN = roles.indexOf("admin") >= 0;
+    if (REQ && !(window.HT_IS_ADMIN || roles.indexOf(REQ) >= 0)) { denyUI(); return; }
+    ov.remove();
+    if (typeof window.onAuthReady === "function") { try { window.onAuthReady(user); } catch (e) {} }
+  }
+
   var s = document.createElement("script");
   s.src = "https://identity.netlify.com/v1/netlify-identity-widget.js";
   s.onload = function () {
@@ -43,15 +57,14 @@
     id.on("init", function (user) {
       setTimeout(hideWidget, 0);
       if (!user) { loginUI(); id.open("login"); return; }
-      var roles = (user.app_metadata && user.app_metadata.roles) || [];
-      window.HT_USER = user; window.HT_ROLES = roles; window.HT_IS_ADMIN = roles.indexOf("admin") >= 0;
-      var need = window.REQUIRE_ROLE;
-      if (need && !(window.HT_IS_ADMIN || roles.indexOf(need) >= 0)) { denyUI(); return; }
-      ov.remove();
-      if (typeof window.onAuthReady === "function") { try { window.onAuthReady(user); } catch (e) {} }
+      // Validar que la sesión siga siendo válida (rechaza usuarios borrados/expirados).
+      if (user.jwt) {
+        user.jwt().then(function () { proceed(user); })
+                  .catch(function () { try { id.logout(); } catch (e) {} loginUI(); id.open("login"); });
+      } else { proceed(user); }
     });
-    id.on("open", function () { ov.style.display = "none"; showWidget(); });
-    id.on("close", function () { hideWidget(); if (!id.currentUser()) { ov.style.display = "flex"; } });
+    id.on("open", function () { showWidget(); });            // NO ocultamos la pantalla de bloqueo
+    id.on("close", function () { hideWidget(); if (!id.currentUser()) { loginUI(); } });
     id.on("login", function () { id.close(); location.reload(); });
     id.on("logout", function () { location.href = "index.html"; });
     id.init();
