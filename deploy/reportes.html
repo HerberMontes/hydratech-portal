@@ -115,7 +115,16 @@
         <div id="empWrap"><div id="empBox" class="empbox"><div class="status" style="padding:8px;">Cargando empleados…</div></div></div>
 
         <div class="step">
-          <div class="stephead"><span class="stepnum">1</span> Hallazgos</div>
+          <div class="stephead"><span class="stepnum">1</span> Foto de portada</div>
+          <div class="stepsub">La foto principal del servicio. Es la que aparece grande en la portada del reporte.</div>
+          <div class="rowbtns">
+            <label class="btn ghost">📷 Subir foto de portada<input type="file" accept="image/*" data-cover="1" style="display:none;"></label>
+          </div>
+          <div class="thumbs" id="th_portada"></div>
+        </div>
+
+        <div class="step">
+          <div class="stephead"><span class="stepnum">2</span> Hallazgos</div>
           <div class="stepsub">Cómo se encontró el equipo / diagnóstico. Sube fotos de la situación.</div>
           <textarea id="n1" placeholder="Qué encontraste..."></textarea>
           <div class="rowbtns">
@@ -126,7 +135,7 @@
         </div>
 
         <div class="step">
-          <div class="stephead"><span class="stepnum">2</span> Actividades realizadas</div>
+          <div class="stephead"><span class="stepnum">3</span> Actividades realizadas</div>
           <div class="stepsub">Qué se hizo para reparar. Sube fotos de la reparación / evidencias.</div>
           <textarea id="n2" placeholder="Qué hiciste para repararlo..."></textarea>
           <div class="rowbtns">
@@ -137,7 +146,7 @@
         </div>
 
         <div class="step">
-          <div class="stephead"><span class="stepnum">3</span> Plan de acción</div>
+          <div class="stephead"><span class="stepnum">4</span> Plan de acción</div>
           <div class="stepsub">Pendientes y lo que se recomienda cambiar (orientado a venta). Fotos opcionales.</div>
           <textarea id="n3" placeholder="Qué queda pendiente / qué recomiendas cambiar..."></textarea>
           <div class="rowbtns">
@@ -175,7 +184,7 @@ const $ = (id) => document.getElementById(id);
 const tok = () => { var e = $("tok"); return e ? e.value.trim() : ""; };
 const headers = (extra) => { const h = Object.assign({}, extra||{}); const t = tok(); if(t) h["x-portal-token"]=t; return h; };
 const esc = (s) => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-let images = [], lastContent = null, selectedOrder = null, empleados = [], allOrders = [];
+let images = [], coverPhoto = null, lastContent = null, selectedOrder = null, empleados = [], allOrders = [];
 
 const BRANDS = {
   hydratech: { name:"HydraTech Group",
@@ -199,7 +208,7 @@ function metaCell(b,label,val){ return '<div style="background:'+b.metaBg+'; pad
 
 function renderReport(brandKey, d, c, imgs){
   const b = BRANDS[brandKey];
-  const heroImg = (imgs[0] && imgs[0].dataURL) || "assets/reporte/banco-bomba.jpg";
+  const heroImg = coverPhoto || (imgs[0] && imgs[0].dataURL) || "assets/reporte/banco-bomba.jpg";
   const hallImgs = imgs.filter(x=>x.sec==="hallazgos");
   const actImgs  = imgs.filter(x=>x.sec==="actividades");
   const planImgs = imgs.filter(x=>x.sec==="plan");
@@ -220,7 +229,7 @@ function renderReport(brandKey, d, c, imgs){
     '<div style="position:relative; padding:0.85in 0.85in 0; display:flex; justify-content:space-between; align-items:flex-start;"><img src="'+b.logoWhite+'" alt="'+esc(b.name)+'" style="height:'+b.logoWhiteH+'px; display:block;"><div style="text-align:right;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.folioColor+';">FOLIO</div><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:20px; margin-top:3px;">'+esc(d.folio||"—")+'</div></div></div>'+
     '<div style="position:relative; padding:0 0.85in; margin-top:0.7in;"><div style="display:inline-flex; align-items:center; gap:9px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); padding:8px 14px; border-radius:7px;"><span style="width:8px; height:8px; border-radius:50%; background:#1f9d55; box-shadow:0 0 0 4px rgba(31,157,85,0.2);"></span><span style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; font-weight:600; letter-spacing:0.14em; color:#cdd6ef;">SERVICIO CONCLUIDO</span></div>'+
     '<h1 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:50px; line-height:1.02; letter-spacing:-0.025em; margin:24px 0 0;">Reporte de<br>Servicio Técnico</h1><p style="font-size:17px; line-height:1.5; color:#aeb6d4; max-width:5.2in; margin:18px 0 0;">Diagnóstico, reparación y plan de seguimiento del equipo hidráulico intervenido.</p></div>'+
-    '<div style="position:relative; margin-top:0.5in; padding:0 0.85in;"><div style="border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); height:2.5in;"><img src="'+heroImg+'" alt="" style="width:100%; height:100%; object-fit:cover; object-position:center 38%; display:block;"></div></div>'+
+    '<div style="position:relative; margin-top:0.4in; padding:0 0.85in;"><div style="border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); height:3.7in;"><img src="'+heroImg+'" alt="" style="width:100%; height:100%; object-fit:cover; object-position:center 42%; display:block;"></div></div>'+
     '<div style="position:relative; margin-top:auto; padding:0.45in 0.85in 0.85in;"><div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.12); border-radius:12px; overflow:hidden;">'+
       metaCell(b,"CLIENTE",d.cliente)+metaCell(b,"PLANTA / UBICACIÓN",d.planta)+metaCell(b,"FECHA DE SERVICIO",fechaLarga(d.fecha))+
       metaCell(b,"TIPO DE SERVICIO",d.tipo)+metaCell(b,"TÉCNICOS",tecs)+metaCell(b,"N° DE ORDEN",d.folio)+'</div>'+
@@ -266,6 +275,10 @@ async function seleccionarOrden(el){
 async function abrirOrden(id, opts){
   opts = opts || {};
   selectedOrder = { id: String(id) };
+  // Limpiar estado previo para no mezclar datos entre órdenes.
+  images=[]; coverPhoto=null; lastContent=null;
+  $("n1").value=""; $("n2").value=""; $("n3").value="";
+  drawThumbs(); drawCover(); $("pdf").style.display="none";
   $("rest").style.display="block";
   $("cliente").value="…"; $("folio").value="…";
   // Botones según modo
@@ -301,6 +314,7 @@ async function cargarBorrador(id){
     if(rep.planta) $("planta").value=rep.planta;
     if(rep.tipo) $("tipo").value=rep.tipo;
     if(Array.isArray(rep.images)){ images = rep.images.slice(); drawThumbs(); }
+    if(rep.coverPhoto){ coverPhoto = rep.coverPhoto; drawCover(); }
     if(rep.content){ lastContent = rep.content; $("pdf").style.display="inline-block"; }
     $("genStatus").className="status"; $("genStatus").textContent="↩ Reporte recuperado.";
   }catch(e){ /* sin borrador, normal */ }
@@ -325,6 +339,21 @@ function getTecnicos(){
   const checks = $("empBox") ? [...$("empBox").querySelectorAll("input:checked")].map(c=>c.value) : [];
   if(checks.length) return checks;
   const man = $("tecnicosManual"); return man ? man.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
+}
+
+/* ===== Foto de portada (paso 1) ===== */
+document.querySelectorAll('input[type="file"][data-cover]').forEach(inp=>{
+  inp.addEventListener("change",(e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>resize(r.result,(d)=>{ coverPhoto=d; drawCover(); }); r.readAsDataURL(f);
+    e.target.value="";
+  });
+});
+function drawCover(){
+  const cont=$("th_portada"); if(!cont) return;
+  cont.innerHTML = coverPhoto ? '<div class="thumb"><span class="x" id="rmCover">×</span><img src="'+coverPhoto+'"></div>' : "";
+  const rm=$("rmCover"); if(rm) rm.addEventListener("click",()=>{ coverPhoto=null; drawCover(); rerender(); });
+  rerender();
 }
 
 /* ===== Fotos por etapa ===== */
@@ -401,6 +430,7 @@ function buildReportPayload(status){
     tecnicos: d.tecnicos,
     notas: { hallazgos:$("n1").value, actividades:$("n2").value, plan:$("n3").value },
     content: lastContent || null,
+    coverPhoto: coverPhoto || null,
     images: images.slice(),
   }};
 }
@@ -426,7 +456,7 @@ $("submitRep").addEventListener("click", async ()=>{
     await guardarReporte("submitted");
     $("genStatus").textContent="✓ Enviado a aprobación. El administrador lo revisará.";
     // limpiar y refrescar lista (la orden enviada desaparece)
-    setTimeout(()=>{ $("rest").style.display="none"; selectedOrder=null; lastContent=null; images=[]; cargarOrdenes(); }, 1200);
+    setTimeout(()=>{ $("rest").style.display="none"; selectedOrder=null; lastContent=null; images=[]; coverPhoto=null; drawCover(); cargarOrdenes(); }, 1200);
   }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
   finally{ $("submitRep").disabled=false; }
 });
