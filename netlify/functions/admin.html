@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administración · HydraTech</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>window.REQUIRE_ROLE = "admin";</script>
+<script defer src="auth-gate.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; background:#0e1220; color:#e7eaf3; font-family:'IBM Plex Sans',system-ui,sans-serif;}
+  .wrap{max-width:1040px; margin:0 auto; padding:26px 22px 70px;}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .back{color:#9aa3cc; text-decoration:none; font-size:14px; font-weight:600;}
+  .logout{background:transparent; border:1px solid #2c3350; color:#9aa3cc; border-radius:7px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;}
+  .kicker{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; color:#5b6390; margin-top:26px;}
+  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:34px; margin:8px 0 4px;}
+  .sub{color:#9aa3cc; font-size:15px; margin:0 0 22px;}
+  .panel{background:#161c30; border:1px solid #232a45; border-radius:14px; padding:18px; margin-top:16px;}
+  .panel h2{font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.05em; color:#aeb6d4; margin:0 0 14px;}
+  label{font-size:12px; font-weight:600; color:#9aa3cc;}
+  input[type=email]{width:100%; background:#0e1220; border:1px solid #2c3350; color:#e7eaf3; border-radius:8px; padding:10px 12px; font-size:15px; font-family:inherit;}
+  input[type=email]:focus{outline:none; border-color:#3a52a8;}
+  .btn{border:0; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .primary{background:#3a52a8; color:#fff;} .primary:hover{background:#324a9b;} .primary:disabled{opacity:.5; cursor:default;}
+  .small{background:#222a47; color:#cdd5ef;} .danger{background:transparent; border:1px solid #5a2a2a; color:#e1928f;}
+  .perms{display:flex; flex-wrap:wrap; gap:14px; margin-top:10px;}
+  .chk{display:flex; align-items:center; gap:7px; font-size:13.5px; color:#cdd5ef; cursor:pointer;}
+  .chk input{width:17px; height:17px; accent-color:#3a52a8;}
+  table{width:100%; border-collapse:collapse; margin-top:6px;}
+  th{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#6a739c; text-align:left; padding:8px 10px; border-bottom:1px solid #232a45;}
+  td{padding:12px 10px; border-bottom:1px solid #1c2236; vertical-align:middle; font-size:14px;}
+  .email{font-weight:600;} .pill{font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 8px; border-radius:20px; margin-left:8px;}
+  .pend{background:#3a2f12; color:#e0b765;} .ok{background:#143020; color:#69d49a;}
+  .rowbtns{display:flex; gap:8px; justify-content:flex-end;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:#8a93b8; margin-top:10px; min-height:16px;}
+  .status.err{color:#e1928f;} .status.ok{color:#69d49a;}
+  @media (max-width:680px){
+    h1{font-size:27px;} td .perms{gap:10px;}
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;} tr{border:1px solid #232a45; border-radius:10px; margin-bottom:12px; padding:6px 10px;}
+    td{border-bottom:1px solid #1c2236;} td:last-child{border-bottom:0;}
+    .rowbtns{justify-content:flex-start;}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="acceso.html">&#8592; Volver a herramientas</a>
+      <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+
+    <div class="kicker">Administración</div>
+    <h1>Usuarios y permisos</h1>
+    <p class="sub">Da de alta personas y marca qué herramientas puede ver cada una. Al invitar, reciben un correo para crear su contraseña.</p>
+
+    <div class="panel">
+      <h2>Agregar usuario</h2>
+      <label>Correo</label>
+      <input id="newEmail" type="email" placeholder="persona@empresa.com" style="margin-top:5px;">
+      <div class="perms" id="newPerms"></div>
+      <div style="margin-top:14px;"><button class="btn primary" id="invite">Invitar por correo</button></div>
+      <div id="inviteStatus" class="status"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Usuarios</h2>
+      <div id="usersWrap"><div class="status">Cargando usuarios…</div></div>
+    </div>
+  </div>
+
+<script>
+  var PERMS = [
+    { key: "reportes", label: "Reportes de servicio" },
+    { key: "cotizador", label: "Cotizador" },
+    { key: "ventas", label: "Reportes de ventas" },
+    { key: "admin", label: "Administrador" },
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); };
+
+  async function authFetch(method, body) {
+    var u = window.netlifyIdentity && window.netlifyIdentity.currentUser();
+    var jwt = u ? await u.jwt() : "";
+    var r = await fetch("/api/admin-users", {
+      method: method,
+      headers: { "Authorization": "Bearer " + jwt, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return r.json();
+  }
+
+  function permsCheckboxes(idPrefix, selected) {
+    return PERMS.map(function (p) {
+      var c = selected && selected.indexOf(p.key) >= 0 ? " checked" : "";
+      return '<label class="chk"><input type="checkbox" id="' + idPrefix + p.key + '" value="' + p.key + '"' + c + '>' + p.label + "</label>";
+    }).join("");
+  }
+  function readChecks(idPrefix) {
+    return PERMS.map(function (p) { return p.key; }).filter(function (k) { var el = $(idPrefix + k); return el && el.checked; });
+  }
+
+  $("newPerms").innerHTML = permsCheckboxes("np_", ["reportes"]);
+
+  async function loadUsers() {
+    $("usersWrap").innerHTML = '<div class="status">Cargando usuarios…</div>';
+    var d = await authFetch("GET");
+    if (!d.ok) { $("usersWrap").innerHTML = '<div class="status err">✗ ' + esc(d.error || "Error") + "</div>"; return; }
+    if (!d.users.length) { $("usersWrap").innerHTML = '<div class="status">Aún no hay usuarios. Agrega el primero arriba.</div>'; return; }
+    var rows = d.users.map(function (u) {
+      var badge = u.confirmed ? '<span class="pill ok">activo</span>' : '<span class="pill pend">pendiente</span>';
+      return '<tr data-id="' + u.id + '">' +
+        '<td class="email">' + esc(u.email) + badge + "</td>" +
+        '<td><div class="perms">' + permsCheckboxes("u_" + u.id + "_", u.roles) + "</div></td>" +
+        '<td><div class="rowbtns"><button class="btn small" data-save="' + u.id + '">Guardar</button>' +
+        '<button class="btn danger" data-del="' + u.id + '" data-email="' + esc(u.email) + '">Eliminar</button></div></td></tr>';
+    }).join("");
+    $("usersWrap").innerHTML =
+      '<table><thead><tr><th>Correo</th><th>Permisos (qué puede ver)</th><th></th></tr></thead><tbody>' + rows + "</tbody></table>" +
+      '<div id="usersStatus" class="status"></div>';
+    document.querySelectorAll("[data-save]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        var id = b.getAttribute("data-save");
+        b.disabled = true; setStatus("usersStatus", "Guardando…", "");
+        var d2 = await authFetch("POST", { action: "roles", id: id, roles: readChecks("u_" + id + "_") });
+        b.disabled = false;
+        if (d2.ok) setStatus("usersStatus", "✓ Permisos guardados. (El usuario debe volver a iniciar sesión para verlo).", "ok");
+        else setStatus("usersStatus", "✗ " + (d2.error || "Error"), "err");
+      });
+    });
+    document.querySelectorAll("[data-del]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        var id = b.getAttribute("data-del"), em = b.getAttribute("data-email");
+        if (!confirm("¿Eliminar a " + em + "? Perderá el acceso.")) return;
+        b.disabled = true; setStatus("usersStatus", "Eliminando…", "");
+        var d2 = await authFetch("POST", { action: "delete", id: id });
+        if (d2.ok) loadUsers(); else { b.disabled = false; setStatus("usersStatus", "✗ " + (d2.error || "Error"), "err"); }
+      });
+    });
+  }
+  function setStatus(id, txt, cls) { var e = $(id); if (e) { e.className = "status " + (cls || ""); e.textContent = txt; } }
+
+  $("invite").addEventListener("click", async function () {
+    var email = $("newEmail").value.trim();
+    if (!email) { setStatus("inviteStatus", "Escribe un correo.", "err"); return; }
+    $("invite").disabled = true; setStatus("inviteStatus", "Enviando invitación…", "");
+    var d = await authFetch("POST", { action: "invite", email: email, roles: readChecks("np_") });
+    $("invite").disabled = false;
+    if (d.ok) { setStatus("inviteStatus", "✓ Invitación enviada a " + email + ".", "ok"); $("newEmail").value = ""; loadUsers(); }
+    else setStatus("inviteStatus", "✗ " + (d.error || "Error"), "err");
+  });
+
+  window.onAuthReady = function () { loadUsers(); };
+</script>
+</body>
+</html>
