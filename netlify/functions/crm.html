@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM · Captura · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#263370; --blue-deep:#1b2447; --bar:#141829;
+    --ink:#1b2138; --body:#4a5267; --muted:#717a90;
+    --line:#e6e9f0; --line2:#d8deea; --soft:#f7f9fc; --field:#fafbfd;
+    --green:#16a34a; --red:#e5484d; --gold:#c9a14a;
+    --shadow:0 1px 2px rgba(27,33,56,.04), 0 10px 30px -12px rgba(27,33,56,.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{background:#fff}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif; color:var(--ink); line-height:1.5; font-size:15px; -webkit-font-smoothing:antialiased}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  .arch{font-family:'Archivo',sans-serif}
+
+  /* ===== barra superior HydraTech (idéntica a tus herramientas) ===== */
+  #ht-bar{background:#fff; border-bottom:3px solid var(--blue)}
+  .ht-bar-in{max-width:1100px; margin:0 auto; padding:10px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px}
+  .ht-back{display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:#4a5267}
+  .ht-back img{height:18px; display:block}
+  .ht-back .wm{display:none; color:#fff; font-family:'Archivo',sans-serif; font-weight:800; font-size:15px; letter-spacing:.02em}
+  .ht-toolname{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#717a90}
+  .ht-back .wm{color:#1b2138}
+
+  /* ===== tabs de sección ===== */
+  .subnav{background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20}
+  .subnav-in{max-width:1100px; margin:0 auto; padding:0 22px; display:flex; align-items:center; gap:4px; height:54px}
+  .subnav a{font-size:13.5px; font-weight:600; color:var(--muted); text-decoration:none; padding:8px 14px; border-radius:8px; display:flex; align-items:center; gap:7px}
+  .subnav a svg{width:15px; height:15px}
+  .subnav a.on{color:var(--blue); background:var(--soft)}
+  .subnav .who{margin-left:auto; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px}
+  .subnav .who b{color:var(--ink); font-weight:600}
+  .subnav .who .av{width:26px; height:26px; border-radius:50%; background:var(--blue); color:#fff; display:grid; place-items:center; font-size:11px; font-weight:700}
+
+  main{max-width:760px; margin:0 auto; padding:26px 22px 130px}
+
+  /* mode pills */
+  .head-row{display:flex; align-items:center; gap:16px; margin-bottom:20px; flex-wrap:wrap}
+  .page-h{margin-right:auto}
+  .page-h .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--blue); margin-bottom:5px}
+  .page-h h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:26px; letter-spacing:-.02em; line-height:1.05}
+  .pills{display:flex; background:var(--soft); border:1px solid var(--line); border-radius:11px; padding:4px; gap:3px}
+  .pills button{border:0; background:transparent; cursor:pointer; font:inherit; font-weight:600; font-size:13.5px; color:var(--muted); padding:9px 16px; border-radius:8px; display:flex; align-items:center; gap:7px; transition:.16s}
+  .pills button svg{width:15px; height:15px}
+  .pills button[aria-pressed="true"]{background:#fff; color:var(--blue); box-shadow:var(--shadow)}
+
+  .fieldtoggle{display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; color:var(--muted); user-select:none}
+  .switch{width:36px; height:21px; border-radius:11px; background:var(--line2); position:relative; transition:.16s; flex:none}
+  .switch::after{content:""; position:absolute; top:2px; left:2px; width:17px; height:17px; border-radius:50%; background:#fff; transition:.16s; box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .fieldtoggle[aria-pressed="true"] .switch{background:var(--blue)}
+  .fieldtoggle[aria-pressed="true"] .switch::after{transform:translateX(15px)}
+
+  .banner{display:flex; gap:12px; align-items:flex-start; border:1px solid; border-radius:13px; padding:14px 16px; margin-bottom:22px; font-size:13.5px; line-height:1.45}
+  .banner svg{flex:none; width:19px; height:19px; margin-top:1px}
+  .banner b{font-weight:600}
+  .banner.lead{background:#f1f4fb; border-color:#dde3f2; color:#3a4670}
+  .banner.opp{background:#fbf7ec; border-color:#ece0c2; color:#806528}
+
+  .card{background:#fff; border:1px solid var(--line); border-radius:15px; padding:20px; margin-bottom:15px; box-shadow:var(--shadow)}
+  .card-opp{display:none}
+  body[data-mode="opp"] .card-opp{display:block}
+
+  .card-h{display:flex; align-items:center; gap:9px; margin-bottom:16px}
+  .card-h .tag{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--blue); background:var(--soft); border:1px solid var(--line); border-radius:5px; padding:2px 7px; letter-spacing:.02em}
+  .card-h h2{font-family:'Archivo',sans-serif; font-weight:700; font-size:16px}
+  .card-h .hint{margin-left:auto; font-size:11.5px; color:var(--muted)}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field.full{grid-column:1/-1}
+  label{font-size:12px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:7px; flex-wrap:wrap}
+  .req{color:var(--red)}
+  .odoo-tag{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--blue); background:#eef1f9; border:1px solid #dde3f2; border-radius:5px; padding:1px 6px; display:none; font-weight:400}
+  body[data-fields="on"] .odoo-tag{display:inline-block}
+  .id-badge{font-size:9px; font-weight:700; color:#fff; background:var(--blue); border-radius:20px; padding:1px 7px; letter-spacing:.02em; display:none}
+  body[data-fields="on"] .id-badge{display:inline-block}
+
+  input,select,textarea{font:inherit; font-size:14px; color:var(--ink); background:var(--field); border:1.5px solid var(--line); border-radius:10px; padding:11px 12px; width:100%; transition:.14s}
+  textarea{resize:vertical; min-height:62px; line-height:1.45}
+  input::placeholder,textarea::placeholder{color:#aab2c4}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px rgba(38,51,112,.12)}
+  select{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23717a90' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; cursor:pointer}
+
+  .search-wrap{position:relative}
+  .search-wrap input{padding-left:36px}
+  .search-ic{position:absolute; left:12px; top:12px; width:16px; height:16px; color:var(--muted)}
+  .results{margin-top:7px; border:1px solid var(--line); border-radius:10px; overflow:hidden; display:none}
+  .results.show{display:block}
+  .results .ri{padding:9px 12px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:9px; border-bottom:1px solid var(--line)}
+  .results .ri:last-child{border-bottom:0}
+  .results .ri:hover{background:var(--soft)}
+  .results .av{width:26px; height:26px; border-radius:50%; background:var(--green); color:#fff; display:grid; place-items:center; font-size:11px; font-weight:700; flex:none}
+  .results .ri b{font-weight:600}
+  .results .ri span{color:var(--muted); font-size:11px}
+
+  .tags{display:flex; flex-wrap:wrap; gap:7px}
+  .tags button{font:inherit; font-size:12.5px; font-weight:500; border:1.5px solid var(--line2); background:var(--field); color:var(--muted); border-radius:20px; padding:5px 12px; cursor:pointer; transition:.14s}
+  .tags button[aria-pressed="true"]{background:#eef1f9; border-color:var(--blue); color:var(--blue)}
+
+  /* BANT gate */
+  .gate{border-color:#ece0c2}
+  .gate-h{display:flex; align-items:center; gap:10px; margin-bottom:4px}
+  .gate-h svg{width:20px; height:20px; color:var(--gold)}
+  .gate-h h2{font-family:'Archivo',sans-serif; font-weight:700; font-size:16px}
+  .gate-h .why{margin-left:auto; font-size:11.5px; color:var(--muted); max-width:240px; text-align:right; line-height:1.35}
+  .bant{display:grid; grid-template-columns:1fr 1fr; gap:18px 22px; margin-top:18px}
+  .bant .q{font-size:11px; color:var(--muted); font-weight:400; display:block; margin-top:2px}
+  .seg{display:flex; gap:6px; margin-top:9px}
+  .seg button{flex:1; border:1.5px solid var(--line); background:var(--field); font:inherit; font-size:12px; font-weight:500; color:var(--muted); padding:8px 4px; border-radius:9px; cursor:pointer; transition:.14s; text-align:center}
+  .seg button[data-v="0"][aria-pressed="true"]{border-color:var(--line2); background:#eef0f4; color:var(--muted)}
+  .seg button[data-v="1"][aria-pressed="true"]{border-color:var(--gold); background:#fbf6ea; color:var(--gold)}
+  .seg button[data-v="2"][aria-pressed="true"]{border-color:var(--green); background:#eaf7ef; color:var(--green)}
+
+  .meter-wrap{margin-top:22px; padding-top:18px; border-top:1px dashed var(--line2)}
+  .meter-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:9px}
+  .meter-top .lab{font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px}
+  .meter-top .pct{font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; color:var(--muted)}
+  .meter{height:9px; background:#edeff4; border-radius:6px; overflow:hidden}
+  .meter-fill{height:100%; width:0; border-radius:6px; background:linear-gradient(90deg,var(--gold),#d8b34d); transition:width .4s cubic-bezier(.2,.7,.2,1), background .3s}
+  .meter-msg{font-size:12px; margin-top:9px; color:var(--muted); display:flex; align-items:center; gap:7px}
+  .meter-msg svg{width:14px; height:14px; flex:none}
+
+  /* action bar */
+  .actionbar{position:fixed; left:0; right:0; bottom:0; z-index:25; background:rgba(255,255,255,.9); backdrop-filter:blur(10px); border-top:1px solid var(--line); padding:13px 22px}
+  .actionbar-in{max-width:760px; margin:0 auto; display:flex; align-items:center; gap:14px}
+  .ab-meta{font-size:12px; color:var(--muted); line-height:1.35}
+  .ab-meta b{color:var(--ink); font-weight:600}
+  .btn{font:inherit; font-weight:600; font-size:14px; border:0; border-radius:11px; padding:12px 22px; cursor:pointer; transition:.16s; display:flex; align-items:center; gap:8px}
+  .btn svg{width:16px; height:16px}
+  .btn-ghost{background:transparent; border:1.5px solid var(--line2); color:var(--muted); margin-left:auto}
+  .btn-ghost:hover{border-color:var(--blue); color:var(--blue)}
+  .btn-primary{background:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(38,51,112,.26)}
+  .btn-primary:hover{background:var(--blue-deep)}
+  .btn[disabled]{opacity:.45; cursor:not-allowed; box-shadow:none}
+
+  .toast{position:fixed; left:50%; bottom:88px; transform:translate(-50%,18px); background:var(--ink); color:#fff; border-radius:11px; padding:12px 17px; display:flex; align-items:center; gap:11px; font-size:13.5px; font-weight:500; box-shadow:0 12px 36px rgba(27,33,56,.34); opacity:0; pointer-events:none; transition:.28s; z-index:40; max-width:90vw}
+  .toast.show{opacity:1; transform:translate(-50%,0)}
+  .toast.err{background:#5a1f22}
+  .toast .ck{width:21px; height:21px; border-radius:50%; background:var(--green); display:grid; place-items:center; flex:none}
+  .toast.err .ck{background:var(--red)}
+  .toast .s{display:block; font-weight:400; font-size:11px; opacity:.82; font-family:'IBM Plex Mono',monospace; margin-top:1px}
+
+  @media(max-width:600px){
+    .grid{grid-template-columns:1fr}
+    .bant{grid-template-columns:1fr}
+    .page-h{width:100%}
+    .pills{flex:1}
+    .pills button{flex:1; justify-content:center}
+    .gate-h .why{display:none}
+    .ab-meta{display:none}
+    .subnav .who b{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+  :focus-visible{outline:2px solid var(--blue); outline-offset:2px}
+</style>
+
+<!-- Permiso: solo cuentas con rol "crm" (o admin) entran. Tú lo asignas en Usuarios y permisos. -->
+<script>window.REQUIRE_ROLE="crm";</script>
+<script defer src="auth-gate.js"></script>
+</head>
+<body data-mode="lead" data-fields="off">
+
+<!-- barra HydraTech -->
+<div id="ht-bar">
+  <div class="ht-bar-in">
+    <a class="ht-back" href="acceso.html">
+      <span style="font-size:18px; line-height:1;">&#8592;</span>
+      <img src="assets/hydratech-wordmark.png" alt="HydraTech Group" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'">
+      <span class="wm">HydraTech</span>
+    </a>
+    <span class="ht-toolname">CRM · Captura</span>
+  </div>
+</div>
+
+<!-- subnav de secciones del CRM -->
+<nav class="subnav">
+  <div class="subnav-in">
+    <a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Captura</a>
+    <a href="crm-plan.html" title="Próxima pantalla"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Mi plan</a>
+    <a href="crm-tablero.html" title="Solo gerencia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 3 5-8"/></svg>Tablero</a>
+    <div class="who"><span>Vendedor</span> <b id="whoami">—</b> <span class="av" id="whoav">·</span></div>
+  </div>
+</nav>
+
+<main>
+  <div class="head-row">
+    <div class="page-h">
+      <div class="eyebrow">Nuevo registro</div>
+      <h1>Captura de prospecto</h1>
+    </div>
+    <div class="pills" role="group" aria-label="Modo">
+      <button data-mode="lead" aria-pressed="true" onclick="setMode('lead')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>Lead rápido</button>
+      <button data-mode="opp" aria-pressed="false" onclick="setMode('opp')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>Oportunidad</button>
+    </div>
+    <div class="fieldtoggle" role="button" tabindex="0" aria-pressed="false" onclick="toggleFields(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFields(this)}">
+      <span class="switch"></span> Ver campos de Odoo
+    </div>
+  </div>
+
+  <div class="banner lead" id="banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span id="banner-t"><b>Modo Lead.</b> Captura mínima para no frenar la prospección. No entra al pipeline hasta calificarlo y convertirlo en oportunidad.</span>
+  </div>
+
+  <!-- contacto -->
+  <section class="card">
+    <div class="card-h"><span class="tag">res.partner</span><h2>Contacto</h2><span class="hint">Se busca en tu Odoo</span></div>
+    <div class="field full">
+      <label>Buscar contacto existente <span class="odoo-tag">partner_id</span> <span class="id-badge">ID Odoo</span></label>
+      <div class="search-wrap">
+        <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input type="text" id="search" placeholder="Nombre, email o empresa…" oninput="onSearch(this.value)" autocomplete="off">
+      </div>
+      <div class="results" id="results"></div>
+    </div>
+    <div class="grid" style="margin-top:14px">
+      <div class="field"><label>Nombre del contacto <span class="req">*</span> <span class="odoo-tag">contact_name</span></label><input type="text" id="f_contact" placeholder="Nombre y apellido"></div>
+      <div class="field"><label>Empresa <span class="odoo-tag">partner_name</span></label><input type="text" id="f_company" placeholder="Razón social"></div>
+      <div class="field"><label>Email <span class="odoo-tag">email_from</span></label><input type="email" id="f_email" placeholder="correo@empresa.com"></div>
+      <div class="field"><label>Teléfono <span class="odoo-tag">phone</span></label><input type="tel" id="f_phone" placeholder="+52 …"></div>
+    </div>
+  </section>
+
+  <!-- negocio (oportunidad) -->
+  <section class="card card-opp">
+    <div class="card-h"><span class="tag">crm.lead</span><h2>Detalle del negocio</h2></div>
+    <div class="grid">
+      <div class="field full"><label>Título de la oportunidad <span class="req">*</span> <span class="odoo-tag">name</span></label><input type="text" id="f_title" placeholder="Ej. Mangueras hidráulicas — planta Monterrey"></div>
+      <div class="field"><label>Ingreso esperado <span class="odoo-tag">expected_revenue</span></label><input type="number" id="f_rev" placeholder="0.00" min="0"></div>
+      <div class="field"><label>Cierre estimado <span class="odoo-tag">date_deadline</span></label><input type="text" id="f_deadline" placeholder="dd/mm/aaaa" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
+      <div class="field"><label>Etapa <span class="odoo-tag">stage_id</span> <span class="id-badge">ID Odoo</span></label><select id="f_stage"><option>Nuevo</option><option>Calificado</option><option>Propuesta</option><option>Negociación</option></select></div>
+      <div class="field"><label>Prioridad <span class="odoo-tag">priority</span></label><select id="f_prio"><option>Normal</option><option>Media</option><option>Alta</option><option>Muy alta</option></select></div>
+      <div class="field full"><label>Etiquetas <span class="odoo-tag">tag_ids</span> <span class="id-badge">ID Odoo</span></label>
+        <div class="tags" id="tags">
+          <button aria-pressed="false" onclick="tog(this)">Industrial</button>
+          <button aria-pressed="false" onclick="tog(this)">Recompra</button>
+          <button aria-pressed="false" onclick="tog(this)">Referido</button>
+          <button aria-pressed="false" onclick="tog(this)">Mantenimiento</button>
+          <button aria-pressed="false" onclick="tog(this)">Banco de pruebas</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANT -->
+  <section class="card card-opp gate">
+    <div class="gate-h">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      <h2>Calificación <span class="mono" style="font-size:12px;color:var(--muted);font-weight:400">BANT</span></h2>
+      <span class="why">Este filtro decide si el negocio entra al pipeline. Sin calificar, no ensucia tus métricas.</span>
+    </div>
+    <div class="bant">
+      <div><label>Presupuesto <span class="q">¿Hay recursos para comprar?</span></label>
+        <div class="seg" data-b="b"><button data-v="0" onclick="bant(this)">Sin definir</button><button data-v="1" onclick="bant(this)">Estimado</button><button data-v="2" onclick="bant(this)">Confirmado</button></div></div>
+      <div><label>Autoridad <span class="q">¿El contacto decide?</span></label>
+        <div class="seg" data-b="a"><button data-v="0" onclick="bant(this)">Usuario</button><button data-v="1" onclick="bant(this)">Influye</button><button data-v="2" onclick="bant(this)">Decide</button></div></div>
+      <div><label>Necesidad <span class="q">¿Qué tan clara es?</span></label>
+        <div class="seg" data-b="n"><button data-v="0" onclick="bant(this)">Explorando</button><button data-v="1" onclick="bant(this)">Clara</button><button data-v="2" onclick="bant(this)">Urgente</button></div></div>
+      <div><label>Plazo <span class="q">¿Cuándo decidiría?</span></label>
+        <div class="seg" data-b="t"><button data-v="0" onclick="bant(this)">Sin fecha</button><button data-v="1" onclick="bant(this)">Trimestre</button><button data-v="2" onclick="bant(this)">Este mes</button></div></div>
+    </div>
+    <div class="meter-wrap">
+      <div class="meter-top"><span class="lab"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg> Listo para el pipeline</span><span class="pct" id="pct">0%</span></div>
+      <div class="meter"><div class="meter-fill" id="fill"></div></div>
+      <div class="meter-msg" id="mmsg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Completa la calificación para habilitar la creación de la oportunidad.</div>
+    </div>
+  </section>
+
+  <!-- asignación -->
+  <section class="card">
+    <div class="card-h"><span class="tag">crm.lead</span><h2>Asignación y origen</h2></div>
+    <div class="grid">
+      <div class="field"><label>Vendedor <span class="odoo-tag">user_id</span> <span class="id-badge">ID Odoo</span></label><select id="f_user"><option>Yo (sesión actual)</option></select></div>
+      <div class="field"><label>Equipo <span class="odoo-tag">team_id</span> <span class="id-badge">ID Odoo</span></label><select id="f_team"><option>Ventas — Industrial</option><option>Ventas — Mayoreo</option><option>Cuentas clave</option></select></div>
+      <div class="field full"><label>Fuente <span class="odoo-tag">source_id</span> <span class="id-badge">ID Odoo</span></label><select id="f_source"><option>Referido</option><option>Llamada en frío</option><option>Sitio web</option><option>WhatsApp</option><option>Feria / evento</option></select></div>
+      <div class="field full"><label>Notas internas <span class="odoo-tag">description</span></label><textarea id="f_notes" placeholder="Contexto, próximos pasos, lo que dijo el contacto…"></textarea></div>
+    </div>
+  </section>
+</main>
+
+<div class="actionbar">
+  <div class="actionbar-in">
+    <div class="ab-meta" id="abmeta"><b>Modo Lead</b><br>Se guarda como lead sin tocar el pipeline.</div>
+    <button class="btn btn-ghost" type="button" onclick="resetForm()">Limpiar</button>
+    <button class="btn btn-primary" id="save" type="button" onclick="save()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+      <span id="savelabel">Guardar lead</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span><span id="toast-t">Guardado</span><span class="s" id="toast-s"></span></span></div>
+
+<script>
+  const GATE=70, bs={b:null,a:null,n:null,t:null};
+  let clientes=[], linkedPartnerId=null;
+
+  /* ---- integración con permisos: se ejecuta tras el login (auth-gate.js) ---- */
+  window.onAuthReady=function(user){
+    const name=(user&&user.user_metadata&&user.user_metadata.full_name)||(user&&user.email)||"Sesión";
+    document.getElementById("whoami").textContent=name;
+    document.getElementById("whoav").textContent=(name.trim()[0]||"·").toUpperCase();
+    const opt=document.querySelector('#f_user option'); if(opt) opt.textContent=name+" (tú)";
+  };
+
+  /* ---- datos desde Odoo (mismas funciones que usa el cotizador) ---- */
+  // Vendedores / empleados
+  fetch("/api/odoo-empleados").then(r=>r.json()).then(d=>{
+    if(d&&d.ok&&Array.isArray(d.empleados)){
+      const sel=document.getElementById("f_user");
+      d.empleados.forEach(e=>{const o=document.createElement("option");o.value="emp:"+e.id;o.textContent=e.name+(e.job?" — "+e.job:"");sel.appendChild(o);});
+    }
+  }).catch(()=>{}); // en preview/local no existe: se queda con la opción por defecto
+  // Clientes (para el buscador anti-duplicados)
+  fetch("/api/odoo-clientes").then(r=>r.json()).then(d=>{
+    if(d&&d.ok&&Array.isArray(d.clientes)) clientes=d.clientes;
+  }).catch(()=>{ clientes=[{id:4128,name:"Aceros del Norte"},{id:5012,name:"Industrias GR"},{id:6233,name:"Metal Pro"}]; });
+
+  function setMode(m){
+    document.body.dataset.mode=m;
+    document.querySelectorAll('.pills button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
+    const bn=document.getElementById('banner'), t=document.getElementById('banner-t');
+    if(m==='opp'){bn.className='banner opp';t.innerHTML='<b>Modo Oportunidad.</b> Esto entra al pipeline, por eso exige la calificación BANT antes de poder guardarse — así el embudo solo contiene negocios reales.';}
+    else{bn.className='banner lead';t.innerHTML='<b>Modo Lead.</b> Captura mínima para no frenar la prospección. No entra al pipeline hasta calificarlo y convertirlo en oportunidad.';}
+    gate();
+  }
+  function toggleFields(el){const on=el.getAttribute('aria-pressed')==='true';el.setAttribute('aria-pressed',!on);document.body.dataset.fields=on?'off':'on';}
+
+  let st;
+  function onSearch(v){
+    clearTimeout(st);
+    const box=document.getElementById('results');
+    if(v.trim().length<2){box.classList.remove('show');box.innerHTML='';return;}
+    st=setTimeout(()=>{
+      const q=v.toLowerCase();
+      const hits=clientes.filter(c=>c.name.toLowerCase().includes(q)).slice(0,5);
+      if(!hits.length){box.classList.remove('show');box.innerHTML='';return;}
+      box.innerHTML=hits.map(c=>{
+        const ini=c.name.trim().slice(0,2).toUpperCase();
+        return '<div class="ri" onclick="pick('+c.id+',\''+c.name.replace(/'/g,"\\'")+'\')"><span class="av">'+ini+'</span><span><b>'+c.name+'</b> <span>· ya existe en Odoo · vincular</span></span></div>';
+      }).join('');
+      box.classList.add('show');
+    },300);
+  }
+  function pick(id,name){
+    linkedPartnerId=id;
+    document.getElementById('search').value=name;
+    document.getElementById('f_company').value=name;
+    document.getElementById('results').classList.remove('show');
+    toast('Contacto vinculado','partner_id = '+id);
+  }
+
+  function tog(b){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');}
+  function bant(b){const g=b.parentElement;g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');bs[g.dataset.b]=+b.dataset.v;gate();}
+
+  function gate(){
+    const vals=Object.values(bs).filter(v=>v!==null);
+    const pct=Math.round((vals.reduce((s,v)=>s+v,0)/8)*100);
+    const fill=document.getElementById('fill'),p=document.getElementById('pct'),m=document.getElementById('mmsg');
+    fill.style.width=pct+'%';p.textContent=pct+'%';
+    const ready=pct>=GATE;
+    if(ready){fill.style.background='linear-gradient(90deg,var(--green),#0e8f43)';p.style.color='var(--green)';m.style.color='var(--green)';m.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Calificado. Puede crearse como oportunidad en el pipeline.';}
+    else{fill.style.background='linear-gradient(90deg,var(--gold),#d8b34d)';p.style.color=pct>0?'var(--gold)':'var(--muted)';m.style.color='var(--muted)';m.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Falta calificación. Súbelo a '+GATE+'% o guárdalo como lead.';}
+    const btn=document.getElementById('save'),label=document.getElementById('savelabel'),meta=document.getElementById('abmeta');
+    if(document.body.dataset.mode==='opp'){
+      label.textContent='Crear oportunidad'; btn.disabled=!ready;
+      meta.innerHTML=ready?'<b>Listo para el pipeline</b><br>Calificación '+pct+'% · entra como oportunidad.':'<b>Aún no calificado ('+pct+'%)</b><br>Completa BANT o cambia a Lead.';
+    }else{label.textContent='Guardar lead';btn.disabled=false;meta.innerHTML='<b>Modo Lead</b><br>Se guarda como lead sin tocar el pipeline.';}
+  }
+
+  function payload(){
+    const isOpp=document.body.dataset.mode==='opp';
+    const tags=[...document.querySelectorAll('#tags button[aria-pressed="true"]')].map(b=>b.textContent);
+    return {
+      type:isOpp?'opportunity':'lead',
+      name:isOpp?(document.getElementById('f_title').value||document.getElementById('f_company').value):(document.getElementById('f_company').value||document.getElementById('f_contact').value),
+      partner_id:linkedPartnerId,
+      contact_name:document.getElementById('f_contact').value,
+      partner_name:document.getElementById('f_company').value,
+      email_from:document.getElementById('f_email').value,
+      phone:document.getElementById('f_phone').value,
+      expected_revenue:isOpp?Number(document.getElementById('f_rev').value||0):0,
+      date_deadline:isOpp?document.getElementById('f_deadline').value:null,
+      stage:isOpp?document.getElementById('f_stage').value:null,
+      priority:isOpp?document.getElementById('f_prio').value:null,
+      tags, bant:isOpp?bs:null,
+      user:document.getElementById('f_user').value,
+      team:document.getElementById('f_team').value,
+      source:document.getElementById('f_source').value,
+      description:document.getElementById('f_notes').value
+    };
+  }
+
+  async function save(){
+    const isOpp=document.body.dataset.mode==='opp';
+    const body=payload();
+    if(!body.contact_name){toast('Falta el nombre del contacto','contact_name requerido',true);return;}
+    try{
+      const res=await fetch('/api/odoo-crm-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const d=await res.json();
+      if(d&&d.ok) toast(isOpp?'Oportunidad creada':'Lead guardado','crm.lead #'+(d.id||'')+' · type='+body.type);
+      else toast('No se pudo guardar', (d&&d.error)||'Revisa la función odoo-crm-lead', true);
+    }catch(e){
+      // Preview o función aún no desplegada: confirma el flujo sin romper.
+      toast(isOpp?'Oportunidad creada (demo)':'Lead guardado (demo)','Falta crear /api/odoo-crm-lead en Netlify');
+    }
+  }
+
+  function resetForm(){
+    document.querySelectorAll('input,textarea').forEach(i=>i.value='');
+    document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+    document.querySelectorAll('#tags button[aria-pressed="true"]').forEach(t=>t.setAttribute('aria-pressed','false'));
+    document.querySelectorAll('.seg button[aria-pressed="true"]').forEach(b=>b.setAttribute('aria-pressed','false'));
+    Object.keys(bs).forEach(k=>bs[k]=null); linkedPartnerId=null;
+    document.getElementById('results').classList.remove('show');
+    gate();
+  }
+
+  let tt;
+  function toast(txt,sub,err){
+    document.getElementById('toast-t').textContent=txt;
+    document.getElementById('toast-s').textContent=sub||'';
+    const e=document.getElementById('toast'); e.className='toast show'+(err?' err':'');
+    clearTimeout(tt); tt=setTimeout(()=>e.classList.remove('show'),2800);
+  }
+
+  gate();
+</script>
+</body>
+</html>
