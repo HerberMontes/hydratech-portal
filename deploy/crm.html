@@ -24,12 +24,13 @@
   .arch{font-family:'Archivo',sans-serif}
 
   /* ===== barra superior HydraTech (idéntica a tus herramientas) ===== */
-  #ht-bar{background:var(--bar); border-bottom:3px solid var(--blue)}
+  #ht-bar{background:#fff; border-bottom:3px solid var(--blue)}
   .ht-bar-in{max-width:1100px; margin:0 auto; padding:10px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px}
-  .ht-back{display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:#aeb6d4}
+  .ht-back{display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:#4a5267}
   .ht-back img{height:18px; display:block}
   .ht-back .wm{display:none; color:#fff; font-family:'Archivo',sans-serif; font-weight:800; font-size:15px; letter-spacing:.02em}
-  .ht-toolname{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#5b6390}
+  .ht-toolname{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#717a90}
+  .ht-back .wm{color:#1b2138}
 
   /* ===== tabs de sección ===== */
   .subnav{background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20}
@@ -174,7 +175,7 @@
   <div class="ht-bar-in">
     <a class="ht-back" href="acceso.html">
       <span style="font-size:18px; line-height:1;">&#8592;</span>
-      <img src="assets/hydratech-wordmark-white.png" alt="HydraTech Group" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'">
+      <img src="assets/hydratech-wordmark.png" alt="HydraTech Group" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline'">
       <span class="wm">HydraTech</span>
     </a>
     <span class="ht-toolname">CRM · Captura</span>
@@ -304,11 +305,13 @@
 
 <script>
   const GATE=70, bs={b:null,a:null,n:null,t:null};
-  let clientes=[], linkedPartnerId=null;
+  let clientes=[], linkedPartnerId=null, repEmail=null, repName=null;
 
   /* ---- integración con permisos: se ejecuta tras el login (auth-gate.js) ---- */
   window.onAuthReady=function(user){
     const name=(user&&user.user_metadata&&user.user_metadata.full_name)||(user&&user.email)||"Sesión";
+    repEmail=(user&&user.email)||null;   // <- el correo con que entró al portal
+    repName=name;
     document.getElementById("whoami").textContent=name;
     document.getElementById("whoav").textContent=(name.trim()[0]||"·").toUpperCase();
     const opt=document.querySelector('#f_user option'); if(opt) opt.textContent=name+" (tú)";
@@ -395,6 +398,7 @@
       stage:isOpp?document.getElementById('f_stage').value:null,
       priority:isOpp?document.getElementById('f_prio').value:null,
       tags, bant:isOpp?bs:null,
+      repEmail, repName,
       user:document.getElementById('f_user').value,
       team:document.getElementById('f_team').value,
       source:document.getElementById('f_source').value,
