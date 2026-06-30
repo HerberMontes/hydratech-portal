@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM · Tablero · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#263370;--ink:#1b2138;--body:#4a5267;--muted:#717a90;
+    --line:#e6e9f0;--line2:#d8deea;--soft:#f7f9fc;--field:#fafbfd;
+    --green:#16a34a;--green-d:#157f3b;--red:#e5484d;--gold:#c9a14a;--gold-d:#9c7a22;--shadow:0 1px 2px rgba(27,33,56,.04),0 10px 30px -14px rgba(27,33,56,.14)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  #ht-bar{background:#fff;border-bottom:3px solid var(--blue)}
+  .ht-bar-in{max-width:1040px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#4a5267}
+  .ht-back img{height:18px;display:block}
+  .ht-back .wm{display:none;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#1b2138}
+  .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#717a90}
+  .subnav{background:#fff;border-bottom:1px solid var(--line)}
+  .subnav-in{max-width:1040px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:4px;height:52px}
+  .subnav a{font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:8px;display:flex;align-items:center;gap:7px}
+  .subnav a svg{width:15px;height:15px}
+  .subnav a.on{color:var(--blue);background:var(--soft)}
+
+  main{max-width:1040px;margin:0 auto;padding:26px 20px 60px}
+  .head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}
+  h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin-top:5px}
+  .sub{font-size:13px;color:var(--muted);margin-top:3px}
+  .ctrl{margin-left:auto;display:flex;align-items:flex-end;gap:10px}
+  .ctrl select{font:inherit;font-size:14px;background:#fff;border:1.5px solid var(--line2);border-radius:9px;padding:9px 12px}
+  .ctrl select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(38,51,112,.12)}
+
+  .legend{display:flex;gap:12px;margin:18px 0;font-size:11.5px}
+  .legend div{background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 12px}
+  .legend b{display:block;font-size:11px;margin-bottom:2px}
+  .legend .a{color:var(--blue)} .legend .r{color:var(--green-d)}
+
+  .rep{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px 18px;margin-bottom:13px;box-shadow:var(--shadow)}
+  .rep.flag{border-color:#f3d6cf;background:#fffaf8}
+  .rep-h{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+  .rep-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex:none;background:var(--blue)}
+  .rep-h .nm{font-weight:600;font-size:15px}
+  .rep-h .tm{font-size:12px;color:var(--muted)}
+  .rep-h .badge{margin-left:auto;font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:20px}
+  .badge.ok{background:#f0f9f3;color:var(--green-d)} .badge.warn{background:#fdf1f1;color:var(--red)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:11px}
+  .met{background:var(--field);border-radius:10px;padding:10px 12px}
+  .met .mv{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;line-height:1}
+  .met .mt{font-size:10.5px;color:var(--muted);margin-top:3px}
+  .met.a{border-left:3px solid var(--blue)} .met.a .mv{color:var(--blue)}
+  .met.r{border-left:3px solid var(--green)} .met.r .mv{color:var(--green-d)}
+  .flags{display:flex;gap:10px}
+  .flagi{flex:1;font-size:11.5px;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+  .flagi svg{width:14px;height:14px;flex:none}
+  .flagi.red{color:var(--red);border-color:#f3d6cf;background:#fff5f3}
+  .flagi.amb{color:var(--gold-d);border-color:#efe1c5;background:#fdf8ef}
+  .flagi.gd{color:var(--green-d);border-color:#cce9d6;background:#f1faf6}
+  .empty-state{text-align:center;color:var(--muted);padding:40px 0;font-size:14px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr 1fr}}
+  :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+</style>
+<script>window.REQUIRE_ROLE="crm-gerencia";</script>
+<script defer src="auth-gate.js"></script>
+</head>
+<body>
+<div id="ht-bar"><div class="ht-bar-in">
+  <a class="ht-back" href="acceso.html"><span style="font-size:18px;line-height:1;">&#8592;</span>
+    <img src="assets/hydratech-wordmark.png" alt="HydraTech Group" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="wm">HydraTech</span></a>
+  <span class="ht-tool">CRM · Tablero</span>
+</div></div>
+<nav class="subnav"><div class="subnav-in">
+  <a href="crm-reporte.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7h8M8 12h8M8 17h5"/></svg>Reporte por vendedor</a>
+  <a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-6 4 3 5-8"/></svg>Tablero del equipo</a>
+</div></nav>
+
+<main>
+  <div class="head">
+    <div>
+      <div class="eyebrow">Tablero gerencial</div>
+      <h1>Equipo comercial</h1>
+      <div class="sub">Para retroalimentar, no para vigilar · <span id="rango">semana en curso</span></div>
+    </div>
+    <div class="ctrl"><select id="sel-semana" onchange="cargar()"></select></div>
+  </div>
+
+  <div class="legend">
+    <div><b class="a">Actividad</b>Lo que hizo el vendedor. Se gestiona con esto.</div>
+    <div><b class="r">Resultado</b>Lo que pasó. Se evalúa con esto.</div>
+  </div>
+
+  <div id="content"><div class="empty-state">Cargando equipo…</div></div>
+</main>
+
+<script>
+  const SAMPLE=[
+    {nombre:"Ana Ríos",equipo:"Industrial",actividades:28,nuevas:6,pipeline:"$2.4M",ganadas:2,sinPaso:0,vencidas:0},
+    {nombre:"Carlos Méndez",equipo:"Industrial",actividades:9,nuevas:11,pipeline:"$3.1M",ganadas:0,sinPaso:7,vencidas:4},
+    {nombre:"Laura Sánchez",equipo:"Mayoreo",actividades:22,nuevas:4,pipeline:"$980K",ganadas:3,sinPaso:1,vencidas:0},
+  ];
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  const ini=n=>n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+
+  function render(reps){
+    if(!reps||!reps.length){ document.getElementById("content").innerHTML='<div class="empty-state">Aún no hay vendedores con datos esta semana.</div>'; return; }
+    document.getElementById("content").innerHTML=reps.map(r=>{
+      const flag=(r.sinPaso>0)||(r.vencidas>2);
+      const ok=(c)=>c>0;
+      return '<div class="rep'+(flag?" flag":"")+'">'+
+        '<div class="rep-h"><div class="rep-av">'+ini(r.nombre)+'</div>'+
+          '<div><div class="nm">'+esc(r.nombre)+'</div><div class="tm">'+esc(r.equipo||"—")+'</div></div>'+
+          '<div class="badge '+(flag?"warn":"ok")+'">'+(flag?"Dar feedback":"Al día")+'</div></div>'+
+        '<div class="grid">'+
+          met("a",r.actividades,"Actividades hechas")+met("a",r.nuevas,"Oportunidades nuevas")+
+          met("r",r.pipeline,"Valor al pipeline")+met("r",r.ganadas,"Cerradas ganadas")+
+        '</div><div class="flags">'+
+          flagi(r.sinPaso,"sin sig. paso", r.sinPaso>0?"red":"gd")+
+          flagi(r.vencidas,"vencidas", r.vencidas>2?"amb":(r.vencidas>0?"amb":"gd"))+
+        '</div></div>';
+    }).join("");
+  }
+  function met(cls,v,t){ return '<div class="met '+cls+'"><div class="mv">'+esc(v)+'</div><div class="mt">'+esc(t)+'</div></div>'; }
+  function flagi(n,label,cls){
+    const ico = cls==="gd"
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+    return '<div class="flagi '+cls+'">'+ico+' '+n+' '+esc(label)+'</div>';
+  }
+
+  async function cargar(){
+    const w=document.getElementById("sel-semana").value||"";
+    try{
+      const r=await fetch("/api/odoo-crm-tablero?semana="+encodeURIComponent(w));
+      const d=await r.json();
+      if(d&&d.ok&&Array.isArray(d.reps)){ render(d.reps); if(d.rango) document.getElementById("rango").textContent=d.rango; return; }
+      render(SAMPLE);
+    }catch(e){ render(SAMPLE); }
+  }
+  function init(){ const s=document.getElementById("sel-semana"); for(let n=26;n>=19;n--){const o=document.createElement("option");o.value=n;o.textContent="Semana "+n;s.appendChild(o);} cargar(); }
+  window.onAuthReady=function(){ init(); };
+  setTimeout(function(){ if(document.getElementById("content").textContent.indexOf("Cargando")>=0) init(); }, 800);
+</script>
+</body>
+</html>

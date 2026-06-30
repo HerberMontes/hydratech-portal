@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM · Mi plan · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#263370;--blue-deep:#1b2447;--ink:#1b2138;--body:#4a5267;--muted:#717a90;
+    --line:#e6e9f0;--line2:#d8deea;--soft:#f7f9fc;--field:#fafbfd;
+    --green:#16a34a;--red:#e5484d;--gold:#c9a14a;--shadow:0 1px 2px rgba(27,33,56,.04),0 10px 30px -14px rgba(27,33,56,.14)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  #ht-bar{background:#fff;border-bottom:3px solid var(--blue)}
+  .ht-bar-in{max-width:980px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#4a5267}
+  .ht-back img{height:18px;display:block}
+  .ht-back .wm{display:none;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:#1b2138}
+  .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#717a90}
+  .subnav{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .subnav-in{max-width:980px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:4px;height:52px}
+  .subnav a{font-size:13.5px;font-weight:600;color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:8px;display:flex;align-items:center;gap:7px}
+  .subnav a svg{width:15px;height:15px}
+  .subnav a.on{color:var(--blue);background:var(--soft)}
+  .subnav .who{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .subnav .who b{color:var(--ink);font-weight:600}
+  .subnav .who .av{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+
+  main{max-width:980px;margin:0 auto;padding:26px 20px 60px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}
+  h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin-top:5px}
+  .wk{font-size:13px;color:var(--muted);margin-top:3px}
+
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0 8px}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:13px;padding:15px 16px;box-shadow:var(--shadow)}
+  .chip .n{font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;line-height:1}
+  .chip .t{font-size:12px;color:var(--muted);margin-top:6px}
+  .chip.warn .n{color:var(--gold)}.chip.bad .n{color:var(--red)}
+
+  .sech{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:26px 2px 12px}
+  .act{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:12px;box-shadow:var(--shadow);position:relative;overflow:hidden;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .act::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green)}
+  .act.due::before{background:var(--red)} .act.none::before{background:var(--gold)}
+  .act-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;background:#eef1f9;color:var(--blue)}
+  .act-ic svg{width:18px;height:18px}
+  .act.none .act-ic{background:#fbf6ea;color:var(--gold)}
+  .act-main{flex:1;min-width:200px}
+  .act-name{font-weight:600;font-size:14px}
+  .act-co{font-size:12px;color:var(--muted);margin-top:1px}
+  .act-next{font-size:12.5px;color:var(--body);margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .act-next .when{font-weight:600}
+  .when.due{color:var(--red)} .when.today{color:var(--gold)} .when.ok{color:var(--green)}
+  .act-next.empty{color:var(--gold);font-weight:500}
+  .act-val{text-align:right;flex:none}
+  .act-val .v{font-family:'Archivo',sans-serif;font-weight:700;font-size:15px}
+  .act-val .vt{font-size:10px;color:var(--muted)}
+  .act-btns{display:flex;gap:8px;flex:none}
+  .act-btns button{border:1.5px solid var(--line2);background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);padding:9px 13px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .act-btns button svg{width:13px;height:13px}
+  .act-btns .prim{background:var(--blue);border-color:var(--blue);color:#fff}
+  .act-btns .gold{background:var(--gold);border-color:var(--gold);color:#fff}
+  .empty-state{text-align:center;color:var(--muted);padding:40px 0;font-size:14px}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);background:var(--ink);color:#fff;border-radius:11px;padding:12px 17px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 36px rgba(27,33,56,.34);opacity:0;pointer-events:none;transition:.28s;z-index:40}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast .ck{width:20px;height:20px;border-radius:50%;background:var(--green);display:grid;place-items:center;flex:none}
+  @media(max-width:680px){.chips{grid-template-columns:1fr}.act{align-items:flex-start}.act-val,.act-btns{margin-left:52px}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+</style>
+<script>window.REQUIRE_ROLE="crm";</script>
+<script defer src="auth-gate.js"></script>
+</head>
+<body>
+<div id="ht-bar"><div class="ht-bar-in">
+  <a class="ht-back" href="acceso.html"><span style="font-size:18px;line-height:1;">&#8592;</span>
+    <img src="assets/hydratech-wordmark.png" alt="HydraTech Group" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span class="wm">HydraTech</span></a>
+  <span class="ht-tool">CRM · Mi plan</span>
+</div></div>
+
+<nav class="subnav"><div class="subnav-in">
+  <a href="crm.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Captura</a>
+  <a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Mi plan</a>
+  <div class="who"><span>Vendedor</span> <b id="whoami">—</b> <span class="av" id="whoav">·</span></div>
+</div></nav>
+
+<main>
+  <div class="eyebrow">Mi plan de trabajo</div>
+  <h1>Mis actividades</h1>
+  <div class="wk" id="wk">Tus actividades agendadas en Odoo</div>
+
+  <div class="chips">
+    <div class="chip"><div class="n" id="c-hoy">—</div><div class="t">actividades hoy</div></div>
+    <div class="chip bad"><div class="n" id="c-venc">—</div><div class="t">vencidas</div></div>
+    <div class="chip warn"><div class="n" id="c-sin">—</div><div class="t">sin siguiente paso</div></div>
+  </div>
+
+  <div id="content"><div class="empty-state">Cargando tu plan…</div></div>
+</main>
+
+<div class="toast" id="toast"><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span id="toast-t">Listo</span></div>
+
+<script>
+  let repEmail=null;
+  const SAMPLE={
+    vendedor:"Carlos Méndez", hoy:2, vencidas:1, sinPaso:1,
+    actividades:[
+      {id:1,tipo:"call",oportunidad:"Acería del Bajío — cotización",cliente:"Industrias GR · Propuesta",monto:"$480K",resumen:"Llamada de seguimiento",fecha:"Vencida · ayer",estado:"due"},
+      {id:2,tipo:"meeting",oportunidad:"Cierre — Aceros del Norte",cliente:"Juan Pérez · Negociación",monto:"$1.20M",resumen:"Reunión de cierre",fecha:"Hoy · 4:00 pm",estado:"today"},
+      {id:3,tipo:"email",oportunidad:"Propuesta — Metal Pro",cliente:"Laura Sánchez · Propuesta",monto:"$310K",resumen:"Correo con cotización",fecha:"Mañana",estado:"ok"},
+    ],
+    sinPasoLista:[
+      {leadId:99,oportunidad:"Distribuidora Centro",cliente:"Comercial DC · Calificado",monto:"$120K"},
+    ],
+  };
+
+  const ICON={
+    call:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
+    meeting:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    email:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M22 7l-10 5L2 7"/>',
+    todo:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  };
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+  function render(p){
+    document.getElementById("whoami").textContent=p.vendedor||"—";
+    document.getElementById("whoav").textContent=((p.vendedor||"·").trim()[0]||"·").toUpperCase();
+    document.getElementById("c-hoy").textContent=p.hoy;
+    document.getElementById("c-venc").textContent=p.vencidas;
+    document.getElementById("c-sin").textContent=p.sinPaso;
+
+    let html="";
+    if((p.sinPasoLista&&p.sinPasoLista.length) || (p.actividades||[]).some(a=>a.estado==="due")){
+      html+='<div class="sech">Requiere atención</div>';
+      (p.actividades||[]).filter(a=>a.estado==="due").forEach(a=>html+=actCard(a));
+      (p.sinPasoLista||[]).forEach(s=>html+=sinCard(s));
+    }
+    const resto=(p.actividades||[]).filter(a=>a.estado!=="due");
+    if(resto.length){ html+='<div class="sech">Próximas actividades</div>'; resto.forEach(a=>html+=actCard(a)); }
+    if(!html) html='<div class="empty-state">No tienes actividades pendientes. Buen trabajo manteniendo el pipeline al día.</div>';
+    document.getElementById("content").innerHTML=html;
+  }
+
+  function actCard(a){
+    const ic=ICON[a.tipo]||ICON.todo;
+    return '<div class="act '+(a.estado==="due"?"due":"")+'">'+
+      '<div class="act-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'+
+      '<div class="act-main"><div class="act-name">'+esc(a.oportunidad)+'</div><div class="act-co">'+esc(a.cliente)+'</div>'+
+        '<div class="act-next"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg> '+esc(a.resumen)+' <span class="when '+a.estado+'">'+esc(a.fecha)+'</span></div></div>'+
+      '<div class="act-val"><div class="v">'+esc(a.monto)+'</div><div class="vt">esperado</div></div>'+
+      '<div class="act-btns"><button class="prim" onclick="hecho('+a.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Hecho</button>'+
+        '<button onclick="agendar('+a.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Reagendar</button></div></div>';
+  }
+  function sinCard(s){
+    return '<div class="act none">'+
+      '<div class="act-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>'+
+      '<div class="act-main"><div class="act-name">'+esc(s.oportunidad)+'</div><div class="act-co">'+esc(s.cliente)+'</div>'+
+        '<div class="act-next empty"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Sin siguiente paso — el negocio está parado</div></div>'+
+      '<div class="act-val"><div class="v">'+esc(s.monto)+'</div><div class="vt">esperado</div></div>'+
+      '<div class="act-btns"><button class="gold" onclick="agendarLead('+s.leadId+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Agendar siguiente paso</button></div></div>';
+  }
+
+  async function post(body){
+    try{ const r=await fetch("/api/odoo-crm-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }
+    catch(e){ return {ok:false,demo:true}; }
+  }
+  async function hecho(id){ const d=await post({action:"done",activityId:id,email:repEmail}); toast(d.demo?"Actividad marcada (demo)":"Actividad registrada"); cargar(); }
+  async function agendar(id){ toast("Abriendo reprogramación…"); /* aquí abrirías un selector de fecha/tipo */ }
+  async function agendarLead(leadId){ const d=await post({action:"schedule",leadId,tipo:"todo",summary:"Siguiente paso",email:repEmail}); toast(d.demo?"Siguiente paso agendado (demo)":"Siguiente paso agendado"); cargar(); }
+
+  async function cargar(){
+    try{
+      const r=await fetch("/api/odoo-crm-plan?email="+encodeURIComponent(repEmail||""));
+      const d=await r.json();
+      if(d&&d.ok&&d.plan){ render(d.plan); return; }
+      render(SAMPLE);
+    }catch(e){ render(SAMPLE); }
+  }
+
+  let tt; function toast(t){ document.getElementById("toast-t").textContent=t; const e=document.getElementById("toast"); e.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>e.classList.remove("show"),2400); }
+
+  window.onAuthReady=function(user){ repEmail=(user&&user.email)||null; cargar(); };
+  // En preview (sin auth-gate) muestra el ejemplo:
+  setTimeout(function(){ if(!repEmail && document.getElementById("content").textContent.indexOf("Cargando")>=0) render(SAMPLE); }, 800);
+</script>
+</body>
+</html>
