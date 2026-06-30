@@ -6,6 +6,10 @@ import { executeKw, checkToken, json } from "./lib/odoo.js";
 // Odoo guarda la prioridad como selección de texto: 0=Baja,1=Normal,2=Alta,3=Muy alta
 const PRIORIDAD = { "Normal": "1", "Media": "2", "Alta": "2", "Muy alta": "3" };
 
+// Convención de la etiqueta del vendedor. DEBE coincidir con odoo-crm-reporte.js
+// para que el reporte filtre correctamente por la misma etiqueta.
+const vendTag = (name) => "Vendedor · " + name;
+
 // Busca el id de un registro relacional por nombre; si no existe (y se pide), lo crea.
 // NUNCA lanza: si algo falla, devuelve null para no bloquear la creación del lead.
 async function resolverIdSeguro(model, nombre, crearSiFalta = false, extra = {}) {
@@ -45,6 +49,8 @@ export default async (req) => {
     };
     if (b.partner_id) vals.partner_id = Number(b.partner_id);
 
+    const tagIds = [];
+
     if (vals.type === "opportunity") {
       if (b.expected_revenue) vals.expected_revenue = Number(b.expected_revenue) || 0;
       if (b.date_deadline) vals.date_deadline = b.date_deadline; // YYYY-MM-DD
@@ -54,24 +60,38 @@ export default async (req) => {
       const stageId = await resolverIdSeguro("crm.stage", b.stage, false);
       if (stageId) vals.stage_id = stageId;
 
+      // Etiquetas manuales (mejor esfuerzo)
       if (Array.isArray(b.tags) && b.tags.length) {
-        const tagIds = [];
         for (const t of b.tags) {
           const id = await resolverIdSeguro("crm.tag", t, true);
           if (id) tagIds.push(id);
         }
-        if (tagIds.length) vals.tag_ids = [[6, 0, tagIds]];
       }
     }
 
     const sourceId = await resolverIdSeguro("utm.source", b.source, true);
     if (sourceId) vals.source_id = sourceId;
 
-    // Vendedor/equipo: por ahora se guardan en la descripción (ver nota más abajo).
-    if (b.user || b.team) {
-      const extra = `Vendedor: ${b.user || "-"} · Equipo: ${b.team || "-"}`;
+    // ----- ATRIBUCIÓN DEL VENDEDOR (sin consumir usuario de Odoo) -----
+    // El vendedor entra al portal con su correo (Netlify Identity). Lo buscamos
+    // como EMPLEADO (hr.employee, gratis) por work_email y marcamos el lead con
+    // su etiqueta. Así una sola base/usuario de Odoo sirve a varios vendedores.
+    let vendedorNombre = b.repName || "";
+    if (b.repEmail) {
+      try {
+        const emp = await executeKw("hr.employee", "search_read",
+          [[["work_email", "=", b.repEmail]]], { fields: ["name"], limit: 1 });
+        if (emp && emp.length) vendedorNombre = emp[0].name;
+      } catch (e) {}
+    }
+    if (vendedorNombre) {
+      const vtId = await resolverIdSeguro("crm.tag", vendTag(vendedorNombre), true);
+      if (vtId) tagIds.push(vtId);
+      const extra = `Vendedor: ${vendedorNombre}${b.team ? " · Equipo: " + b.team : ""}`;
       vals.description = vals.description ? `${extra}\n\n${vals.description}` : extra;
     }
+
+    if (tagIds.length) vals.tag_ids = [[6, 0, tagIds]];
 
     // ----- Crear en Odoo (esto sí debe funcionar) -----
     const id = await executeKw("crm.lead", "create", [vals]);
