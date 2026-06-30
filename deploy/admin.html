@@ -10,40 +10,44 @@
 <script>window.REQUIRE_ROLE = "admin";</script>
 <script defer src="auth-gate.js"></script>
 <style>
-  *{box-sizing:border-box;}
-  body{margin:0; background:#0e1220; color:#e7eaf3; font-family:'IBM Plex Sans',system-ui,sans-serif;}
-  .wrap{max-width:1040px; margin:0 auto; padding:26px 22px 70px;}
-  .top{display:flex; align-items:center; justify-content:space-between; gap:12px;}
-  .back{color:#9aa3cc; text-decoration:none; font-size:14px; font-weight:600;}
-  .logout{background:transparent; border:1px solid #2c3350; color:#9aa3cc; border-radius:7px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;}
-  .kicker{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; color:#5b6390; margin-top:26px;}
-  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:34px; margin:8px 0 4px;}
-  .sub{color:#9aa3cc; font-size:15px; margin:0 0 22px;}
-  .panel{background:#161c30; border:1px solid #232a45; border-radius:14px; padding:18px; margin-top:16px;}
-  .panel h2{font-family:'Archivo',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.05em; color:#aeb6d4; margin:0 0 14px;}
-  label{font-size:12px; font-weight:600; color:#9aa3cc;}
-  input[type=email]{width:100%; background:#0e1220; border:1px solid #2c3350; color:#e7eaf3; border-radius:8px; padding:10px 12px; font-size:15px; font-family:inherit;}
-  input[type=email]:focus{outline:none; border-color:#3a52a8;}
-  .btn{border:0; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;}
-  .primary{background:#3a52a8; color:#fff;} .primary:hover{background:#324a9b;} .primary:disabled{opacity:.5; cursor:default;}
-  .small{background:#222a47; color:#cdd5ef;} .danger{background:transparent; border:1px solid #5a2a2a; color:#e1928f;}
-  .perms{display:flex; flex-wrap:wrap; gap:14px; margin-top:10px;}
-  .chk{display:flex; align-items:center; gap:7px; font-size:13.5px; color:#cdd5ef; cursor:pointer;}
-  .chk input{width:17px; height:17px; accent-color:#3a52a8;}
-  table{width:100%; border-collapse:collapse; margin-top:6px;}
-  th{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#6a739c; text-align:left; padding:8px 10px; border-bottom:1px solid #232a45;}
-  td{padding:12px 10px; border-bottom:1px solid #1c2236; vertical-align:middle; font-size:14px;}
-  .email{font-weight:600;} .pill{font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 8px; border-radius:20px; margin-left:8px;}
-  .pend{background:#3a2f12; color:#e0b765;} .ok{background:#143020; color:#69d49a;}
-  .rowbtns{display:flex; gap:8px; justify-content:flex-end;}
-  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:#8a93b8; margin-top:10px; min-height:16px;}
-  .status.err{color:#e1928f;} .status.ok{color:#69d49a;}
+  *{box-sizing:border-box}
+  body{margin:0; background:#ffffff; color:#1b2138; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px; margin:0 auto; padding:24px 22px 70px}
+  .top{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .back{color:#4a5267; text-decoration:none; font-size:14px; font-weight:600}
+  .back:hover{color:#263370}
+  .logout{background:#fff; border:1.5px solid #d8deea; color:#4a5267; border-radius:8px; padding:8px 15px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit}
+  .logout:hover{border-color:#263370; color:#263370}
+  .kicker{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:#263370; margin-top:30px}
+  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:34px; margin:9px 0 4px; letter-spacing:-.01em}
+  .sub{color:#4a5267; font-size:15px; margin:0 0 22px}
+  .panel{background:#fff; border:1px solid #e6e9f0; border-radius:14px; padding:20px; margin-top:16px; box-shadow:0 1px 2px rgba(27,33,56,.04)}
+  .panel h2{font-family:'Archivo',sans-serif; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#717a90; margin:0 0 16px}
+  label{font-size:12px; font-weight:600; color:#4a5267}
+  input[type=email]{width:100%; background:#fafbfd; border:1.5px solid #e6e9f0; color:#1b2138; border-radius:9px; padding:11px 12px; font-size:15px; font-family:inherit}
+  input[type=email]:focus{outline:none; border-color:#263370; box-shadow:0 0 0 3px rgba(38,51,112,.12)}
+  .btn{border:0; border-radius:9px; padding:11px 18px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit}
+  .primary{background:#263370; color:#fff} .primary:hover{background:#1b2447} .primary:disabled{opacity:.5; cursor:default}
+  .small{background:#eef1f9; color:#263370} .small:hover{background:#e2e7f5}
+  .danger{background:#fff; border:1.5px solid #f0c9c7; color:#d6453f} .danger:hover{background:#fdf1f1}
+  .perms{display:flex; flex-wrap:wrap; gap:14px; margin-top:12px}
+  .chk{display:flex; align-items:center; gap:7px; font-size:13.5px; color:#1b2138; cursor:pointer; font-weight:500}
+  .chk input{width:17px; height:17px; accent-color:#263370}
+  table{width:100%; border-collapse:collapse; margin-top:6px}
+  th{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#717a90; text-align:left; padding:9px 10px; border-bottom:1px solid #e6e9f0}
+  td{padding:13px 10px; border-bottom:1px solid #f0f2f7; vertical-align:middle; font-size:14px}
+  .email{font-weight:600}
+  .pill{font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 8px; border-radius:20px; margin-left:8px}
+  .pend{background:#fbf7ec; color:#9c7a22; border:1px solid #e8dcc0} .ok{background:#f0f9f3; color:#157f3b; border:1px solid #cce9d6}
+  .rowbtns{display:flex; gap:8px; justify-content:flex-end}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:#717a90; margin-top:12px; min-height:16px}
+  .status.err{color:#d6453f} .status.ok{color:#157f3b}
   @media (max-width:680px){
-    h1{font-size:27px;} td .perms{gap:10px;}
-    table, thead, tbody, th, td, tr{display:block;}
-    thead{display:none;} tr{border:1px solid #232a45; border-radius:10px; margin-bottom:12px; padding:6px 10px;}
-    td{border-bottom:1px solid #1c2236;} td:last-child{border-bottom:0;}
-    .rowbtns{justify-content:flex-start;}
+    h1{font-size:27px} td .perms{gap:10px}
+    table, thead, tbody, th, td, tr{display:block}
+    thead{display:none} tr{border:1px solid #e6e9f0; border-radius:10px; margin-bottom:12px; padding:6px 10px}
+    td{border-bottom:1px solid #f0f2f7} td:last-child{border-bottom:0}
+    .rowbtns{justify-content:flex-start}
   }
 </style>
 </head>
@@ -63,7 +67,7 @@
       <label>Correo</label>
       <input id="newEmail" type="email" placeholder="persona@empresa.com" style="margin-top:5px;">
       <div class="perms" id="newPerms"></div>
-      <div style="margin-top:14px;"><button class="btn primary" id="invite">Invitar por correo</button></div>
+      <div style="margin-top:16px;"><button class="btn primary" id="invite">Invitar por correo</button></div>
       <div id="inviteStatus" class="status"></div>
     </div>
 
@@ -74,10 +78,13 @@
   </div>
 
 <script>
+  // Para añadir una herramienta nueva: agrega aquí su {key,label} y en TOOL_ROLES de admin-users.js
   var PERMS = [
     { key: "reportes", label: "Reportes de servicio" },
     { key: "cotizador", label: "Cotizador" },
     { key: "ventas", label: "Reportes de ventas" },
+    { key: "crm", label: "CRM · Captura" },
+    { key: "crm-gerencia", label: "CRM · Reporte gerencial" },
     { key: "admin", label: "Administrador" },
   ];
   var $ = function (id) { return document.getElementById(id); };
