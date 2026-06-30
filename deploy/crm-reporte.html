@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM · Reporte semanal · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#eef0f4;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#1b2138}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  /* barra HydraTech */
+  #ht-bar{background:#141829;border-bottom:3px solid #263370}
+  .ht-bar-in{max-width:980px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#aeb6d4}
+  .ht-back img{height:18px;display:block}
+  .ht-back .wm{display:none;color:#fff;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px}
+  .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b6390}
+
+  /* controles (no se imprimen) */
+  .controls{max-width:980px;margin:0 auto;padding:16px 18px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .controls .f{display:flex;flex-direction:column;gap:5px}
+  .controls label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#717a90}
+  .controls select{font:inherit;font-size:14px;background:#fff;border:1.5px solid #d8deea;border-radius:9px;padding:9px 12px;color:#1b2138;min-width:190px}
+  .controls select:focus{outline:none;border-color:#263370;box-shadow:0 0 0 3px rgba(38,51,112,.12)}
+  .controls .spacer{margin-left:auto}
+  .btn{font:inherit;font-weight:600;font-size:13.5px;border:0;border-radius:9px;padding:10px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn svg{width:15px;height:15px}
+  .btn-primary{background:#263370;color:#fff}
+  .btn-primary:hover{background:#1b2447}
+  .btn-ghost{background:#fff;border:1.5px solid #d8deea;color:#4a5267}
+  .btn-ghost:hover{border-color:#263370;color:#263370}
+
+  /* hoja */
+  .sheet-wrap{display:flex;justify-content:center;padding:6px 16px 40px}
+  .sheet{width:816px;max-width:100%;min-height:1056px;background:#fff;box-shadow:0 8px 40px rgba(27,33,56,.10);padding:38px 40px 32px;display:flex;flex-direction:column}
+
+  .hd{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid #263370}
+  .wordmark{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .wordmark .mk{width:26px;height:26px;border-radius:6px;background:#263370;position:relative;flex:none}
+  .wordmark .mk::after{content:"";position:absolute;inset:6px;border:2px solid #fff;border-radius:3px;border-right-color:transparent;border-bottom-color:transparent}
+  .wordmark .nm{font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;letter-spacing:.3px;color:#1b2138}
+  .hd .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:2.4px;color:#717a90;text-transform:uppercase}
+  .hd .who{font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px;color:#1b2138;margin-top:5px;line-height:1.05}
+  .hd .sub{font-size:12.5px;color:#4a5267;margin-top:3px}
+  .hd .right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .hd .wk{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:#717a90;text-transform:uppercase}
+  .hd .rng{font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;color:#1b2138;margin-top:2px}
+  .pill{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:999px}
+  .pill .d{width:8px;height:8px;border-radius:50%;flex:none}
+  .pill .t{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:1.4px;text-transform:uppercase}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .panel{border:1px solid #e6e9f0;border-radius:9px;overflow:hidden}
+  .panel .ph{padding:11px 15px;border-bottom:1px solid #e6e9f0}
+  .panel .ph .k{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:500}
+  .panel .ph .d{font-size:11px;color:#717a90;margin-top:2px}
+  .panel.act .ph{background:#f4f6fb;border-left:3px solid #263370}
+  .panel.act .ph .k{color:#263370}
+  .panel.out .ph{background:#f3f9f5;border-left:3px solid #16a34a}
+  .panel.out .ph .k{color:#157f3b}
+  .mets{display:grid;grid-template-columns:1fr 1fr}
+  .met{padding:13px 15px;border-top:1px solid #f0f2f7;border-left:1px solid #f0f2f7}
+  .met .ml{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.8px;color:#717a90;text-transform:uppercase;line-height:1.3;min-height:24px}
+  .met .mv{font-family:'Archivo',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.5px;line-height:1}
+  .met .ms{font-size:10.5px;color:#717a90;margin-top:3px}
+  .panel.act .met .mv{color:#263370}
+  .panel.out .met .mv{color:#157f3b}
+
+  .coach{display:flex;align-items:stretch;margin-top:16px;border:1px solid;border-radius:9px;overflow:hidden}
+  .coach .msg{flex:1;padding:13px 16px;display:flex;flex-direction:column;justify-content:center}
+  .coach .msg .k{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:500}
+  .coach .msg .t{font-size:12px;color:#4a5267;margin-top:4px;line-height:1.4;max-width:330px}
+  .coach .nums{display:flex}
+  .coach .num{padding:12px 20px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-width:150px}
+  .coach .num.bl{border-left:1px solid}
+  .coach .num .v{font-family:'Archivo',sans-serif;font-weight:800;font-size:34px;line-height:1}
+  .coach .num .c{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.6px;color:#4a5267;text-transform:uppercase;margin-top:4px;line-height:1.3}
+
+  .lower{display:grid;grid-template-columns:1.62fr 1fr;gap:16px;margin-top:18px}
+  .sectk{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:#263370;text-transform:uppercase;font-weight:500;margin-bottom:9px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  thead th{text-align:left;padding:0 6px 7px 0;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:1px;color:#717a90;text-transform:uppercase;font-weight:500}
+  thead th.r{text-align:right}
+  tbody tr{border-bottom:1px solid #f0f2f7}
+  tbody td{padding:9px 6px;vertical-align:top}
+  td.cli{padding-left:0;font-weight:600;color:#1b2138;line-height:1.25}
+  td.amt{text-align:right;font-family:'Archivo',sans-serif;font-weight:700;color:#1b2138;white-space:nowrap}
+  td.dt{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a5267;white-space:nowrap;padding-right:0}
+  .stg{display:inline-block;padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;white-space:nowrap}
+
+  .trend{border:1px solid #e6e9f0;border-radius:9px;padding:12px 14px 11px;display:flex;flex-direction:column}
+  .trend .tt{font-size:10.5px;color:#717a90;margin-top:2px}
+  .trend .days{display:flex;justify-content:space-between;margin-top:7px}
+  .trend .day{flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#717a90;text-transform:uppercase}
+
+  .notes{margin-top:18px;flex:1;display:flex;flex-direction:column}
+  .notes .nh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
+  .notes .area{flex:1;min-height:96px;border:1px solid #e6e9f0;border-radius:9px;background:repeating-linear-gradient(to bottom,transparent,transparent 30px,#f0f2f7 30px,#f0f2f7 31px);padding:8px 14px}
+  .sigs{display:flex;justify-content:space-between;gap:24px;margin-top:14px}
+  .sig{flex:1;border-top:1px solid #c4cad8;padding-top:5px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:#717a90;text-transform:uppercase}
+  .ft{margin-top:18px;padding-top:10px;border-top:1px solid #e6e9f0;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:#a4abbd;text-transform:uppercase}
+
+  @media print{
+    @page{size:letter;margin:0}
+    body{background:#fff}
+    #ht-bar,.controls{display:none!important}
+    .sheet-wrap{padding:0}
+    .sheet{box-shadow:none;width:100%;min-height:auto}
+  }
+  @media(max-width:840px){
+    .sheet{padding:24px 20px}
+    .twocol,.lower{grid-template-columns:1fr}
+    .hd .who{font-size:24px}
+  }
+</style>
+
+<script>window.REQUIRE_ROLE="crm-gerencia";</script>
+<script defer src="auth-gate.js"></script>
+</head>
+<body>
+
+<div id="ht-bar">
+  <div class="ht-bar-in">
+    <a class="ht-back" href="acceso.html">
+      <span style="font-size:18px;line-height:1;">&#8592;</span>
+      <img src="assets/hydratech-wordmark-white.png" alt="HydraTech Group" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+      <span class="wm">HydraTech</span>
+    </a>
+    <span class="ht-tool">CRM · Reporte semanal</span>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="f">
+    <label>Vendedor</label>
+    <select id="sel-vendedor" onchange="cargar()"></select>
+  </div>
+  <div class="f">
+    <label>Semana</label>
+    <select id="sel-semana" onchange="cargar()"></select>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost" onclick="cargar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0 0 20.5 15"/></svg>Actualizar</button>
+  <button class="btn btn-primary" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Descargar PDF</button>
+</div>
+
+<div class="sheet-wrap">
+  <div class="sheet" id="sheet"><!-- render por JS --></div>
+</div>
+
+<script>
+  /* ---------- datos de ejemplo (fallback si no existe la función) ---------- */
+  const SAMPLE = {
+    vendedor:"Carlos Méndez", equipo:"Equipo Industrial", rol:"Ejecutivo de cuenta sr.",
+    semana:"26", rango:"22 – 28 jun 2026", estado:"requiere",
+    actividad:[
+      {label:"Actividades completadas", value:"47", sub:"de 52 planeadas"},
+      {label:"Llamadas", value:"31", sub:"+6 vs. semana previa"},
+      {label:"Reuniones", value:"9", sub:"4 presenciales"},
+      {label:"Oportunidades nuevas", value:"5", sub:"al pipeline"},
+    ],
+    resultado:[
+      {label:"Valor agregado al pipeline", value:"$1.84M", sub:"MXN · 6 opps"},
+      {label:"Oportunidades ganadas", value:"3", sub:"de 7 en cierre"},
+      {label:"Monto cerrado", value:"$612K", sub:"MXN"},
+      {label:"Avance entre etapas", value:"58%", sub:"tasa de avance"},
+    ],
+    sinPaso:4, vencidas:6,
+    oportunidades:[
+      {cliente:"Northern Pumps & Seals", etapa:"Negociación", monto:"$1.20M", paso:"Reunión técnica en sitio", fecha:"30 jun"},
+      {cliente:"Bajío Steel & Hose", etapa:"Propuesta", monto:"$480K", paso:"Enviar cotización revisada", fecha:"02 jul"},
+      {cliente:"Integral Hydraulics MX", etapa:"Cierre", monto:"$320K", paso:"Firma de contrato", fecha:"01 jul"},
+      {cliente:"Vega Construcción", etapa:"Calificación", monto:"$560K", paso:"Llamada de descubrimiento", fecha:"03 jul"},
+      {cliente:"West Industrial Parts", etapa:"Propuesta", monto:"$275K", paso:"", fecha:"—"},
+    ],
+    trend:[{day:"Lun",value:9},{day:"Mar",value:11},{day:"Mié",value:7},{day:"Jue",value:12},{day:"Vie",value:6},{day:"Sáb",value:2},{day:"Dom",value:0}],
+    generado:"HydraTech CRM",
+  };
+
+  const ETAPA = {
+    "Calificación":{c:"#4a5267",b:"#eef0f4"},
+    "Propuesta":{c:"#263370",b:"#eaedf6"},
+    "Negociación":{c:"#9c7a22",b:"#f6efda"},
+    "Cierre":{c:"#157f3b",b:"#e7f4ec"},
+  };
+  const esc = s => String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+
+  function sparkline(trend){
+    const W=280,H=96,padX=8,padTop=10,padBot=10;
+    const max=Math.max(...trend.map(t=>t.value),1), n=trend.length, step=(W-padX*2)/(n-1);
+    const pts=trend.map((t,i)=>[padX+i*step,(H-padBot)-(t.value/max)*(H-padTop-padBot)]);
+    const line=pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+    const area=pts[0][0].toFixed(1)+","+(H-padBot)+" "+line+" "+pts[n-1][0].toFixed(1)+","+(H-padBot);
+    const dots=pts.map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="#fff" stroke="#263370" stroke-width="2"></circle>').join("");
+    return '<svg viewBox="0 0 280 96" width="100%" preserveAspectRatio="none" style="display:block"><polygon points="'+area+'" fill="#263370" fill-opacity="0.07"></polygon><polyline points="'+line+'" fill="none" stroke="#263370" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>'+dots+'</svg>';
+  }
+
+  function render(s){
+    const aldia = s.estado==="aldia";
+    const est = aldia
+      ? {t:"Al día",col:"#16a34a",bg:"#f0f9f3",bd:"#cce9d6"}
+      : {t:"Requiere atención",col:"#e5484d",bg:"#fdf1f1",bd:"#f6d3d4"};
+    const limpio = s.sinPaso===0 && s.vencidas===0;
+    const coach = limpio
+      ? {bg:"#f3f9f5",bd:"#cce9d6",ink:"#157f3b",msg:"Sin pendientes críticos esta semana. Buen ritmo de seguimiento — mantén la disciplina del siguiente paso."}
+      : {bg:"#fdfbf4",bd:"#ece2c6",ink:"#9c7a22",msg:"Puntos a revisar en la sesión de retroalimentación. Prioriza agendar el siguiente paso de cada oportunidad abierta."};
+    const sinC = s.sinPaso>0?"#c9a14a":"#16a34a", venC = s.vencidas>0?"#e5484d":"#16a34a";
+
+    const met = (m,cls)=>'<div class="met"><div class="ml">'+esc(m.label)+'</div><div class="mv">'+esc(m.value)+'</div><div class="ms">'+esc(m.sub)+'</div></div>';
+
+    const rows = s.oportunidades.map(o=>{
+      const e = ETAPA[o.etapa]||{c:"#4a5267",b:"#eef0f4"};
+      const tienePaso = o.paso && o.paso.trim().length>0;
+      return '<tr><td class="cli">'+esc(o.cliente)+'</td>'+
+        '<td><span class="stg" style="color:'+e.c+';background:'+e.b+'">'+esc(o.etapa)+'</span></td>'+
+        '<td class="amt">'+esc(o.monto)+'</td>'+
+        '<td style="color:'+(tienePaso?"#4a5267":"#e5484d")+';line-height:1.25">'+esc(tienePaso?o.paso:"Sin siguiente paso")+'</td>'+
+        '<td class="dt">'+esc(o.fecha)+'</td></tr>';
+    }).join("");
+
+    const total = s.trend.reduce((a,t)=>a+t.value,0);
+    const days = s.trend.map(t=>'<div class="day">'+esc(t.day)+'</div>').join("");
+
+    document.getElementById("sheet").innerHTML =
+    '<div class="hd"><div>'+
+      '<div class="wordmark"><div class="mk"></div><div class="nm">Hydra<span style="color:#263370">Tech</span></div></div>'+
+      '<div class="eyebrow">Reporte semanal · Seguimiento comercial</div>'+
+      '<div class="who">'+esc(s.vendedor)+'</div>'+
+      '<div class="sub">'+esc(s.equipo)+' · '+esc(s.rol)+'</div>'+
+    '</div><div class="right">'+
+      '<div><div class="wk">Semana '+esc(s.semana)+'</div><div class="rng">'+esc(s.rango)+'</div></div>'+
+      '<div class="pill" style="background:'+est.bg+';border:1px solid '+est.bd+'"><span class="d" style="background:'+est.col+'"></span><span class="t" style="color:'+est.col+'">'+est.t+'</span></div>'+
+    '</div></div>'+
+
+    '<div class="twocol">'+
+      '<div class="panel act"><div class="ph"><div class="k">Actividad</div><div class="d">Lo que hizo · indicadores adelantados</div></div><div class="mets">'+s.actividad.map(m=>met(m)).join("")+'</div></div>'+
+      '<div class="panel out"><div class="ph"><div class="k">Resultado</div><div class="d">Lo que pasó · indicadores de resultado</div></div><div class="mets">'+s.resultado.map(m=>met(m)).join("")+'</div></div>'+
+    '</div>'+
+
+    '<div class="coach" style="border-color:'+coach.bd+';background:'+coach.bg+'">'+
+      '<div class="msg"><div class="k" style="color:'+coach.ink+'">Alertas de coaching</div><div class="t">'+esc(coach.msg)+'</div></div>'+
+      '<div class="nums">'+
+        '<div class="num"><div class="v" style="color:'+sinC+'">'+s.sinPaso+'</div><div class="c">Oportunidades sin<br>siguiente paso</div></div>'+
+        '<div class="num bl" style="border-color:'+coach.bd+'"><div class="v" style="color:'+venC+'">'+s.vencidas+'</div><div class="c">Actividades<br>vencidas</div></div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="lower">'+
+      '<div><div class="sectk">Oportunidades clave de la semana</div>'+
+        '<table><thead><tr><th>Cliente</th><th>Etapa</th><th class="r">Monto</th><th>Siguiente paso</th><th class="r">Fecha</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="trend"><div class="sectk" style="margin-bottom:2px">Actividad por día</div><div class="tt">'+total+' actividades · semana '+esc(s.semana)+'</div>'+
+        '<div style="flex:1;margin-top:12px">'+sparkline(s.trend)+'</div><div class="days">'+days+'</div></div>'+
+    '</div>'+
+
+    '<div class="notes"><div class="nh"><div class="sectk" style="margin-bottom:0">Notas de dirección / acuerdos</div><div style="font-size:10px;color:#717a90">Para retroalimentación y compromisos de la próxima semana</div></div>'+
+      '<div class="area"></div>'+
+      '<div class="sigs"><div class="sig">Firma del vendedor</div><div class="sig">Firma de dirección comercial</div></div></div>'+
+
+    '<div class="ft"><div>Generado por '+esc(s.generado)+'</div><div>Confidencial · uso interno</div></div>';
+  }
+
+  /* ---------- carga de datos desde Odoo (con fallback) ---------- */
+  async function cargar(){
+    const v = document.getElementById("sel-vendedor").value || "";
+    const w = document.getElementById("sel-semana").value || SAMPLE.semana;
+    try{
+      const res = await fetch("/api/odoo-crm-reporte?vendedor="+encodeURIComponent(v)+"&semana="+encodeURIComponent(w));
+      const d = await res.json();
+      if(d && d.ok && d.reporte) { render(d.reporte); return; }
+      render(SAMPLE);
+    }catch(e){
+      render(SAMPLE); // preview o función aún no creada
+    }
+  }
+
+  function initControls(){
+    // Semanas (ejemplo: últimas 8). En producción las puebla la función o las generas por fecha.
+    const ws = document.getElementById("sel-semana");
+    for(let n=26;n>=19;n--){const o=document.createElement("option");o.value=n;o.textContent="Semana "+n;ws.appendChild(o);}
+    // Vendedores desde Odoo (misma función que el cotizador). Fallback a ejemplo.
+    const vs = document.getElementById("sel-vendedor");
+    fetch("/api/odoo-empleados").then(r=>r.json()).then(d=>{
+      if(d&&d.ok&&Array.isArray(d.empleados)&&d.empleados.length){
+        d.empleados.forEach(e=>{const o=document.createElement("option");o.value=e.id;o.textContent=e.name;vs.appendChild(o);});
+      }else{const o=document.createElement("option");o.value="";o.textContent=SAMPLE.vendedor;vs.appendChild(o);}
+      cargar();
+    }).catch(()=>{const o=document.createElement("option");o.value="";o.textContent=SAMPLE.vendedor;vs.appendChild(o);cargar();});
+  }
+
+  initControls();
+</script>
+</body>
+</html>
