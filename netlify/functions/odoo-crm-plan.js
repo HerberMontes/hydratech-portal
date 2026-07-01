@@ -80,6 +80,35 @@ export default async (req) => {
         }catch(e){}
         return json({ ok:true });
       }
+      // ---- BITÁCORA: documenta lo que hizo el vendedor para empujar el lead/oportunidad ----
+      if (b.action === "bitacora" && b.leadId) {
+        const TIPO = { call:"Llamada", email:"Correo", whatsapp:"WhatsApp", visit:"Visita", meeting:"Reunión", note:"Nota" };
+        const RES  = { contacted:"Contactado", noresp:"Sin respuesta", waiting:"Pendiente de ellos", advanced:"Avanzó", cooled:"Se enfrió" };
+        const tipoTxt = TIPO[b.tipo] || "Nota";
+        const resTxt  = RES[b.resultado] || "";
+        const nota = String(b.nota || "").trim().replace(/</g, "&lt;");
+        // Se guarda en el chatter con formato legible; gerencia lo lee después.
+        let body = `<b>${tipoTxt}</b>`;
+        if (resTxt) body += ` · <span>${resTxt}</span>`;
+        if (nota)   body += `<br>${nota}`;
+        await executeKw("crm.lead","message_post",[[Number(b.leadId)]],{ body, message_type:"comment" });
+
+        // Siguiente paso (opcional): crea la actividad agendada.
+        let schedId = null;
+        if (b.sigFecha) {
+          const mdl = await executeKw("ir.model","search_read",[[["model","=","crm.lead"]]],{fields:["id"],limit:1}).catch(()=>[]);
+          const resModelId = mdl&&mdl.length ? mdl[0].id : false;
+          const tipos = await executeKw("mail.activity.type","search_read",[[]],{fields:["id","name","category"]}).catch(()=>[]);
+          const pick=(cat,kw)=>{const t=tipos.find(x=>x.category===cat||(x.name||"").toLowerCase().includes(kw));return t?t.id:false;};
+          let typeId = b.sigTipo==="call"?pick("phonecall","llam"):b.sigTipo==="meeting"?pick("meeting","reuni"):b.sigTipo==="email"?pick("","correo"):pick("","todo");
+          if(!typeId && tipos.length) typeId = tipos[0].id;
+          const vals = { res_id:Number(b.leadId), summary:b.sigNota||("Siguiente paso: "+tipoTxt), date_deadline:b.sigFecha };
+          if(resModelId) vals.res_model_id=resModelId; else vals.res_model="crm.lead";
+          if(typeId) vals.activity_type_id=typeId;
+          schedId = await executeKw("mail.activity","create",[vals]).catch(()=>null);
+        }
+        return json({ ok:true, schedId });
+      }
       return json({ ok:false, error:"Acción no reconocida." },400);
     }catch(e){ return json({ ok:false, error:String(e.message||e) },500); }
   }
@@ -92,7 +121,7 @@ export default async (req) => {
     const dominio = ["tag_ids","in",[tagId||-1]];
     const today = fmt(new Date());
 
-    const plan = { vendedor:nombre, hoy:0, vencidas:0, sinPaso:0, actividades:[], sinPasoLista:[], porCalificar:[] };
+    const plan = { vendedor:nombre, hoy:0, vencidas:0, sinPaso:0, actividades:[], sinPasoLista:[], porCalificar:[], items:[] };
     if(!tagId) return json({ ok:true, plan });
 
     // Leads del vendedor (para contexto y para mapear actividades)
@@ -122,8 +151,9 @@ export default async (req) => {
       else { estado="ok"; fecha=fechaCorta(dd); }
       const tt = tipoById[Array.isArray(a.activity_type_id)?a.activity_type_id[0]:0] || {};
       plan.actividades.push({
-        id:a.id, tipo:tipoDe(tt.cat,tt.name),
+        id:a.id, leadId:a.res_id, tipo:tipoDe(tt.cat,tt.name),
         oportunidad: lead.name || m2oName(a.activity_type_id) || "Actividad",
+        etapa: m2oName(lead.stage_id) || "",
         cliente: (lead.partner_name || m2oName(lead.partner_id) || lead.contact_name || "—") + (lead.stage_id?(" · "+m2oName(lead.stage_id)):""),
         monto: mxn(lead.expected_revenue),
         resumen: a.summary || (tt.name || "Actividad"),
@@ -138,6 +168,7 @@ export default async (req) => {
     plan.sinPaso = sinPaso.length;
     plan.sinPasoLista = sinPaso.map(l=>({
       leadId:l.id, oportunidad:l.name||"Oportunidad",
+      etapa:m2oName(l.stage_id)||"",
       cliente:(l.partner_name||m2oName(l.partner_id)||l.contact_name||"—")+(l.stage_id?(" · "+m2oName(l.stage_id)):""),
       monto:mxn(l.expected_revenue),
     }));
@@ -148,9 +179,24 @@ export default async (req) => {
       { fields:["id","name","partner_name","contact_name","partner_id","stage_id","expected_revenue"], limit:20 }).catch(()=>[]);
     plan.porCalificar = porCal.map(l=>({
       leadId:l.id, oportunidad:l.name||"Oportunidad",
+      etapa:m2oName(l.stage_id)||"Nuevo",
       cliente:(l.partner_name||m2oName(l.partner_id)||l.contact_name||"—")+" · "+(m2oName(l.stage_id)||"Nuevo"),
       monto:mxn(l.expected_revenue),
     }));
+
+    // TODOS los leads/oportunidades abiertos del vendedor (cualquier etapa, menos Ganado):
+    // esta es la base para documentar el avance con la bitácora.
+    const conActividad = new Set(acts.map(a=>a.res_id));
+    plan.items = leads
+      .filter(l => l.type === "opportunity" && m2oName(l.stage_id) !== "Ganado")
+      .map(l => ({
+        leadId: l.id,
+        nombre: l.name || "—",
+        cliente: (l.partner_name || m2oName(l.partner_id) || l.contact_name || "—"),
+        etapa: m2oName(l.stage_id) || "—",
+        monto: mxn(l.expected_revenue),
+        sigPaso: conActividad.has(l.id),
+      }));
 
     return json({ ok:true, plan });
   }catch(e){ return json({ ok:false, error:String(e.message||e) },500); }
