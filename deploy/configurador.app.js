@@ -276,14 +276,25 @@ function App() {
   }, [results]);
   const bomCostTotal = bom.reduce((s, b) => s + b.cost * b.qty, 0);
   const copyBOM = () => {
-    const rows = [["Codigo", "Descripcion", "Cantidad", "Unidad", "Costo unit", "Costo total"]];
-    bom.forEach((b) => rows.push([b.code, b.name, b.qty, b.unit, b.cost.toFixed(2), (b.cost * b.qty).toFixed(2)]));
-    rows.push(["", "", "", "", "TOTAL", bomCostTotal.toFixed(2)]);
+    const admin = typeof window !== "undefined" && window.HT_IS_ADMIN === true;
+    const rows = admin ? [["Codigo", "Descripcion", "Cantidad", "Unidad", "Costo unit", "Costo total"]] : [["Codigo", "Descripcion", "Cantidad", "Unidad"]];
+    bom.forEach((b) => rows.push(admin ? [b.code, b.name, b.qty, b.unit, b.cost.toFixed(2), (b.cost * b.qty).toFixed(2)] : [b.code, b.name, b.qty, b.unit]));
+    if (admin) rows.push(["", "", "", "", "TOTAL", bomCostTotal.toFixed(2)]);
     navigator.clipboard?.writeText(rows.map((r) => r.join("	")).join("\n")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     });
   };
+  const [canP, setCanP] = useState(typeof window !== "undefined" && window.HT_IS_ADMIN === true);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.HT_IS_ADMIN === true) { setCanP(true); return; }
+    const prev = window.onAuthReady;
+    window.onAuthReady = (u) => { try { prev && prev(u); } catch (e) {} setCanP(window.HT_IS_ADMIN === true); };
+    const t = setInterval(() => { if (window.HT_IS_ADMIN === true) { setCanP(true); clearInterval(t); } }, 300);
+    setTimeout(() => clearInterval(t), 6000);
+    return () => clearInterval(t);
+  }, []);
   const th = "px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400";
   return /* @__PURE__ */ jsxs("div", { className: "min-h-screen w-full bg-slate-100 text-slate-900", style: { fontFamily: "'Inter',ui-sans-serif,system-ui,sans-serif" }, children: [
     /* @__PURE__ */ jsx("style", { children: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');.mono{font-family:'JetBrains Mono',ui-monospace,monospace}` }),
@@ -297,9 +308,9 @@ function App() {
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-5", children: [
         /* @__PURE__ */ jsx(Stat, { label: "Mangueras", value: lines.length }),
-        /* @__PURE__ */ jsx(Stat, { label: "Costo compra", value: money(purchaseTotal), dim: true }),
-        /* @__PURE__ */ jsx(Stat, { label: "Margen", value: margin + "%", accent: "#34d399" }),
-        /* @__PURE__ */ jsxs("div", { className: "text-right", children: [
+        canP && /* @__PURE__ */ jsx(Stat, { label: "Costo compra", value: money(purchaseTotal), dim: true }),
+        canP && /* @__PURE__ */ jsx(Stat, { label: "Margen", value: margin + "%", accent: "#34d399" }),
+        canP && /* @__PURE__ */ jsxs("div", { className: "text-right", children: [
           /* @__PURE__ */ jsx("div", { className: "text-[9px] font-medium uppercase tracking-wider text-slate-400", children: "Precio cliente" }),
           /* @__PURE__ */ jsx("div", { className: "text-2xl font-extrabold leading-none tabular-nums", children: money(customerTotal) })
         ] })
@@ -396,7 +407,7 @@ function App() {
                     /* @__PURE__ */ jsx("b", { className: "text-slate-700", children: v.B.code })
                   ] })
                 ] }),
-                /* @__PURE__ */ jsx("div", { className: "shrink-0 text-right", children: /* @__PURE__ */ jsx("div", { className: "text-sm font-extrabold tabular-nums text-blue-700", children: money(v.customer) }) })
+                canP && /* @__PURE__ */ jsx("div", { className: "shrink-0 text-right", children: /* @__PURE__ */ jsx("div", { className: "text-sm font-extrabold tabular-nums text-blue-700", children: money(v.customer) }) })
               ] }),
               res.soft && /* @__PURE__ */ jsxs("div", { className: "mt-0.5 text-[10px] font-semibold text-amber-700", children: [
                 "\u26A0 ",
@@ -443,8 +454,8 @@ function App() {
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "C\xF3digo" }),
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "Descripci\xF3n" }),
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Cantidad" }),
-            /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Costo unit." }),
-            /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Costo total" })
+            canP && /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Costo unit." }),
+            canP && /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Costo total" })
           ] }) }),
           /* @__PURE__ */ jsxs("tbody", { children: [
             bom.map((b) => /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-50", children: [
@@ -458,10 +469,10 @@ function App() {
                 " ",
                 /* @__PURE__ */ jsx("span", { className: "text-[10px] font-medium text-slate-400", children: b.unit })
               ] }),
-              /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-right tabular-nums text-slate-500", children: money(b.cost) }),
-              /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-right font-semibold tabular-nums", children: money(b.cost * b.qty) })
+              canP && /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-right tabular-nums text-slate-500", children: money(b.cost) }),
+              canP && /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-right font-semibold tabular-nums", children: money(b.cost * b.qty) })
             ] }, b.code)),
-            /* @__PURE__ */ jsxs("tr", { className: "bg-slate-50", children: [
+            canP && /* @__PURE__ */ jsxs("tr", { className: "bg-slate-50", children: [
               /* @__PURE__ */ jsx("td", { colSpan: 4, className: "px-2 py-2 text-right text-xs font-bold uppercase text-slate-500", children: "Total de compra" }),
               /* @__PURE__ */ jsx("td", { className: "px-2 py-2 text-right text-base font-extrabold tabular-nums text-slate-900", children: money(bomCostTotal) })
             ] })
@@ -482,14 +493,14 @@ function App() {
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "Lado A" }),
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "Lado B" }),
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Largo total" }),
-            /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Precio cliente" })
+            canP && /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5 text-right", children: "Precio cliente" })
           ] }) }),
           /* @__PURE__ */ jsxs("tbody", { children: [
             results.map((r, i) => {
               const v = norm(r);
               return /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-50", children: [
                 /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 font-bold text-slate-400", children: i + 1 }),
-                !v ? /* @__PURE__ */ jsxs("td", { colSpan: 5, className: "px-2 py-1.5 text-[12px] text-amber-700", children: [
+                !v ? /* @__PURE__ */ jsxs("td", { colSpan: canP ? 5 : 4, className: "px-2 py-1.5 text-[12px] text-amber-700", children: [
                   "\u26A0 ",
                   r.error
                 ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
@@ -503,11 +514,11 @@ function App() {
                   /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-[12px] text-slate-600", children: describe(v.A) }),
                   /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-[12px] text-slate-600", children: describe(v.B) }),
                   /* @__PURE__ */ jsxs("td", { className: "px-2 py-1.5 text-right tabular-nums text-slate-600", children: [lines[i].len, " m"] }),
-                  /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-right font-bold tabular-nums text-blue-700", children: money(v.customer) })
+                  canP && /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-right font-bold tabular-nums text-blue-700", children: money(v.customer) })
                 ] })
               ] }, i);
             }),
-            /* @__PURE__ */ jsxs("tr", { className: "bg-slate-50", children: [
+            canP && /* @__PURE__ */ jsxs("tr", { className: "bg-slate-50", children: [
               /* @__PURE__ */ jsx("td", { colSpan: 5, className: "px-2 py-2 text-right text-xs font-bold uppercase text-slate-500", children: "Total cliente" }),
               /* @__PURE__ */ jsx("td", { className: "px-2 py-2 text-right text-base font-extrabold tabular-nums text-blue-700", children: money(customerTotal) })
             ] })
