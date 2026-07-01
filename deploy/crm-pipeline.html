@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HydraTech · Commercial pipeline report</title>
+
+<!-- CRM management role required (same auth as the rest of the portal) -->
+<script>window.REQUIRE_ROLE = "crm-gerencia";</script>
+<script src="/auth-gate.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: #eef0f4;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    color: #1b2138;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .toolbar {
+    max-width: 862px; margin: 22px auto 10px; padding: 0 6px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .toolbar .lbl {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #717a90;
+  }
+  .badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+  }
+  .badge.live   { background: rgba(22,163,74,0.12);  color: #16a34a; }
+  .badge.sample { background: rgba(201,161,74,0.16); color: #8f6f28; }
+  .btn {
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 600;
+    color: #fff; background: #263370; border: none; border-radius: 8px;
+    padding: 8px 14px; cursor: pointer;
+  }
+  .btn:hover { background: #1d2857; }
+  .sheet {
+    max-width: 862px; margin: 0 auto 40px; background: #fff;
+    box-shadow: 0 4px 24px rgba(38,51,56,0.12);
+    padding: 30px 34px 24px; color: #1b2138;
+  }
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none; }
+    .sheet { box-shadow: none; margin: 0; max-width: none; padding: 12mm; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="lbl">Commercial pipeline report</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="src-badge" class="badge sample">Loading…</span>
+    <button class="btn" onclick="window.print()">Save as PDF</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet">
+  <!-- rendered by JS -->
+</div>
+
+<script>
+/* ============================================================
+   BUSINESS RULES (mirror of the Claude Design props)
+   ============================================================ */
+var UMBRAL_DIAS = 14;        // days-in-stage threshold to flag a bottleneck
+var RESALTAR_CUELLO = true;  // highlight "To quote" in red when stalled
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function money(n){ return '$' + Number(n||0).toLocaleString('en-US'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+function stageColor(dias, neutral){
+  if (neutral) return { chipBg:'#f1f3f7', chipColor:'#717a90' };
+  if (dias > UMBRAL_DIAS)       return { chipBg:'rgba(229,72,77,0.12)',  chipColor:'#e5484d' };
+  if (dias > UMBRAL_DIAS * 0.6) return { chipBg:'rgba(201,161,74,0.16)', chipColor:'#8f6f28' };
+  return { chipBg:'rgba(22,163,74,0.10)', chipColor:'#16a34a' };
+}
+var AMBAR = { bg:'rgba(201,161,74,0.16)', color:'#8f6f28' };
+var ROJO  = { bg:'rgba(229,72,77,0.12)',  color:'#e5484d' };
+function toneStyle(t){ return t === 'rojo' ? ROJO : AMBAR; }
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(d){
+  var maxDiasRiesgo = 0;
+  d.sinCotizar.concat(d.cotizada).forEach(function(o){ if(o.dias>maxDiasRiesgo) maxDiasRiesgo=o.dias; });
+  if (maxDiasRiesgo < 1) maxDiasRiesgo = 1;
+
+  var maxPerd = 0;
+  d.perdidas.forEach(function(p){ if(p.n>maxPerd) maxPerd=p.n; });
+  if (maxPerd < 1) maxPerd = 1;
+
+  // --- funnel stages ---
+  var etapasHtml = d.etapas.map(function(e){
+    var c = stageColor(e.dias, e.neutral);
+    var cuello = e.puedeCuello && RESALTAR_CUELLO && e.dias > UMBRAL_DIAS;
+    var cardBorder = cuello ? '#e5484d' : (e.neutral ? 'rgba(22,163,74,0.35)' : '#e6e9f0');
+    var cardBg     = cuello ? 'rgba(229,72,77,0.05)' : (e.neutral ? 'rgba(22,163,74,0.04)' : '#fff');
+    var tag = cuello ? '<div style="background:#e5484d;color:#fff;font-family:\'IBM Plex Mono\',monospace;font-size:8px;letter-spacing:0.06em;text-transform:uppercase;text-align:center;padding:3px;border-radius:6px;">Bottleneck</div>' : '';
+    return '<div style="border:1px solid '+cardBorder+';background:'+cardBg+';border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:7px;min-height:150px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+        + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#717a90;">'+esc(e.n)+'</span>'
+        + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;letter-spacing:0.07em;text-transform:uppercase;color:#a2aab9;">'+esc(e.estado)+'</span>'
+      + '</div>'
+      + '<div style="font-family:Archivo,sans-serif;font-weight:700;font-size:12.5px;color:#1b2138;line-height:1.15;min-height:28px;">'+esc(e.nombre)+'</div>'
+      + '<div style="display:flex;align-items:baseline;gap:5px;">'
+        + '<span style="font-family:Archivo,sans-serif;font-weight:800;font-size:28px;line-height:1;color:#263370;">'+esc(e.conteo)+'</span>'
+        + '<span style="font-size:10px;color:#717a90;">deals</span>'
+      + '</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#1b2138;">'+money(e.valor)+'</div>'
+      + '<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:5px;">'
+        + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:7.5px;letter-spacing:0.04em;text-transform:uppercase;color:#717a90;line-height:1.2;">'+esc(e.diasLabel)+'</span>'
+        + '<span style="background:'+c.chipBg+';color:'+c.chipColor+';font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:500;padding:2px 7px;border-radius:999px;white-space:nowrap;">'+esc(e.dias)+' d</span>'
+      + '</div>'
+      + tag
+    + '</div>';
+  }).join('');
+
+  // --- risk rows ---
+  function riskRows(arr){
+    return arr.map(function(o){
+      var barPct = Math.round(o.dias / maxDiasRiesgo * 100);
+      return '<div style="padding:8px 0;border-top:1px solid #eef0f4;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'
+          + '<span style="font-size:11.5px;font-weight:600;color:#1b2138;">'+esc(o.cliente)+'</span>'
+          + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#e5484d;font-weight:500;white-space:nowrap;">'+esc(o.dias)+' d</span>'
+        + '</div>'
+        + '<div style="height:5px;background:#f1f3f7;border-radius:999px;margin:6px 0 5px;overflow:hidden;">'
+          + '<div style="height:100%;width:'+barPct+'%;background:#e5484d;border-radius:999px;"></div>'
+        + '</div>'
+        + '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#717a90;">'
+          + '<span>'+esc(o.vendedor)+'</span><span style="color:#4a5267;">'+money(o.valor)+'</span>'
+        + '</div>'
+      + '</div>';
+    }).join('') || '<div style="padding:10px 0;font-size:11px;color:#a2aab9;">None right now.</div>';
+  }
+
+  // --- BANT: compute pct + bar width ---
+  var b = d.bant;
+  var bantTotal = (b.verde.n||0) + (b.ambar.n||0) + (b.rojo.n||0);
+  function pct(n){ return bantTotal ? Math.round(n / bantTotal * 100) : 0; }
+  function w(n){ return bantTotal ? (n / bantTotal * 100) : 0; }
+  var vP=pct(b.verde.n), aP=pct(b.ambar.n), rP=pct(b.rojo.n);
+
+  // --- rep cards ---
+  var vendHtml = d.vendedores.map(function(v){
+    var coaching = v.coaching ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:8px;letter-spacing:0.05em;text-transform:uppercase;color:#e5484d;">● Needs coaching</span>' : '';
+    var alertas = (v.alertas||[]).map(function(a){
+      var st = toneStyle(a.tone);
+      return '<span style="background:'+st.bg+';color:'+st.color+';font-family:\'IBM Plex Mono\',monospace;font-size:9px;padding:3px 7px;border-radius:999px;">'+esc(a.texto)+'</span>';
+    }).join('');
+    return '<div style="border:1px solid #e6e9f0;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(27,33,56,0.04);padding:13px 14px;">'
+      + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<div style="width:30px;height:30px;border-radius:8px;background:rgba(38,51,112,0.08);display:flex;align-items:center;justify-content:center;font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:500;color:#263370;flex-shrink:0;">'+esc(v.ini)+'</div>'
+        + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#1b2138;">'+esc(v.nombre)+'</div>'+coaching
+        + '</div>'
+        + '<div style="text-align:right;">'
+          + '<div style="font-family:Archivo,sans-serif;font-weight:800;font-size:17px;color:#16a34a;line-height:1;">'+esc(v.conv)+'</div>'
+          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:7.5px;letter-spacing:0.06em;text-transform:uppercase;color:#717a90;">Conversion</div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px;">'
+        + '<div style="background:rgba(38,51,112,0.045);border-radius:10px;padding:9px 10px;">'
+          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:7.5px;letter-spacing:0.06em;text-transform:uppercase;color:#263370;font-weight:500;margin-bottom:5px;">Activity · Leading</div>'
+          + statRow('Visits', v.visitas, '#263370')
+          + statRow('Quotes', v.cotizaciones, '#263370')
+          + statRow('Next steps', v.siguientes, '#263370')
+        + '</div>'
+        + '<div style="background:rgba(22,163,74,0.055);border-radius:10px;padding:9px 10px;">'
+          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:7.5px;letter-spacing:0.06em;text-transform:uppercase;color:#16a34a;font-weight:500;margin-bottom:5px;">Result</div>'
+          + statRow('Won', v.ganadas, '#16a34a')
+          + statRow('Won value', v.valorGanado, '#16a34a')
+          + '<div style="height:16px;"></div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;">'+alertas+'</div>'
+    + '</div>';
+  }).join('');
+
+  function statRow(label, val, color){
+    return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:2px 0;">'
+      + '<span style="font-size:10px;color:#4a5267;">'+esc(label)+'</span>'
+      + '<span style="font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:'+color+';">'+esc(val)+'</span>'
+    + '</div>';
+  }
+
+  // --- losses ---
+  var perdHtml = d.perdidas.map(function(p){
+    var barPct = Math.round(p.n / maxPerd * 100);
+    return '<div style="display:flex;align-items:center;gap:11px;padding:5px 0;">'
+      + '<span style="width:190px;font-size:11.5px;color:#4a5267;flex-shrink:0;">'+esc(p.razon)+'</span>'
+      + '<div style="flex:1;height:14px;background:#f7f8fb;border-radius:4px;overflow:hidden;">'
+        + '<div style="height:100%;width:'+barPct+'%;background:rgba(229,72,77,0.82);border-radius:4px;"></div>'
+      + '</div>'
+      + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#1b2138;width:22px;text-align:right;flex-shrink:0;">'+esc(p.n)+'</span>'
+    + '</div>';
+  }).join('');
+
+  // --- KPIs ---
+  var kpiHtml = d.kpis.map(function(k){
+    return '<div style="border:1px solid #e6e9f0;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(27,33,56,0.04);padding:12px 13px;display:flex;flex-direction:column;gap:7px;min-height:96px;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:#717a90;line-height:1.3;">'+esc(k.label)+'</div>'
+      + '<div style="display:flex;align-items:baseline;gap:4px;">'
+        + '<span style="font-family:Archivo,sans-serif;font-weight:800;font-size:23px;line-height:1;color:'+(k.color||'#1b2138')+';">'+esc(k.value)+'</span>'
+        + (k.unit ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;color:#a2aab9;">'+esc(k.unit)+'</span>' : '')
+      + '</div>'
+      + '<div style="font-size:9.5px;color:#717a90;margin-top:auto;line-height:1.3;">'+esc(k.sub)+'</div>'
+    + '</div>';
+  }).join('');
+
+  var secTitle = function(num, title, right){
+    return '<div style="display:flex;align-items:center;gap:9px;margin:22px 0 11px;">'
+      + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#263370;font-weight:500;">'+num+'</span>'
+      + '<h2 style="font-family:Archivo,sans-serif;font-weight:700;font-size:14px;color:#1b2138;margin:0;">'+title+'</h2>'
+      + '<div style="flex:1;height:1px;background:#e6e9f0;"></div>'
+      + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;letter-spacing:0.08em;text-transform:uppercase;color:#a2aab9;">'+right+'</span>'
+    + '</div>';
+  };
+
+  document.getElementById('sheet').innerHTML =
+    // 1 · HEADER
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;border-bottom:2px solid #263370;padding-bottom:14px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;">'
+        + '<div style="width:36px;height:36px;border-radius:9px;background:#263370;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:15px;height:15px;border:2.5px solid #fff;border-radius:50%;"></div></div>'
+        + '<div>'
+          + '<div style="font-family:Archivo,sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.01em;line-height:1.05;">HydraTech <span style="color:#263370;font-weight:700;">· Commercial pipeline report</span></div>'
+          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9.5px;letter-spacing:0.09em;text-transform:uppercase;color:#717a90;margin-top:4px;">Industrial hose &amp; hydraulics services · Nuevo León, Mexico</div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="text-align:right;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;letter-spacing:0.11em;text-transform:uppercase;color:#a2aab9;">Period</div>'
+        + '<div style="font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#1b2138;margin-top:3px;">'+esc(d.periodo)+'</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9.5px;color:#717a90;margin-top:2px;">'+esc(d.corteLabel)+'</div>'
+      + '</div>'
+    + '</div>'
+
+    // 2 · KPIs
+    + secTitle('02','Executive KPIs','Figures in MXN')
+    + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px;">'+kpiHtml+'</div>'
+
+    // 3 · FUNNEL
+    + '<div style="break-inside:avoid;">'
+      + secTitle('03','Funnel by stage','New → To quote → Quote sent → Won')
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;">'+etapasHtml+'</div>'
+    + '</div>'
+
+    // 4 · RISK ZONE
+    + '<div style="break-inside:avoid;">'
+      + secTitle('04','Risk zone · Bottleneck','Sorted by days stalled')
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">'
+        + '<div style="border:1px solid #e6e9f0;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(27,33,56,0.04);padding:14px 15px;">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;">'
+            + '<div style="display:flex;align-items:center;gap:7px;"><span style="font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#1b2138;">Not quoted</span>'
+              + '<span style="background:rgba(201,161,74,0.16);color:#8f6f28;font-family:\'IBM Plex Mono\',monospace;font-size:8px;letter-spacing:0.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px;">Operational</span></div>'
+            + '<span style="font-family:Archivo,sans-serif;font-weight:800;font-size:15px;color:#8f6f28;">'+d.sinCotizar.length+'</span>'
+          + '</div>'
+          + '<div style="font-size:10px;color:#717a90;margin-bottom:8px;">Quote not yet created · rep action</div>'
+          + riskRows(d.sinCotizar)
+        + '</div>'
+        + '<div style="border:1px solid #e6e9f0;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(27,33,56,0.04);padding:14px 15px;">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;">'
+            + '<div style="display:flex;align-items:center;gap:7px;"><span style="font-family:Archivo,sans-serif;font-weight:700;font-size:13px;color:#1b2138;">Quoted, not advancing</span>'
+              + '<span style="background:rgba(38,51,112,0.09);color:#263370;font-family:\'IBM Plex Mono\',monospace;font-size:8px;letter-spacing:0.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px;">Commercial</span></div>'
+            + '<span style="font-family:Archivo,sans-serif;font-weight:800;font-size:15px;color:#263370;">'+d.cotizada.length+'</span>'
+          + '</div>'
+          + '<div style="font-size:10px;color:#717a90;margin-bottom:8px;">Quote sent, no response or decision · follow-up</div>'
+          + riskRows(d.cotizada)
+        + '</div>'
+      + '</div>'
+    + '</div>'
+
+    // 5 · BANT HEALTH
+    + '<div style="break-inside:avoid;">'
+      + secTitle('05','BANT health','Budget · Authority · Need · Timeline')
+      + '<div style="border:1px solid #e6e9f0;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(27,33,56,0.04);padding:15px 16px;">'
+        + '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;">'
+          + '<span style="font-size:11px;color:#4a5267;">Distribution of '+bantTotal+' opportunities by qualification quality (health traffic light)</span>'
+          + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#717a90;">'+bantTotal+' deals</span>'
+        + '</div>'
+        + '<div style="display:flex;height:16px;border-radius:6px;overflow:hidden;gap:2px;">'
+          + '<div style="width:'+w(b.verde.n)+'%;background:#16a34a;"></div>'
+          + '<div style="width:'+w(b.ambar.n)+'%;background:#c9a14a;"></div>'
+          + '<div style="width:'+w(b.rojo.n)+'%;background:#e5484d;"></div>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:13px;">'
+          + bantLegend('#16a34a', b.verde.n, vP, b.verde.label, b.verde.desc)
+          + bantLegend('#c9a14a', b.ambar.n, aP, b.ambar.label, b.ambar.desc)
+          + bantLegend('#e5484d', b.rojo.n,  rP, b.rojo.label,  b.rojo.desc)
+        + '</div>'
+      + '</div>'
+    + '</div>'
+
+    // 6 · REP PERFORMANCE
+    + '<div style="break-inside:avoid;">'
+      + secTitle('06','Rep performance','<span style="color:#263370;">Activity</span> vs <span style="color:#16a34a;">Result</span>')
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">'+vendHtml+'</div>'
+    + '</div>'
+
+    // 7 · LOSSES
+    + '<div style="break-inside:avoid;">'
+      + secTitle('07','Losses by reason', d.perdidasTotal+' opportunities lost')
+      + '<div style="border:1px solid #e6e9f0;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(27,33,56,0.04);padding:14px 16px;">'+perdHtml+'</div>'
+    + '</div>'
+
+    // FOOTER
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:12px;border-top:1px solid #e6e9f0;font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;letter-spacing:0.05em;text-transform:uppercase;color:#a2aab9;">'
+      + '<span>HydraTech Group · Nuevo León</span>'
+      + '<span>'+(d.live ? 'Live data · Odoo CRM' : 'Sample data — Odoo not reachable')+'</span>'
+      + '<span>'+esc(d.corteLabel)+'</span>'
+    + '</div>';
+
+  function bantLegend(color, n, p, label, desc){
+    return '<div style="display:flex;gap:8px;align-items:flex-start;">'
+      + '<div style="width:9px;height:9px;border-radius:2px;background:'+color+';margin-top:5px;flex-shrink:0;"></div>'
+      + '<div>'
+        + '<div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:Archivo,sans-serif;font-weight:800;font-size:18px;color:#1b2138;">'+esc(n)+'</span><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:#717a90;">'+p+'%</span></div>'
+        + '<div style="font-size:11px;font-weight:600;color:#1b2138;">'+esc(label)+'</div>'
+        + '<div style="font-size:10px;color:#717a90;">'+esc(desc)+'</div>'
+      + '</div>'
+    + '</div>';
+  }
+
+  var badge = document.getElementById('src-badge');
+  if (d.live){ badge.className = 'badge live'; badge.textContent = 'Live · Odoo'; }
+  else { badge.className = 'badge sample'; badge.textContent = 'Sample data'; }
+}
+
+/* ============================================================
+   SAMPLE DATA (fallback if Odoo is unavailable)
+   ============================================================ */
+var SAMPLE = {
+  live: false,
+  periodo: 'Week 26 · Jun 22–28, 2026',
+  corteLabel: 'As of Jun 30, 2026',
+  kpis: [
+    { label:'Open opportunities', value:'47',     unit:'',    sub:'Across 3 active stages', color:'#1b2138' },
+    { label:'Total pipeline value', value:'$6.84M', unit:'MXN', sub:'Sum of 47 opportunities', color:'#263370' },
+    { label:'Won this period', value:'8',           unit:'',    sub:'+2 vs. prior week',      color:'#16a34a' },
+    { label:'Won value', value:'$1.24M',            unit:'MXN', sub:'8 closes this period',   color:'#16a34a' },
+    { label:'Conversion rate', value:'22%',         unit:'',    sub:'Won / closed',           color:'#1b2138' }
+  ],
+  etapas: [
+    { n:'01', nombre:'New',        conteo:15, valor:1180000, dias:4,  diasLabel:'Avg. age',   neutral:false, estado:'Active', puedeCuello:false },
+    { n:'02', nombre:'To quote',   conteo:20, valor:3020000, dias:17, diasLabel:'Avg. age',   neutral:false, estado:'Active', puedeCuello:true  },
+    { n:'03', nombre:'Quote sent', conteo:12, valor:2640000, dias:9,  diasLabel:'Avg. age',   neutral:false, estado:'Active', puedeCuello:false },
+    { n:'04', nombre:'Won',        conteo:8,  valor:1235000, dias:28, diasLabel:'Avg. cycle', neutral:true,  estado:'Result', puedeCuello:false }
+  ],
+  sinCotizar: [
+    { cliente:'Deacero · Ramos Arizpe',        vendedor:'Mariana Cantú',   valor:310000, dias:28 },
+    { cliente:'Frisa Forgings · Sta. Catarina',vendedor:'Rodrigo Salazar', valor:185000, dias:25 },
+    { cliente:'Nemak · García',                vendedor:'Jorge Treviño',   valor:540000, dias:19 },
+    { cliente:'Grupo Simec · Apodaca',         vendedor:'Diana Elizondo',  valor:220000, dias:14 }
+  ],
+  cotizada: [
+    { cliente:'Ternium · Plant 2',        vendedor:'Rodrigo Salazar', valor:420000, dias:34 },
+    { cliente:'Villacero · Guadalupe DC', vendedor:'Mariana Cantú',   valor:260000, dias:22 },
+    { cliente:'Aceros Cuauhtémoc',        vendedor:'Jorge Treviño',   valor:95000,  dias:17 }
+  ],
+  bant: {
+    verde: { n:21, label:'Well qualified',       desc:'Complete BANT' },
+    ambar: { n:17, label:'Partially qualified',  desc:'Missing 1–2 criteria' },
+    rojo:  { n:9,  label:'Weak / no BANT',       desc:'Needs discovery' }
+  },
+  vendedores: [
+    { ini:'RS', nombre:'Rodrigo Salazar', conv:'25%', visitas:12, cotizaciones:9,  siguientes:7, ganadas:3, valorGanado:'$520K', coaching:false, alertas:[{texto:'2 without next step', tone:'ambar'}] },
+    { ini:'MC', nombre:'Mariana Cantú',   conv:'21%', visitas:15, cotizaciones:11, siguientes:9, ganadas:3, valorGanado:'$410K', coaching:false, alertas:[{texto:'1 overdue opportunity', tone:'rojo'}] },
+    { ini:'JT', nombre:'Jorge Treviño',   conv:'14%', visitas:8,  cotizaciones:5,  siguientes:3, ganadas:1, valorGanado:'$180K', coaching:true,  alertas:[{texto:'4 without next step', tone:'ambar'},{texto:'3 overdue', tone:'rojo'}] },
+    { ini:'DE', nombre:'Diana Elizondo',  conv:'12%', visitas:11, cotizaciones:8,  siguientes:6, ganadas:1, valorGanado:'$125K', coaching:false, alertas:[{texto:'2 overdue', tone:'rojo'}] }
+  ],
+  perdidas: [
+    { razon:'Price', n:11 },
+    { razon:'Lead time', n:7 },
+    { razon:'No customer response', n:5 },
+    { razon:'Technical spec', n:3 },
+    { razon:'Incumbent supplier (competition)', n:2 }
+  ],
+  perdidasTotal: 28
+};
+
+/* ============================================================
+   BOOT: fetch live data, fall back to sample
+   ============================================================ */
+function loadReport(){
+  var url = '/api/odoo-crm-pipeline';
+  var params = new URLSearchParams(location.search);
+  if (params.get('semana')) url += '?semana=' + encodeURIComponent(params.get('semana'));
+
+  fetch(url)
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(j){
+      if (!j || !j.ok || !j.data) throw new Error('bad payload');
+      var d = j.data; d.live = true;
+      render(d);
+    })
+    .catch(function(err){
+      console.warn('Pipeline report: using sample data —', err);
+      render(SAMPLE);
+    });
+}
+
+// auth-gate calls onAuthReady once the session is confirmed
+window.onAuthReady = function(){ loadReport(); };
+// Fallback if auth-gate isn't present (e.g. local preview)
+if (!window.REQUIRE_ROLE || typeof window.onAuthReady !== 'function') {
+  document.addEventListener('DOMContentLoaded', loadReport);
+}
+</script>
+</body>
+</html>
