@@ -65,7 +65,36 @@
   .act-btns button svg{width:13px;height:13px}
   .act-btns .prim{background:var(--blue);border-color:var(--blue);color:#fff}
   .act-btns .gold{background:var(--gold);border-color:var(--gold);color:#fff}
+  .act-btns .cal{background:var(--blue);border-color:var(--blue);color:#fff}
+  .act.cal::before{background:var(--blue)}
+  .act.cal .act-ic{background:#eef1f9;color:var(--blue)}
   .empty-state{text-align:center;color:var(--muted);padding:40px 0;font-size:14px}
+
+  /* modal calificar BANT */
+  .ov{position:fixed;inset:0;background:rgba(27,33,56,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .ov.show{display:flex}
+  .modal{background:#fff;border-radius:18px;width:460px;max-width:100%;box-shadow:0 30px 70px rgba(27,33,56,.4);overflow:hidden}
+  .modal-h{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .modal-h .ic{width:34px;height:34px;border-radius:10px;background:#eef1f9;color:var(--blue);display:grid;place-items:center;flex:none}
+  .modal-h .ic svg{width:17px;height:17px}
+  .modal-h h3{font-family:'Archivo',sans-serif;font-weight:700;font-size:16px}
+  .modal-h .s{font-size:11.5px;color:var(--muted)}
+  .modal-b{padding:18px 20px}
+  .bq{margin-bottom:15px}
+  .bq label{font-size:12.5px;font-weight:600;display:flex;justify-content:space-between;margin-bottom:8px}
+  .bq label .h{font-weight:400;color:var(--muted);font-size:11px}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;border:1.5px solid var(--line);background:var(--field);font:inherit;font-size:12px;font-weight:500;color:var(--muted);padding:9px 4px;border-radius:9px;cursor:pointer;text-align:center;transition:.14s}
+  .seg button[data-v="1"][aria-pressed="true"]{border-color:var(--gold);background:#fbf6ea;color:var(--gold-d,#9c7a22)}
+  .seg button[data-v="2"][aria-pressed="true"]{border-color:var(--green);background:#eaf7ef;color:var(--green-d,#157f3b)}
+  .seg button[data-v="0"][aria-pressed="true"]{border-color:var(--line2);background:#eef0f4;color:var(--muted)}
+  .movehint{font-size:11.5px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:7px}
+  .movehint svg{width:14px;height:14px;color:var(--blue)}
+  .modal-f{padding:16px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+  .btn{font:inherit;font-weight:600;font-size:14px;border:0;border-radius:10px;padding:11px 18px;cursor:pointer}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line2);color:var(--muted)}
+  .btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-d,#1b2447)}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed}
 
   .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);background:var(--ink);color:#fff;border-radius:11px;padding:12px 17px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 36px rgba(27,33,56,.34);opacity:0;pointer-events:none;transition:.28s;z-index:40}
   .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -93,7 +122,7 @@
 <main>
   <div class="eyebrow">Mi plan de trabajo</div>
   <h1>Mis actividades</h1>
-  <div class="wk" id="wk">Tus actividades agendadas en Odoo</div>
+  <div class="wk" id="wk">Tus oportunidades por calificar y tus actividades en Odoo</div>
 
   <div class="chips">
     <div class="chip"><div class="n" id="c-hoy">—</div><div class="t">actividades hoy</div></div>
@@ -104,12 +133,41 @@
   <div id="content"><div class="empty-state">Cargando tu plan…</div></div>
 </main>
 
+<!-- MODAL: calificar BANT (tras la visita) -->
+<div class="ov" id="ov-cal">
+  <div class="modal">
+    <div class="modal-h">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div><h3>Calificar oportunidad</h3><div class="s" id="cal-sub">—</div></div>
+    </div>
+    <div class="modal-b">
+      <div class="bq"><label>Presupuesto <span class="h">¿Hay recursos para comprar?</span></label>
+        <div class="seg" data-b="b"><button data-v="0" onclick="selBant(this)">Sin definir</button><button data-v="1" onclick="selBant(this)">Estimado</button><button data-v="2" onclick="selBant(this)">Confirmado</button></div></div>
+      <div class="bq"><label>Autoridad <span class="h">¿El contacto decide?</span></label>
+        <div class="seg" data-b="a"><button data-v="0" onclick="selBant(this)">Usuario</button><button data-v="1" onclick="selBant(this)">Influye</button><button data-v="2" onclick="selBant(this)">Decide</button></div></div>
+      <div class="bq"><label>Necesidad <span class="h">¿Qué tan clara es?</span></label>
+        <div class="seg" data-b="n"><button data-v="0" onclick="selBant(this)">Explorando</button><button data-v="1" onclick="selBant(this)">Clara</button><button data-v="2" onclick="selBant(this)">Urgente</button></div></div>
+      <div class="bq"><label>Plazo <span class="h">¿Cuándo decidiría?</span></label>
+        <div class="seg" data-b="t"><button data-v="0" onclick="selBant(this)">Sin fecha</button><button data-v="1" onclick="selBant(this)">Trimestre</button><button data-v="2" onclick="selBant(this)">Este mes</button></div></div>
+      <div class="movehint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Al guardar, la oportunidad se mueve a <b style="color:var(--ink);margin-left:2px">Por cotizar</b> y toma prioridad según la calificación.</div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="cerrarCal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCalificacion()">Guardar y mover a Por cotizar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span id="toast-t">Listo</span></div>
 
 <script>
   let repEmail=null;
   const SAMPLE={
     vendedor:"Carlos Méndez", hoy:2, vencidas:1, sinPaso:1,
+    porCalificar:[
+      {leadId:120,oportunidad:"Bombas del Norte — línea hidráulica",cliente:"Bombas del Norte · Nuevo",monto:"$1.2M"},
+      {leadId:121,oportunidad:"Servohidráulica MX — banco de pruebas",cliente:"Servo MX · Nuevo",monto:"$340K"},
+    ],
     actividades:[
       {id:1,tipo:"call",oportunidad:"Acería del Bajío — cotización",cliente:"Industrias GR · Propuesta",monto:"$480K",resumen:"Llamada de seguimiento",fecha:"Vencida · ayer",estado:"due"},
       {id:2,tipo:"meeting",oportunidad:"Cierre — Aceros del Norte",cliente:"Juan Pérez · Negociación",monto:"$1.20M",resumen:"Reunión de cierre",fecha:"Hoy · 4:00 pm",estado:"today"},
@@ -136,6 +194,10 @@
     document.getElementById("c-sin").textContent=p.sinPaso;
 
     let html="";
+    if(p.porCalificar && p.porCalificar.length){
+      html+='<div class="sech">Por calificar · tras la visita</div>';
+      p.porCalificar.forEach(o=>html+=calCard(o));
+    }
     if((p.sinPasoLista&&p.sinPasoLista.length) || (p.actividades||[]).some(a=>a.estado==="due")){
       html+='<div class="sech">Requiere atención</div>';
       (p.actividades||[]).filter(a=>a.estado==="due").forEach(a=>html+=actCard(a));
@@ -143,8 +205,17 @@
     }
     const resto=(p.actividades||[]).filter(a=>a.estado!=="due");
     if(resto.length){ html+='<div class="sech">Próximas actividades</div>'; resto.forEach(a=>html+=actCard(a)); }
-    if(!html) html='<div class="empty-state">No tienes actividades pendientes. Buen trabajo manteniendo el pipeline al día.</div>';
+    if(!html) html='<div class="empty-state">Nada pendiente. Buen trabajo manteniendo el pipeline al día.</div>';
     document.getElementById("content").innerHTML=html;
+  }
+
+  function calCard(o){
+    return '<div class="act cal">'+
+      '<div class="act-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>'+
+      '<div class="act-main"><div class="act-name">'+esc(o.oportunidad)+'</div><div class="act-co">'+esc(o.cliente)+'</div>'+
+        '<div class="act-next"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Recién capturada · califícala tras la visita</div></div>'+
+      '<div class="act-val"><div class="v">'+esc(o.monto)+'</div><div class="vt">esperado</div></div>'+
+      '<div class="act-btns"><button class="cal" onclick="openCal('+o.leadId+',\''+esc(o.oportunidad).replace(/'/g,"")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>Calificar (BANT)</button></div></div>';
   }
 
   function actCard(a){
@@ -173,6 +244,24 @@
   async function hecho(id){ const d=await post({action:"done",activityId:id,email:repEmail}); toast(d.demo?"Actividad marcada (demo)":"Actividad registrada"); cargar(); }
   async function agendar(id){ toast("Abriendo reprogramación…"); /* aquí abrirías un selector de fecha/tipo */ }
   async function agendarLead(leadId){ const d=await post({action:"schedule",leadId,tipo:"todo",summary:"Siguiente paso",email:repEmail}); toast(d.demo?"Siguiente paso agendado (demo)":"Siguiente paso agendado"); cargar(); }
+
+  // ---- Calificar BANT (mueve Nuevo -> Por cotizar) ----
+  let calLeadId=null; const cbs={b:null,a:null,n:null,t:null};
+  function openCal(leadId,name){
+    calLeadId=leadId; document.getElementById('cal-sub').textContent=name;
+    document.querySelectorAll('#ov-cal .seg button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    cbs.b=cbs.a=cbs.n=cbs.t=null;
+    document.getElementById('ov-cal').classList.add('show');
+  }
+  function cerrarCal(){ document.getElementById('ov-cal').classList.remove('show'); }
+  function selBant(b){ const g=b.parentElement; g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); cbs[g.dataset.b]=+b.dataset.v; }
+  async function guardarCalificacion(){
+    const d=await post({action:"calificar",leadId:calLeadId,bant:cbs,email:repEmail});
+    cerrarCal();
+    toast(d&&d.demo?"Calificada y movida a Por cotizar (demo)":"Calificada · movida a Por cotizar");
+    cargar();
+  }
+  document.getElementById('ov-cal').addEventListener('click',e=>{ if(e.target.id==='ov-cal') cerrarCal(); });
 
   async function cargar(){
     try{
