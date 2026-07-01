@@ -61,6 +61,25 @@ export default async (req) => {
         const id = await executeKw("mail.activity","create",[vals]);  // user_id por defecto = usuario de la API
         return json({ ok:true, id });
       }
+      if (b.action === "calificar" && b.leadId) {
+        const bant = b.bant || {};
+        const vals = {};
+        // Etapa "Por cotizar" (por nombre). Ajusta el nombre si tu etapa se llama distinto.
+        const st = await executeKw("crm.stage","search_read",
+          [[["name","=","Por cotizar"]]],{fields:["id"],limit:1}).catch(()=>[]);
+        if (st && st.length) vals.stage_id = st[0].id;
+        // Prioridad automática según la calificación (el "semáforo" del BANT).
+        const score = ["b","a","n","t"].reduce((s,k)=>s+(Number(bant[k])||0),0); // 0..8
+        vals.priority = score>=6 ? "3" : score>=4 ? "2" : "1";
+        await executeKw("crm.lead","write",[[Number(b.leadId)], vals]);
+        // Registra la calificación en el historial (chatter), mejor esfuerzo.
+        try{
+          const et = (v)=>["Sin definir/Bajo","Medio","Alto"][Number(v)||0] || "—";
+          const body = `<b>Calificación BANT</b><br>Presupuesto: ${et(bant.b)} · Autoridad: ${et(bant.a)} · Necesidad: ${et(bant.n)} · Plazo: ${et(bant.t)}<br>Movida a <b>Por cotizar</b>.`;
+          await executeKw("crm.lead","message_post",[[Number(b.leadId)]],{ body, message_type:"comment" });
+        }catch(e){}
+        return json({ ok:true });
+      }
       return json({ ok:false, error:"Acción no reconocida." },400);
     }catch(e){ return json({ ok:false, error:String(e.message||e) },500); }
   }
@@ -73,7 +92,7 @@ export default async (req) => {
     const dominio = ["tag_ids","in",[tagId||-1]];
     const today = fmt(new Date());
 
-    const plan = { vendedor:nombre, hoy:0, vencidas:0, sinPaso:0, actividades:[], sinPasoLista:[] };
+    const plan = { vendedor:nombre, hoy:0, vencidas:0, sinPaso:0, actividades:[], sinPasoLista:[], porCalificar:[] };
     if(!tagId) return json({ ok:true, plan });
 
     // Leads del vendedor (para contexto y para mapear actividades)
@@ -120,6 +139,16 @@ export default async (req) => {
     plan.sinPasoLista = sinPaso.map(l=>({
       leadId:l.id, oportunidad:l.name||"Oportunidad",
       cliente:(l.partner_name||m2oName(l.partner_id)||l.contact_name||"—")+(l.stage_id?(" · "+m2oName(l.stage_id)):""),
+      monto:mxn(l.expected_revenue),
+    }));
+
+    // Oportunidades en etapa "Nuevo": recién capturadas, por calificar tras la visita.
+    const porCal = await executeKw("crm.lead","search_read",
+      [[dominio, ["type","=","opportunity"], ["active","=",true], ["stage_id.name","=","Nuevo"]]],
+      { fields:["id","name","partner_name","contact_name","partner_id","stage_id","expected_revenue"], limit:20 }).catch(()=>[]);
+    plan.porCalificar = porCal.map(l=>({
+      leadId:l.id, oportunidad:l.name||"Oportunidad",
+      cliente:(l.partner_name||m2oName(l.partner_id)||l.contact_name||"—")+" · "+(m2oName(l.stage_id)||"Nuevo"),
       monto:mxn(l.expected_revenue),
     }));
 
