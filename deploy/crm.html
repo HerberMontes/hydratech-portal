@@ -309,8 +309,8 @@
     document.body.dataset.mode=m;
     document.querySelectorAll('.pills button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
     const bn=document.getElementById('banner'), t=document.getElementById('banner-t');
-    if(m==='opp'){bn.className='banner opp';t.innerHTML='<b>Modo Oportunidad.</b> Entra al pipeline en la etapa <b>Nuevo</b>. La calificación BANT se llena después de la visita, desde Mi plan, y ahí se mueve a <b>Por cotizar</b>.';}
-    else{bn.className='banner lead';t.innerHTML='<b>Modo Lead.</b> Captura mínima para no frenar la prospección. No entra al pipeline hasta calificarlo y convertirlo en oportunidad.';}
+    if(m==='opp'){bn.className='banner opp';t.innerHTML='<b>Modo Oportunidad.</b> Cliente ya registrado como proveedor. Entra directo a la fase comercial en <b>Nuevo</b>. La calificación BANT se llena tras la visita, desde Mi plan.';}
+    else{bn.className='banner lead';t.innerHTML='<b>Modo Lead.</b> Prospecto nuevo. Arranca el flujo de alta de proveedor en <b>Por contactar</b>. Se documenta el avance desde Mi plan hasta que aprueben el alta.';}
     gate();
   }
   function toggleFields(el){const on=el.getAttribute('aria-pressed')==='true';el.setAttribute('aria-pressed',!on);document.body.dataset.fields=on?'off':'on';}
@@ -346,10 +346,10 @@
     btn.disabled=false;
     if(document.body.dataset.mode==='opp'){
       label.textContent='Crear oportunidad';
-      meta.innerHTML='<b>Entra en "Nuevo"</b><br>La calificación BANT se hace tras la visita.';
+      meta.innerHTML='<b>Entra en "Nuevo"</b><br>Cliente ya registrado · fase comercial.';
     }else{
-      label.textContent='Guardar lead';
-      meta.innerHTML='<b>Modo Lead</b><br>Se guarda como lead sin tocar el pipeline.';
+      label.textContent='Crear lead';
+      meta.innerHTML='<b>Entra en "Por contactar"</b><br>Arranca el flujo de alta de proveedor.';
     }
   }
 
@@ -357,7 +357,9 @@
     const isOpp=document.body.dataset.mode==='opp';
     const tags=[...document.querySelectorAll('#tags button[aria-pressed="true"]')].map(b=>b.textContent);
     return {
-      type:isOpp?'opportunity':'lead',
+      // Ambos entran al MISMO pipeline (Camino 1): por eso los dos son "opportunity".
+      // El botón solo decide en qué ETAPA arranca la tarjeta.
+      type:'opportunity',
       name:isOpp?(document.getElementById('f_title').value||document.getElementById('f_company').value):(document.getElementById('f_company').value||document.getElementById('f_contact').value),
       partner_id:linkedPartnerId,
       contact_name:document.getElementById('f_contact').value,
@@ -366,7 +368,9 @@
       phone:document.getElementById('f_phone').value,
       expected_revenue:isOpp?Number(document.getElementById('f_rev').value||0):0,
       date_deadline:isOpp?document.getElementById('f_deadline').value:null,
-      stage:isOpp?"Nuevo":null,
+      // Lead → arranca el flujo de ALTA DE PROVEEDOR en "Por contactar".
+      // Oportunidad → cliente ya registrado, entra directo a la fase comercial en "Nuevo".
+      stage:isOpp?"Nuevo":"Por contactar",
       priority:isOpp?document.getElementById('f_prio').value:null,
       tags,
       repEmail, repName,

@@ -95,6 +95,16 @@
   .btn-ghost{background:#fff;border:1.5px solid var(--line2);color:var(--muted)}
   .btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-d,#1b2447)}
   .btn-primary:disabled{opacity:.45;cursor:not-allowed}
+  /* bitácora */
+  .seg.wrap{flex-wrap:wrap}
+  .seg.wrap button{flex:0 1 auto;min-width:84px}
+  .seg.pick button[aria-pressed="true"]{border-color:var(--blue);background:#eef1f9;color:var(--blue)}
+  .ta{width:100%;border:1.5px solid var(--line);background:var(--field);border-radius:10px;padding:10px 12px;font:inherit;font-size:13.5px;color:var(--ink);resize:vertical;min-height:60px}
+  .row2{display:flex;gap:8px}
+  .inp{border:1.5px solid var(--line);background:var(--field);border-radius:10px;padding:10px 12px;font:inherit;font-size:13.5px;color:var(--ink)}
+  .inp.grow{flex:1;min-width:0}
+  .act-btns .ghost2{background:#fff;border-color:var(--line2);color:var(--blue)}
+  .act.item::before{background:var(--blue)}
 
   .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);background:var(--ink);color:#fff;border-radius:11px;padding:12px 17px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 36px rgba(27,33,56,.34);opacity:0;pointer-events:none;transition:.28s;z-index:40}
   .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -121,8 +131,8 @@
 
 <main>
   <div class="eyebrow">Mi plan de trabajo</div>
-  <h1>Mis actividades</h1>
-  <div class="wk" id="wk">Tus oportunidades por calificar y tus actividades en Odoo</div>
+  <h1>Mis leads y actividades</h1>
+  <div class="wk" id="wk">Documenta lo que haces para empujar cada lead u oportunidad, y agenda el siguiente paso</div>
 
   <div class="chips">
     <div class="chip"><div class="n" id="c-hoy">—</div><div class="t">actividades hoy</div></div>
@@ -158,12 +168,66 @@
   </div>
 </div>
 
+<!-- MODAL: bitácora / registrar avance -->
+<div class="ov" id="ov-bit">
+  <div class="modal">
+    <div class="modal-h">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+      <div><h3>Registrar avance</h3><div class="s" id="bit-sub">—</div></div>
+    </div>
+    <div class="modal-b">
+      <div class="bq"><label>¿Qué hiciste? <span class="h">un clic</span></label>
+        <div class="seg wrap pick" data-b="tipo">
+          <button data-v="call" onclick="selBit(this)">Llamada</button>
+          <button data-v="email" onclick="selBit(this)">Correo</button>
+          <button data-v="whatsapp" onclick="selBit(this)">WhatsApp</button>
+          <button data-v="visit" onclick="selBit(this)">Visita</button>
+          <button data-v="meeting" onclick="selBit(this)">Reunión</button>
+          <button data-v="note" onclick="selBit(this)">Nota</button>
+        </div></div>
+      <div class="bq"><label>¿Cómo salió? <span class="h">resultado</span></label>
+        <div class="seg wrap pick" data-b="res">
+          <button data-v="contacted" onclick="selBit(this)">Contactado</button>
+          <button data-v="noresp" onclick="selBit(this)">Sin respuesta</button>
+          <button data-v="waiting" onclick="selBit(this)">Pendiente de ellos</button>
+          <button data-v="advanced" onclick="selBit(this)">Avanzó</button>
+          <button data-v="cooled" onclick="selBit(this)">Se enfrió</button>
+        </div></div>
+      <div class="bq"><label>Detalle <span class="h">una línea basta</span></label>
+        <textarea class="ta" id="bit-nota" placeholder="Ej. Hablé con compras, pidió constancia fiscal y catálogo. Se lo mando mañana."></textarea></div>
+      <div class="bq"><label>Siguiente paso <span class="h">opcional, pero recomendado</span></label>
+        <div class="seg wrap pick" data-b="sigtipo" style="margin-bottom:8px">
+          <button data-v="call" onclick="selBit(this)">Llamar</button>
+          <button data-v="visit" onclick="selBit(this)">Visitar</button>
+          <button data-v="email" onclick="selBit(this)">Enviar correo</button>
+          <button data-v="todo" onclick="selBit(this)">Pendiente</button>
+        </div>
+        <div class="row2">
+          <input type="date" class="inp" id="bit-sigfecha">
+          <input type="text" class="inp grow" id="bit-signota" placeholder="¿Qué vas a hacer? (opcional)">
+        </div>
+        <div class="movehint" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Toda tarjeta abierta debería tener un siguiente paso; si no, sale en rojo para gerencia.</div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" onclick="cerrarBit()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarBitacora()">Registrar avance</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><span class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span id="toast-t">Listo</span></div>
 
 <script>
   let repEmail=null;
   const SAMPLE={
     vendedor:"Carlos Méndez", hoy:2, vencidas:1, sinPaso:1,
+    items:[
+      {leadId:201,nombre:"Aceros del Sur — alta de proveedor",cliente:"Aceros del Sur",etapa:"Por contactar",monto:"$0",sigPaso:false},
+      {leadId:202,nombre:"Metalúrgica Regia — presentación",cliente:"Metalúrgica Regia",etapa:"Cita agendada",monto:"$0",sigPaso:true},
+      {leadId:203,nombre:"Fundidora GN — papeleo de alta",cliente:"Fundidora GN",etapa:"Alta en proceso",monto:"$0",sigPaso:true},
+      {leadId:120,nombre:"Bombas del Norte — línea hidráulica",cliente:"Bombas del Norte",etapa:"Nuevo",monto:"$1.2M",sigPaso:false},
+    ],
     porCalificar:[
       {leadId:120,oportunidad:"Bombas del Norte — línea hidráulica",cliente:"Bombas del Norte · Nuevo",monto:"$1.2M"},
       {leadId:121,oportunidad:"Servohidráulica MX — banco de pruebas",cliente:"Servo MX · Nuevo",monto:"$340K"},
@@ -194,6 +258,10 @@
     document.getElementById("c-sin").textContent=p.sinPaso;
 
     let html="";
+    if(p.items && p.items.length){
+      html+='<div class="sech">Mis leads y oportunidades · registra tu avance</div>';
+      p.items.forEach(o=>html+=itemCard(o));
+    }
     if(p.porCalificar && p.porCalificar.length){
       html+='<div class="sech">Por calificar · tras la visita</div>';
       p.porCalificar.forEach(o=>html+=calCard(o));
@@ -209,13 +277,29 @@
     document.getElementById("content").innerHTML=html;
   }
 
+  function bitBtn(leadId,name,etapa){
+    return '<button class="ghost2" onclick="openBit('+leadId+',\''+esc(name).replace(/'/g,"")+'\',\''+esc(etapa||"").replace(/'/g,"")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Registrar avance</button>';
+  }
+
+  function itemCard(o){
+    const sinPaso = !o.sigPaso;
+    const next = sinPaso
+      ? '<div class="act-next empty"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Sin siguiente paso agendado</div>'
+      : '<div class="act-next"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Con siguiente paso agendado</div>';
+    return '<div class="act item'+(sinPaso?' none':'')+'">'+
+      '<div class="act-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg></div>'+
+      '<div class="act-main"><div class="act-name">'+esc(o.nombre)+'</div><div class="act-co">'+esc(o.cliente)+' · <b style="color:var(--blue)">'+esc(o.etapa)+'</b></div>'+next+'</div>'+
+      '<div class="act-val"><div class="v">'+esc(o.monto)+'</div><div class="vt">esperado</div></div>'+
+      '<div class="act-btns">'+bitBtn(o.leadId,o.nombre,o.etapa)+'</div></div>';
+  }
+
   function calCard(o){
     return '<div class="act cal">'+
       '<div class="act-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>'+
       '<div class="act-main"><div class="act-name">'+esc(o.oportunidad)+'</div><div class="act-co">'+esc(o.cliente)+'</div>'+
         '<div class="act-next"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Recién capturada · califícala tras la visita</div></div>'+
       '<div class="act-val"><div class="v">'+esc(o.monto)+'</div><div class="vt">esperado</div></div>'+
-      '<div class="act-btns"><button class="cal" onclick="openCal('+o.leadId+',\''+esc(o.oportunidad).replace(/'/g,"")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>Calificar (BANT)</button></div></div>';
+      '<div class="act-btns">'+bitBtn(o.leadId,o.oportunidad,o.etapa)+'<button class="cal" onclick="openCal('+o.leadId+',\''+esc(o.oportunidad).replace(/'/g,"")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>Calificar (BANT)</button></div></div>';
   }
 
   function actCard(a){
@@ -225,8 +309,7 @@
       '<div class="act-main"><div class="act-name">'+esc(a.oportunidad)+'</div><div class="act-co">'+esc(a.cliente)+'</div>'+
         '<div class="act-next"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg> '+esc(a.resumen)+' <span class="when '+a.estado+'">'+esc(a.fecha)+'</span></div></div>'+
       '<div class="act-val"><div class="v">'+esc(a.monto)+'</div><div class="vt">esperado</div></div>'+
-      '<div class="act-btns"><button class="prim" onclick="hecho('+a.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Hecho</button>'+
-        '<button onclick="agendar('+a.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Reagendar</button></div></div>';
+      '<div class="act-btns">'+bitBtn(a.leadId,a.oportunidad,a.etapa)+'<button class="prim" onclick="hecho('+a.id+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Hecho</button></div></div>';
   }
   function sinCard(s){
     return '<div class="act none">'+
@@ -234,7 +317,7 @@
       '<div class="act-main"><div class="act-name">'+esc(s.oportunidad)+'</div><div class="act-co">'+esc(s.cliente)+'</div>'+
         '<div class="act-next empty"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Sin siguiente paso — el negocio está parado</div></div>'+
       '<div class="act-val"><div class="v">'+esc(s.monto)+'</div><div class="vt">esperado</div></div>'+
-      '<div class="act-btns"><button class="gold" onclick="agendarLead('+s.leadId+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Agendar siguiente paso</button></div></div>';
+      '<div class="act-btns">'+bitBtn(s.leadId,s.oportunidad,s.etapa)+'</div></div>';
   }
 
   async function post(body){
@@ -262,6 +345,33 @@
     cargar();
   }
   document.getElementById('ov-cal').addEventListener('click',e=>{ if(e.target.id==='ov-cal') cerrarCal(); });
+
+  // ---- Bitácora / registrar avance ----
+  let bitLeadId=null; const bitSel={tipo:null,res:null,sigtipo:null};
+  function openBit(leadId,name,etapa){
+    bitLeadId=leadId;
+    document.getElementById('bit-sub').textContent = name + (etapa?(' · '+etapa):'');
+    document.querySelectorAll('#ov-bit .seg button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    bitSel.tipo=bitSel.res=bitSel.sigtipo=null;
+    document.getElementById('bit-nota').value='';
+    document.getElementById('bit-sigfecha').value='';
+    document.getElementById('bit-signota').value='';
+    document.getElementById('ov-bit').classList.add('show');
+  }
+  function cerrarBit(){ document.getElementById('ov-bit').classList.remove('show'); }
+  function selBit(b){ const g=b.parentElement; g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); bitSel[g.dataset.b]=b.dataset.v; }
+  async function guardarBitacora(){
+    if(!bitSel.tipo){ toast('Elige qué hiciste'); return; }
+    const payload={ action:"bitacora", leadId:bitLeadId, tipo:bitSel.tipo, resultado:bitSel.res,
+      nota:document.getElementById('bit-nota').value, email:repEmail };
+    const f=document.getElementById('bit-sigfecha').value;
+    if(f){ payload.sigFecha=f; payload.sigTipo=bitSel.sigtipo||"todo"; payload.sigNota=document.getElementById('bit-signota').value; }
+    const d=await post(payload);
+    cerrarBit();
+    toast(d&&d.demo?"Avance registrado (demo)":(f?"Avance registrado · siguiente paso agendado":"Avance registrado"));
+    cargar();
+  }
+  document.getElementById('ov-bit').addEventListener('click',e=>{ if(e.target.id==='ov-bit') cerrarBit(); });
 
   async function cargar(){
     try{
