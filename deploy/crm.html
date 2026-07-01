@@ -240,7 +240,6 @@
       <div class="field full"><label>Título de la oportunidad <span class="req">*</span> <span class="odoo-tag">name</span></label><input type="text" id="f_title" placeholder="Ej. Mangueras hidráulicas — planta Monterrey"></div>
       <div class="field"><label>Ingreso esperado <span class="odoo-tag">expected_revenue</span></label><input type="number" id="f_rev" placeholder="0.00" min="0"></div>
       <div class="field"><label>Cierre estimado <span class="odoo-tag">date_deadline</span></label><input type="text" id="f_deadline" placeholder="dd/mm/aaaa" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'"></div>
-      <div class="field"><label>Etapa <span class="odoo-tag">stage_id</span> <span class="id-badge">ID Odoo</span></label><select id="f_stage"><option>Nuevo</option><option>Calificado</option><option>Propuesta</option><option>Negociación</option></select></div>
       <div class="field"><label>Prioridad <span class="odoo-tag">priority</span></label><select id="f_prio"><option>Normal</option><option>Media</option><option>Alta</option><option>Muy alta</option></select></div>
       <div class="field full"><label>Etiquetas <span class="odoo-tag">tag_ids</span> <span class="id-badge">ID Odoo</span></label>
         <div class="tags" id="tags">
@@ -251,30 +250,6 @@
           <button aria-pressed="false" onclick="tog(this)">Banco de pruebas</button>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- BANT -->
-  <section class="card card-opp gate">
-    <div class="gate-h">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-      <h2>Calificación <span class="mono" style="font-size:12px;color:var(--muted);font-weight:400">BANT</span></h2>
-      <span class="why">Este filtro decide si el negocio entra al pipeline. Sin calificar, no ensucia tus métricas.</span>
-    </div>
-    <div class="bant">
-      <div><label>Presupuesto <span class="q">¿Hay recursos para comprar?</span></label>
-        <div class="seg" data-b="b"><button data-v="0" onclick="bant(this)">Sin definir</button><button data-v="1" onclick="bant(this)">Estimado</button><button data-v="2" onclick="bant(this)">Confirmado</button></div></div>
-      <div><label>Autoridad <span class="q">¿El contacto decide?</span></label>
-        <div class="seg" data-b="a"><button data-v="0" onclick="bant(this)">Usuario</button><button data-v="1" onclick="bant(this)">Influye</button><button data-v="2" onclick="bant(this)">Decide</button></div></div>
-      <div><label>Necesidad <span class="q">¿Qué tan clara es?</span></label>
-        <div class="seg" data-b="n"><button data-v="0" onclick="bant(this)">Explorando</button><button data-v="1" onclick="bant(this)">Clara</button><button data-v="2" onclick="bant(this)">Urgente</button></div></div>
-      <div><label>Plazo <span class="q">¿Cuándo decidiría?</span></label>
-        <div class="seg" data-b="t"><button data-v="0" onclick="bant(this)">Sin fecha</button><button data-v="1" onclick="bant(this)">Trimestre</button><button data-v="2" onclick="bant(this)">Este mes</button></div></div>
-    </div>
-    <div class="meter-wrap">
-      <div class="meter-top"><span class="lab"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg> Listo para el pipeline</span><span class="pct" id="pct">0%</span></div>
-      <div class="meter"><div class="meter-fill" id="fill"></div></div>
-      <div class="meter-msg" id="mmsg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Completa la calificación para habilitar la creación de la oportunidad.</div>
     </div>
   </section>
 
@@ -334,7 +309,7 @@
     document.body.dataset.mode=m;
     document.querySelectorAll('.pills button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
     const bn=document.getElementById('banner'), t=document.getElementById('banner-t');
-    if(m==='opp'){bn.className='banner opp';t.innerHTML='<b>Modo Oportunidad.</b> Esto entra al pipeline, por eso exige la calificación BANT antes de poder guardarse — así el embudo solo contiene negocios reales.';}
+    if(m==='opp'){bn.className='banner opp';t.innerHTML='<b>Modo Oportunidad.</b> Entra al pipeline en la etapa <b>Nuevo</b>. La calificación BANT se llena después de la visita, desde Mi plan, y ahí se mueve a <b>Por cotizar</b>.';}
     else{bn.className='banner lead';t.innerHTML='<b>Modo Lead.</b> Captura mínima para no frenar la prospección. No entra al pipeline hasta calificarlo y convertirlo en oportunidad.';}
     gate();
   }
@@ -365,21 +340,17 @@
   }
 
   function tog(b){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');}
-  function bant(b){const g=b.parentElement;g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');bs[g.dataset.b]=+b.dataset.v;gate();}
-
+  function bant(){}
   function gate(){
-    const vals=Object.values(bs).filter(v=>v!==null);
-    const pct=Math.round((vals.reduce((s,v)=>s+v,0)/8)*100);
-    const fill=document.getElementById('fill'),p=document.getElementById('pct'),m=document.getElementById('mmsg');
-    fill.style.width=pct+'%';p.textContent=pct+'%';
-    const ready=pct>=GATE;
-    if(ready){fill.style.background='linear-gradient(90deg,var(--green),#0e8f43)';p.style.color='var(--green)';m.style.color='var(--green)';m.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Calificado. Puede crearse como oportunidad en el pipeline.';}
-    else{fill.style.background='linear-gradient(90deg,var(--gold),#d8b34d)';p.style.color=pct>0?'var(--gold)':'var(--muted)';m.style.color='var(--muted)';m.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Falta calificación. Súbelo a '+GATE+'% o guárdalo como lead.';}
     const btn=document.getElementById('save'),label=document.getElementById('savelabel'),meta=document.getElementById('abmeta');
+    btn.disabled=false;
     if(document.body.dataset.mode==='opp'){
-      label.textContent='Crear oportunidad'; btn.disabled=!ready;
-      meta.innerHTML=ready?'<b>Listo para el pipeline</b><br>Calificación '+pct+'% · entra como oportunidad.':'<b>Aún no calificado ('+pct+'%)</b><br>Completa BANT o cambia a Lead.';
-    }else{label.textContent='Guardar lead';btn.disabled=false;meta.innerHTML='<b>Modo Lead</b><br>Se guarda como lead sin tocar el pipeline.';}
+      label.textContent='Crear oportunidad';
+      meta.innerHTML='<b>Entra en "Nuevo"</b><br>La calificación BANT se hace tras la visita.';
+    }else{
+      label.textContent='Guardar lead';
+      meta.innerHTML='<b>Modo Lead</b><br>Se guarda como lead sin tocar el pipeline.';
+    }
   }
 
   function payload(){
@@ -395,9 +366,9 @@
       phone:document.getElementById('f_phone').value,
       expected_revenue:isOpp?Number(document.getElementById('f_rev').value||0):0,
       date_deadline:isOpp?document.getElementById('f_deadline').value:null,
-      stage:isOpp?document.getElementById('f_stage').value:null,
+      stage:isOpp?"Nuevo":null,
       priority:isOpp?document.getElementById('f_prio').value:null,
-      tags, bant:isOpp?bs:null,
+      tags,
       repEmail, repName,
       user:document.getElementById('f_user').value,
       team:document.getElementById('f_team').value,
