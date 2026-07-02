@@ -43,7 +43,11 @@
   .chip .t{font-size:12px;color:var(--muted);margin-top:6px}
   .chip.warn .n{color:var(--gold)}.chip.bad .n{color:var(--red)}
 
-  .sech{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:26px 2px 12px}
+  .sech{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:18px 2px 10px}
+  .blk-h{font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;color:var(--ink);margin:32px 2px 2px;display:flex;align-items:center;gap:10px}
+  .blk-h:first-of-type{margin-top:14px}
+  .blk-h span{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--blue);background:#eef1f9;border-radius:999px;padding:2px 10px}
+  .blk-sub{font-size:12.5px;color:var(--muted);margin:3px 2px 0}
   .act{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:12px;box-shadow:var(--shadow);position:relative;overflow:hidden;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   .act::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green)}
   .act.due::before{background:var(--red)} .act.none::before{background:var(--gold)}
@@ -221,12 +225,14 @@
 <script>
   let repEmail=null;
   const SAMPLE={
-    vendedor:"Carlos Méndez", hoy:2, vencidas:1, sinPaso:1,
+    vendedor:"Carlos Méndez", hoy:1, vencidas:1, sinPaso:2,
     items:[
-      {leadId:201,nombre:"Aceros del Sur — alta de proveedor",cliente:"Aceros del Sur",etapa:"Por contactar",monto:"$0",sigPaso:false},
-      {leadId:202,nombre:"Metalúrgica Regia — presentación",cliente:"Metalúrgica Regia",etapa:"Cita agendada",monto:"$0",sigPaso:true},
-      {leadId:203,nombre:"Fundidora GN — papeleo de alta",cliente:"Fundidora GN",etapa:"Alta en proceso",monto:"$0",sigPaso:true},
-      {leadId:120,nombre:"Bombas del Norte — línea hidráulica",cliente:"Bombas del Norte",etapa:"Nuevo",monto:"$1.2M",sigPaso:false},
+      {leadId:201,nombre:"Aceros del Sur",cliente:"Aceros del Sur",etapa:"Por contactar",monto:"$0",sig:null,atencion:true},
+      {leadId:202,nombre:"Metalúrgica Regia",cliente:"Metalúrgica Regia",etapa:"Cita agendada",monto:"$0",sig:{resumen:"Llamar a compras",fecha:"3 jul",estado:"ok"},atencion:false},
+      {leadId:210,nombre:"Perfiles y Tubos MTY",cliente:"Perfiles y Tubos",etapa:"Cita agendada",monto:"$0",sig:{resumen:"Confirmar cita",fecha:"Vencida · 30 jun",estado:"due"},atencion:true},
+      {leadId:203,nombre:"Fundidora GN",cliente:"Fundidora GN",etapa:"Alta en proceso",monto:"$0",sig:{resumen:"Seguimiento al papeleo",fecha:"4 jul",estado:"ok"},atencion:false},
+      {leadId:120,nombre:"Bombas del Norte — línea hidráulica",cliente:"Bombas del Norte",etapa:"Nuevo",monto:"$1.2M",sig:null,atencion:true},
+      {leadId:130,nombre:"Servo MX — banco de pruebas",cliente:"Servo MX",etapa:"Por cotizar",monto:"$340K",sig:{resumen:"Enviar cotización",fecha:"Hoy",estado:"today"},atencion:false},
     ],
     porCalificar:[
       {leadId:120,oportunidad:"Bombas del Norte — línea hidráulica",cliente:"Bombas del Norte · Nuevo",monto:"$1.2M"},
@@ -250,6 +256,9 @@
   };
   const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 
+  const LEAD_STAGES=["Por contactar","Cita agendada","Presentado","Alta en proceso"];
+  const OPP_STAGES=["Nuevo","Por cotizar","Cotización enviada"];
+
   function render(p){
     document.getElementById("whoami").textContent=p.vendedor||"—";
     document.getElementById("whoav").textContent=((p.vendedor||"·").trim()[0]||"·").toUpperCase();
@@ -257,24 +266,38 @@
     document.getElementById("c-venc").textContent=p.vencidas;
     document.getElementById("c-sin").textContent=p.sinPaso;
 
+    const items=p.items||[];
     let html="";
-    if(p.items && p.items.length){
-      html+='<div class="sech">Mis leads y oportunidades · registra tu avance</div>';
-      p.items.forEach(o=>html+=itemCard(o));
+    html+=bloque("Leads · alta de proveedor","Prospectos en proceso de registro como proveedor",items,LEAD_STAGES);
+    html+=bloque("Oportunidades · comercial","Clientes ya registrados, en ciclo de cotización",items,OPP_STAGES);
+    const known=LEAD_STAGES.concat(OPP_STAGES);
+    const otros=items.filter(i=>known.indexOf(i.etapa)<0);
+    if(otros.length){
+      const et=[...new Set(otros.map(o=>o.etapa))];
+      html+=bloque("Otras etapas","",items,et);
     }
-    if(p.porCalificar && p.porCalificar.length){
-      html+='<div class="sech">Por calificar · tras la visita</div>';
-      p.porCalificar.forEach(o=>html+=calCard(o));
-    }
-    if((p.sinPasoLista&&p.sinPasoLista.length) || (p.actividades||[]).some(a=>a.estado==="due")){
-      html+='<div class="sech">Requiere atención</div>';
-      (p.actividades||[]).filter(a=>a.estado==="due").forEach(a=>html+=actCard(a));
-      (p.sinPasoLista||[]).forEach(s=>html+=sinCard(s));
-    }
-    const resto=(p.actividades||[]).filter(a=>a.estado!=="due");
-    if(resto.length){ html+='<div class="sech">Próximas actividades</div>'; resto.forEach(a=>html+=actCard(a)); }
-    if(!html) html='<div class="empty-state">Nada pendiente. Buen trabajo manteniendo el pipeline al día.</div>';
+    if(!items.length) html='<div class="empty-state">Nada abierto por ahora. Captura un prospecto en la pantalla de Captura para empezar.</div>';
     document.getElementById("content").innerHTML=html;
+  }
+
+  // Un bloque = un conjunto de etapas. Dentro, subtítulo por etapa y, en cada etapa,
+  // primero los que requieren atención (parados o vencidos).
+  function bloque(titulo,sub,items,stages){
+    const dentro=items.filter(i=>stages.indexOf(i.etapa)>=0);
+    if(!dentro.length) return "";
+    // ¿cuántas etapas del bloque traen items? Si es solo una, no repetimos encabezado de etapa.
+    const etapasConItems=stages.filter(st=>dentro.some(i=>i.etapa===st));
+    const mostrarEtapa=etapasConItems.length>=2;
+    let h='<div class="blk-h">'+titulo+' <span>'+dentro.length+'</span></div>';
+    if(sub) h+='<div class="blk-sub">'+sub+'</div>';
+    etapasConItems.forEach(st=>{
+      const grp=dentro.filter(i=>i.etapa===st);
+      grp.sort((a,b)=>(b.atencion?1:0)-(a.atencion?1:0)); // atención primero
+      if(mostrarEtapa) h+='<div class="sech">'+esc(st)+' · '+grp.length+'</div>';
+      else h+='<div style="height:4px"></div>';
+      grp.forEach(o=>h+=itemCard(o));
+    });
+    return h;
   }
 
   function bitBtn(leadId,name,etapa){
@@ -282,15 +305,24 @@
   }
 
   function itemCard(o){
-    const sinPaso = !o.sigPaso;
-    const next = sinPaso
-      ? '<div class="act-next empty"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Sin siguiente paso agendado</div>'
-      : '<div class="act-next"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Con siguiente paso agendado</div>';
-    return '<div class="act item'+(sinPaso?' none':'')+'">'+
+    let nextHtml, cls="";
+    if(o.sig){
+      cls = o.sig.estado==="due" ? "due" : "";
+      const ic='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>';
+      nextHtml='<div class="act-next">'+ic+' '+esc(o.sig.resumen)+' <span class="when '+o.sig.estado+'">'+esc(o.sig.fecha)+'</span></div>';
+    } else {
+      cls="none";
+      nextHtml='<div class="act-next empty"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Sin siguiente paso — agéndalo al registrar avance</div>';
+    }
+    const calBtn = o.etapa==="Nuevo"
+      ? '<button class="cal" onclick="openCal('+o.leadId+',\''+esc(o.nombre).replace(/'/g,"")+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>Calificar (BANT)</button>'
+      : '';
+    const showVal = o.monto && o.monto!=="$0";
+    return '<div class="act item '+cls+'">'+
       '<div class="act-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg></div>'+
-      '<div class="act-main"><div class="act-name">'+esc(o.nombre)+'</div><div class="act-co">'+esc(o.cliente)+' · <b style="color:var(--blue)">'+esc(o.etapa)+'</b></div>'+next+'</div>'+
-      '<div class="act-val"><div class="v">'+esc(o.monto)+'</div><div class="vt">esperado</div></div>'+
-      '<div class="act-btns">'+bitBtn(o.leadId,o.nombre,o.etapa)+'</div></div>';
+      '<div class="act-main"><div class="act-name">'+esc(o.nombre)+'</div><div class="act-co">'+esc(o.cliente)+' · <b style="color:var(--blue)">'+esc(o.etapa)+'</b></div>'+nextHtml+'</div>'+
+      (showVal?'<div class="act-val"><div class="v">'+esc(o.monto)+'</div><div class="vt">esperado</div></div>':'')+
+      '<div class="act-btns">'+bitBtn(o.leadId,o.nombre,o.etapa)+calBtn+'</div></div>';
   }
 
   function calCard(o){
