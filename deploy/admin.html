@@ -132,6 +132,7 @@
         '<td class="email">' + esc(u.email) + badge + "</td>" +
         '<td><div class="perms">' + permsCheckboxes("u_" + u.id + "_", u.roles) + "</div></td>" +
         '<td><div class="rowbtns"><button class="btn small" data-save="' + u.id + '">Guardar</button>' +
+        '<button class="btn small" data-pass="' + u.id + '" data-email="' + esc(u.email) + '">Contraseña</button>' +
         '<button class="btn danger" data-del="' + u.id + '" data-email="' + esc(u.email) + '">Eliminar</button></div></td></tr>';
     }).join("");
     $("usersWrap").innerHTML =
@@ -144,6 +145,20 @@
         var d2 = await authFetch("POST", { action: "roles", id: id, roles: readChecks("u_" + id + "_") });
         b.disabled = false;
         if (d2.ok) setStatus("usersStatus", "✓ Permisos guardados. (El usuario debe volver a iniciar sesión para verlo).", "ok");
+        else setStatus("usersStatus", "✗ " + (d2.error || "Error"), "err");
+      });
+    });
+    document.querySelectorAll("[data-pass]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        var id = b.getAttribute("data-pass"), em = b.getAttribute("data-email");
+        var pass = prompt("Nueva contraseña para " + em + " (mínimo 8 caracteres):", "");
+        if (pass === null) return;
+        pass = pass.trim();
+        if (pass.length < 8) { setStatus("usersStatus", "✗ La contraseña debe tener al menos 8 caracteres.", "err"); return; }
+        b.disabled = true; setStatus("usersStatus", "Actualizando contraseña…", "");
+        var d2 = await authFetch("POST", { action: "setpass", id: id, password: pass });
+        b.disabled = false;
+        if (d2.ok) setStatus("usersStatus", "✓ Contraseña de " + em + " actualizada a: " + pass + " — compártesela. Ya puede entrar.", "ok");
         else setStatus("usersStatus", "✗ " + (d2.error || "Error"), "err");
       });
     });
