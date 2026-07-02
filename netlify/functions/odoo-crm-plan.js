@@ -185,18 +185,32 @@ export default async (req) => {
     }));
 
     // TODOS los leads/oportunidades abiertos del vendedor (cualquier etapa, menos Ganado):
-    // esta es la base para documentar el avance con la bitácora.
-    const conActividad = new Set(acts.map(a=>a.res_id));
+    // cada uno trae su siguiente paso (si tiene) y si requiere atención.
+    const actsByLead = {};
+    acts.forEach(a=>{ (actsByLead[a.res_id]=actsByLead[a.res_id]||[]).push(a); });
     plan.items = leads
       .filter(l => l.type === "opportunity" && m2oName(l.stage_id) !== "Ganado")
-      .map(l => ({
-        leadId: l.id,
-        nombre: l.name || "—",
-        cliente: (l.partner_name || m2oName(l.partner_id) || l.contact_name || "—"),
-        etapa: m2oName(l.stage_id) || "—",
-        monto: mxn(l.expected_revenue),
-        sigPaso: conActividad.has(l.id),
-      }));
+      .map(l => {
+        const la = (actsByLead[l.id]||[]).slice()
+          .sort((x,y)=>String(x.date_deadline||"").localeCompare(String(y.date_deadline||"")));
+        let sig = null, estado = "none";
+        if (la.length){
+          const a = la[0], dd = a.date_deadline || "";
+          estado = dd < today ? "due" : (dd === today ? "today" : "ok");
+          const tt = tipoById[Array.isArray(a.activity_type_id)?a.activity_type_id[0]:0] || {};
+          sig = { resumen: a.summary || tt.name || "Siguiente paso",
+                  fecha: (estado==="due"?"Vencida · ":"") + fechaCorta(dd), estado };
+        }
+        return {
+          leadId: l.id,
+          nombre: l.name || "—",
+          cliente: (l.partner_name || m2oName(l.partner_id) || l.contact_name || "—"),
+          etapa: m2oName(l.stage_id) || "—",
+          monto: mxn(l.expected_revenue),
+          sig,
+          atencion: (estado === "due" || estado === "none"),  // vencida o sin siguiente paso
+        };
+      });
 
     return json({ ok:true, plan });
   }catch(e){ return json({ ok:false, error:String(e.message||e) },500); }
