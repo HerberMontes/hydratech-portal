@@ -2,11 +2,12 @@
 // Panel de administración de usuarios (solo admins).
 // Usa la API de administración de Netlify Identity (token admin de la función).
 // GET  -> lista usuarios
-// POST {action:"invite", email, roles?}   -> invita por correo
-// POST {action:"roles",  id, roles}        -> guarda permisos
-// POST {action:"delete", id}               -> elimina usuario
+// POST {action:"create", email, password, roles?} -> crea usuario CONFIRMADO con contraseña (sin correo)
+// POST {action:"invite", email, roles?}           -> invita por correo
+// POST {action:"roles",  id, roles}               -> guarda permisos
+// POST {action:"delete", id}                       -> elimina usuario
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-const TOOL_ROLES = ["reportes", "cotizador", "ventas", "admin"];
+const TOOL_ROLES = ["reportes", "cotizador", "ventas", "crm", "crm-gerencia", "admin"];
 const J = (code, obj) => ({ statusCode: code, headers: { "Content-Type": "application/json" }, body: JSON.stringify(obj) });
 
 export const handler = async (event, context) => {
@@ -38,6 +39,23 @@ export const handler = async (event, context) => {
 
     if (event.httpMethod === "POST") {
       const body = JSON.parse(event.body || "{}");
+
+      // NUEVO: crear usuario ya CONFIRMADO con contraseña (no manda correo).
+      if (body.action === "create") {
+        if (!body.email) return J(400, { ok: false, error: "Falta el correo." });
+        if (!body.password || String(body.password).length < 8) return J(400, { ok: false, error: "La contraseña debe tener al menos 8 caracteres." });
+        const payload = {
+          email: body.email,
+          password: String(body.password),
+          confirm: true, // queda confirmado: puede entrar de inmediato, sin correo de verificación
+        };
+        if (body.roles) payload.app_metadata = { roles: clean(body.roles) };
+        const r = await fetch(base + "/admin/users", { method: "POST", headers: H, body: JSON.stringify(payload) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.msg || d.error_description || "HTTP " + r.status);
+        return J(200, { ok: true, id: d.id });
+      }
+
       if (body.action === "invite") {
         if (!body.email) return J(400, { ok: false, error: "Falta el correo." });
         const r = await fetch(base + "/invite", { method: "POST", headers: H, body: JSON.stringify({ email: body.email }) });
