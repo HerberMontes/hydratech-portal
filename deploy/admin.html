@@ -60,14 +60,22 @@
 
     <div class="kicker">Administración</div>
     <h1>Usuarios y permisos</h1>
-    <p class="sub">Da de alta personas y marca qué herramientas puede ver cada una. Al invitar, reciben un correo para crear su contraseña.</p>
+    <p class="sub">Da de alta personas y marca qué herramientas puede ver cada una. Puedes <b>crearles usuario y contraseña al instante</b>, o invitarlas por correo para que ellas la definan.</p>
 
     <div class="panel">
       <h2>Agregar usuario</h2>
       <label>Correo</label>
       <input id="newEmail" type="email" placeholder="persona@empresa.com" style="margin-top:5px;">
       <div class="perms" id="newPerms"></div>
-      <div style="margin-top:16px;"><button class="btn primary" id="invite">Invitar por correo</button></div>
+
+      <label style="margin-top:16px;display:block;">Contraseña (opcional)</label>
+      <input id="newPass" type="text" placeholder="Déjala vacía para invitar por correo" style="margin-top:5px;">
+      <div class="status" style="margin-top:4px;">Si escribes una contraseña, el usuario queda creado y listo para entrar (sin correo). Mínimo 8 caracteres. Compártele el correo y la contraseña; puede cambiarla después.</div>
+
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn primary" id="create">Crear con contraseña</button>
+        <button class="btn" id="invite">Invitar por correo</button>
+      </div>
       <div id="inviteStatus" class="status"></div>
     </div>
 
@@ -150,6 +158,20 @@
     });
   }
   function setStatus(id, txt, cls) { var e = $(id); if (e) { e.className = "status " + (cls || ""); e.textContent = txt; } }
+
+  $("create").addEventListener("click", async function () {
+    var email = $("newEmail").value.trim();
+    var pass = $("newPass").value;
+    if (!email) { setStatus("inviteStatus", "Escribe un correo.", "err"); return; }
+    if (!pass || pass.length < 8) { setStatus("inviteStatus", "La contraseña debe tener al menos 8 caracteres.", "err"); return; }
+    $("create").disabled = true; setStatus("inviteStatus", "Creando usuario…", "");
+    var d = await authFetch("POST", { action: "create", email: email, password: pass, roles: readChecks("np_") });
+    $("create").disabled = false;
+    if (d.ok) {
+      setStatus("inviteStatus", "✓ Usuario creado: " + email + " · contraseña: " + pass + " — compárteselos. Ya puede entrar.", "ok");
+      $("newEmail").value = ""; $("newPass").value = ""; loadUsers();
+    } else setStatus("inviteStatus", "✗ " + (d.error || "Error"), "err");
+  });
 
   $("invite").addEventListener("click", async function () {
     var email = $("newEmail").value.trim();
