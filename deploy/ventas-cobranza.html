@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seguimiento de cobranza · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<script>window.REQUIRE_ROLE="ventas";</script>
+<script defer src="auth-gate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#263370;--ink:#1b2138;--body:#4a5267;--muted:#717a90;
+    --line:#e6e9f0;--line2:#d8deea;--soft:#f7f9fc;--field:#fafbfd;
+    --green:#16a34a;--red:#e5484d;--gold:#c9a14a;
+    --shadow:0 1px 2px rgba(27,33,56,.04),0 12px 30px -16px rgba(27,33,56,.16)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#ffffff;font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  #ht-bar{background:#fff;border-bottom:3px solid var(--blue)}
+  .ht-in{max-width:1120px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between}
+  .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--body);font-weight:600;font-size:14px}
+  .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+  main{max-width:1120px;margin:0 auto;padding:26px 20px 70px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}
+  .badge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;margin-left:8px}
+  .badge.live{background:rgba(22,163,74,.12);color:var(--green)} .badge.sample{background:rgba(201,161,74,.16);color:#8f6f28}
+  h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin-top:5px}
+  .sub{color:var(--muted);font-size:13.5px;margin-top:4px;max-width:680px}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:22px 0 6px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:'Archivo',sans-serif;font-weight:800;font-size:27px;line-height:1}
+  .kpi .t{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.3}
+  .kpi.red .n{color:var(--red)} .kpi.gold .n{color:var(--gold)} .kpi.blue .n{color:var(--blue)}
+
+  /* filtros */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 14px}
+  .filters button{font-size:13px;font-weight:600;border:1.5px solid var(--line2);background:#fff;color:var(--body);border-radius:999px;padding:8px 15px;cursor:pointer}
+  .filters button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .filters .count{opacity:.7;font-weight:500}
+
+  /* tarjeta de venta */
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:13px;position:relative;overflow:hidden}
+  .card .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green)}
+  .card.amber .bar{background:var(--gold)} .card.red .bar{background:var(--red)} .card.done .bar{background:var(--blue)}
+  .card-in{padding:15px 18px 16px 20px}
+  .crow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .cliente{font-family:'Archivo',sans-serif;font-weight:800;font-size:16px}
+  .folio{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted)}
+  .monto{margin-left:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;color:var(--blue)}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+  .chip{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:6px;display:flex;align-items:center;gap:5px;background:var(--soft);color:var(--body)}
+  .chip.ok{background:rgba(22,163,74,.1);color:var(--green)}
+  .chip.warn{background:rgba(201,161,74,.16);color:#8f6f28}
+  .chip.bad{background:rgba(229,72,77,.12);color:var(--red)}
+
+  /* stepper */
+  .steps{display:flex;margin:16px 0 6px;gap:0}
+  .step{flex:1;position:relative;text-align:center;min-width:0}
+  .step .line{position:absolute;top:11px;left:-50%;width:100%;height:2px;background:var(--line2);z-index:0}
+  .step:first-child .line{display:none}
+  .step.done .line,.step.current .line{background:var(--blue)}
+  .step .dot{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;margin:0 auto;background:#fff;border:2px solid var(--line2);display:grid;place-items:center}
+  .step.done .dot{background:var(--blue);border-color:var(--blue);color:#fff}
+  .step.current .dot{border-color:var(--blue);border-width:3px;box-shadow:0 0 0 4px rgba(38,51,112,.1)}
+  .step.current.amber .dot{border-color:var(--gold);box-shadow:0 0 0 4px rgba(201,161,74,.18)}
+  .step.current.red .dot{border-color:var(--red);box-shadow:0 0 0 4px rgba(229,72,77,.16)}
+  .step .dot svg{width:12px;height:12px}
+  .step .lbl{font-size:10.5px;font-weight:600;color:var(--muted);margin-top:7px;line-height:1.25;padding:0 3px}
+  .step.done .lbl,.step.current .lbl{color:var(--ink)}
+  .step .crit{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;color:var(--red);margin-top:2px}
+
+  /* estado del paso actual */
+  .statusbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .stuck{display:flex;align-items:center;gap:8px;font-size:13px}
+  .stuck .meter{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px}
+  .stuck.green .meter{color:var(--green)} .stuck.amber .meter{color:var(--gold)} .stuck.red .meter{color:var(--red)}
+  .stuck .cap{font-size:11.5px;color:var(--muted)}
+  .foco{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;background:var(--red);color:#fff;padding:4px 10px;border-radius:999px;display:flex;align-items:center;gap:6px}
+  .edad{font-size:11.5px;color:var(--muted)}
+  .next{font-size:12.5px;color:var(--body)}
+  .next b{color:var(--ink)}
+
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .act-btn{font-family:'IBM Plex Sans';font-size:13px;font-weight:600;border-radius:9px;padding:9px 15px;cursor:pointer;border:1.5px solid var(--line2);background:#fff;color:var(--blue);display:inline-flex;align-items:center;gap:7px}
+  .act-btn.prim{background:var(--green);border-color:var(--green);color:#fff}
+  .act-btn.pay{background:var(--blue);border-color:var(--blue);color:#fff}
+  .act-btn svg{width:15px;height:15px}
+  .card.archived{opacity:.6}
+  .cap-in{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
+  .cap-in input{flex:1;min-width:180px;border:1.5px solid var(--line2);border-radius:9px;padding:9px 12px;font:inherit;font-size:14px;color:var(--ink);background:var(--field)}
+
+  .ov{position:fixed;inset:0;background:rgba(27,33,56,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .ov.show{display:flex}
+  .modal{background:#fff;border-radius:16px;width:440px;max-width:100%;box-shadow:0 30px 70px rgba(27,33,56,.4);display:flex;flex-direction:column;max-height:92vh;overflow:hidden}
+  .modal-h{padding:16px 18px;border-bottom:1px solid var(--line);flex:none}
+  .modal-h h3{font-family:'Archivo',sans-serif;font-weight:700;font-size:16px}
+  .modal-h .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .modal-b{padding:16px 18px;overflow-y:auto;flex:1 1 auto;min-height:0}
+  .modal-b label{display:block;font-size:12px;font-weight:600;color:var(--body);margin:12px 0 5px}
+  .modal-b label:first-child{margin-top:0}
+  .modal-b input[type=date],.modal-b input[type=text]{width:100%;border:1.5px solid var(--line2);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);background:var(--field)}
+  .chkline{display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:13px;font-weight:500;color:var(--ink);cursor:pointer}
+  .chkline input{margin-top:2px;width:16px;height:16px}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+  .modal-f{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex:none;box-shadow:0 -6px 16px -12px rgba(27,33,56,.28)}
+  .modal-f button{font-family:'IBM Plex Sans';font-size:13px;font-weight:600;border-radius:9px;padding:10px 16px;cursor:pointer;border:1.5px solid var(--line2);background:#fff;color:var(--body)}
+  .modal-f button.prim{background:var(--green);border-color:var(--green);color:#fff}
+
+  .note{font-size:12.5px;color:var(--muted);margin-top:18px;display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px dashed var(--line2);border-radius:12px;padding:12px 14px}
+  .note svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--blue)}
+
+  @media(max-width:760px){
+    .kpis{grid-template-columns:1fr 1fr}
+    .step .lbl{font-size:9px}
+    .monto{margin-left:0}
+  }
+</style>
+</head>
+<body>
+<div id="ht-bar"><div class="ht-in">
+  <a class="ht-back" href="acceso.html"><span style="font-size:18px;">&#8592;</span> HydraTech</a>
+  <span class="ht-tool">Reporte de ventas · Cobranza</span>
+</div></div>
+
+<main>
+  <div class="eyebrow">Seguimiento post-venta <span id="src" class="badge sample">Cargando…</span></div>
+  <h1>Cobranza · dónde está cada venta</h1>
+  <p class="sub">Del servicio entregado hasta el pago. Cada venta avanza por 6 pasos; el medidor muestra cuántos días lleva atorada en el paso actual. Los pasos críticos son <b>Esperando OC</b> (máx. 10 días) y <b>Pago</b>.</p>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="filters" id="filters"></div>
+  <div id="list"></div>
+
+  <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span><b>Prototipo con datos de ejemplo.</b> Así se ve el flujo y la lógica de "días atorado". Cuando lo apruebes, lo conecto a tus datos reales (Odoo / sistema) y lo estilizas en Claude Design.</span>
+  </div>
+</main>
+
+<div class="ov" id="ov-pago">
+  <div class="modal">
+    <div class="modal-h"><h3>Registrar pago</h3><div class="s" id="pg-sub">—</div></div>
+    <div class="modal-b">
+      <label>Fecha de pago</label>
+      <input type="date" id="pg-fecha">
+      <label>Referencia del pago</label>
+      <input type="text" id="pg-ref" placeholder="SPEI, cheque, transferencia…">
+      <label class="chkline"><input type="checkbox" id="pg-comp"> El complemento de pago (REP) ya se emitió</label>
+      <p class="hint">Si aún no emites el complemento, registra el pago ahora y márcalo después con "Emitir complemento". La venta se archiva cuando está pagada <b>y</b> con complemento.</p>
+    </div>
+    <div class="modal-f">
+      <button onclick="cerrarPago()">Cancelar</button>
+      <button class="prim" onclick="guardarPago()">Guardar pago</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Los 6 pasos del flujo, con umbrales de días para amarillo/rojo.
+  const STEPS=[
+    {key:"entregado", lbl:"Entregado",     amber:2,  red:4},
+    {key:"solped",    lbl:"SOLPED",        amber:2,  red:4},
+    {key:"oc",        lbl:"Esperando OC",  amber:7,  red:10, critico:true},
+    {key:"ocproc",    lbl:"OC en proceso", amber:3,  red:6},
+    {key:"acuse",     lbl:"Acuse subido",  amber:23, red:30, critico:true},
+    {key:"pagado",    lbl:"Pagado",        done:true},
+  ];
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  const money=n=>"$"+Number(n||0).toLocaleString("es-MX");
+
+  // Datos reales (se cargan desde /api/cobranza-listar). SAMPLE es solo respaldo si Odoo no responde.
+  let VENTAS=[];
+  let usandoDemo=false;
+  const SAMPLE=[
+    {id:-1,cliente:"Deacero · Ramos Arizpe", folio:"REM-2041", monto:310000, solped:"4500231", evidencia:true, paso:2, dias:12, edad:19, pago:null, archivada:false, plazoDias:30, terminos:"30 días"},
+    {id:-2,cliente:"Ternium · Planta 2",     folio:"REM-2038", monto:420000, solped:"RQ-88120", evidencia:true, acuse:true, paso:4, dias:34, edad:52, pago:null, archivada:false, plazoDias:30, fechaPago:"2026-06-20", diasParaPago:-12, terminos:"30 días", focoRojo:true},
+    {id:-3,cliente:"Nemak · García",         folio:"REM-2044", monto:180000, solped:"4500377", evidencia:true, paso:3, dias:4,  edad:11, pago:null, archivada:false, terminos:"45 días"},
+    {id:-4,cliente:"Frisa · Sta. Catarina",  folio:"REM-2049", monto:95000,  solped:"",        evidencia:true, paso:1, dias:3,  edad:3,  pago:null, archivada:false, terminos:"30 días"},
+    {id:-5,cliente:"Grupo Simec · Apodaca",  folio:"REM-2036", monto:220000, solped:"SOL-7741", evidencia:true, paso:2, dias:6,  edad:14, pago:null, archivada:false, terminos:"30 días"},
+    {id:-6,cliente:"Villacero · Guadalupe",  folio:"REM-2031", monto:260000, solped:"4500198", evidencia:true, acuse:true, paso:4, dias:18, edad:40, pago:null, archivada:false, plazoDias:30, fechaPago:"2026-07-08", diasParaPago:6, terminos:"30 días"},
+    {id:-8,cliente:"Metalsa · Apodaca",      folio:"REM-2020", monto:140000, solped:"4500090", evidencia:true, acuse:true, paso:5, dias:0,  edad:61, pago:{fecha:"2026-06-28", ref:"SPEI-7781", complemento:true}, archivada:false, terminos:"30 días"},
+  ];
+
+  function statusDe(v){
+    const s=STEPS[v.paso];
+    if(s.done) return "done";
+    if(s.key==="acuse" && v.pago) return "amber"; // pagado, falta complemento
+    if(v.focoRojo) return "red";
+    const red = (s.key==="acuse" && v.plazoDias!=null) ? v.plazoDias : s.red;
+    if(red!=null && v.dias>red) return "red";
+    if(s.amber!=null && v.dias>s.amber) return "amber";
+    return "green";
+  }
+  function focoRojo(v){
+    if(typeof v.focoRojo==="boolean") return v.focoRojo;   // lo calcula el servidor
+    const s=STEPS[v.paso]; if(v.pago) return false; return !s.done && s.critico && v.dias>s.red;
+  }
+  const fmt=d=>{ if(!d) return ""; const p=String(d).split("-"); if(p.length<3) return d; const M=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return (+p[2])+" "+M[(+p[1])-1]; };
+  const findV=folio=>VENTAS.find(v=>v.folio===folio);
+
+  let filtro="todos";
+  function pasa(v){
+    if(filtro==="archivadas") return v.archivada;
+    if(v.archivada) return false;
+    if(filtro==="todos") return true;
+    if(filtro==="foco") return focoRojo(v);
+    if(filtro==="oc") return STEPS[v.paso].key==="oc";
+    if(filtro==="pagar") return STEPS[v.paso].key==="acuse" && !v.pago;
+    if(filtro==="abiertos") return !STEPS[v.paso].done;
+    return true;
+  }
+
+  function stepper(v){
+    return '<div class="steps">'+STEPS.map((s,i)=>{
+      let cls = i<v.paso ? "done" : (i===v.paso ? "current" : "");
+      if(i===v.paso){ const st=statusDe(v); if(st==="amber")cls+=" amber"; if(st==="red")cls+=" red"; }
+      const inner = i<v.paso
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>'
+        : (i===v.paso && STEPS[v.paso].done ? '<svg viewBox="0 0 24 24" fill="none" stroke="#263370" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : "");
+      return '<div class="step '+cls+'"><div class="line"></div><div class="dot">'+inner+'</div>'+
+        '<div class="lbl">'+s.lbl+(s.critico?'<br><span class="crit">&#9733; crítico</span>':"")+'</div></div>';
+    }).join("")+'</div>';
+  }
+
+  function card(v){
+    const st=statusDe(v);
+    const s=STEPS[v.paso];
+    const foco=focoRojo(v);
+    // chips: solped, evidencia, acuse
+    let chips="";
+    chips += v.solped
+      ? '<span class="chip ok">SOLPED '+esc(v.solped)+'</span>'
+      : '<span class="chip bad">Falta SOLPED</span>';
+    chips += v.evidencia ? '<span class="chip ok">Evidencia &#10003;</span>' : '<span class="chip warn">Sin evidencia</span>';
+    if(v.acuse) chips += '<span class="chip ok">Acuse subido &#10003;</span>';
+
+    let statusHtml, actions="";
+    if(v.archivada){
+      statusHtml='<div class="stuck done"><span class="cap">Archivada · pagada y con complemento en '+v.edad+' días</span></div>';
+      actions='<button class="act-btn" data-arch0="'+esc(v.folio)+'">Desarchivar</button>';
+    } else if(s.done){
+      statusHtml='<div class="stuck green"><span class="meter">&#10003;</span><span class="cap">Pagada y con complemento &#183; '+v.edad+' d desde la entrega</span></div>';
+      actions='<button class="act-btn prim" data-arch1="'+esc(v.folio)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>Archivar</button>';
+    } else if(s.key==="acuse" && v.pago){
+      statusHtml='<div class="stuck amber"><span class="meter">&#10003;</span><span class="cap">Pagado el '+fmt(v.pago.fecha)+' ('+esc(v.pago.ref)+') &#183; <b>falta complemento (REP)</b></span></div>';
+      actions='<button class="act-btn prim" data-comp="'+esc(v.folio)+'">Emitir complemento</button>';
+    } else {
+      const isAcuse = s.key==="acuse";
+      const limite = s.critico ? (isAcuse && v.plazoDias!=null ? (' · plazo '+v.plazoDias+' d') : (' de '+s.red+' máx.')) : '';
+      let pagoInfo="";
+      if(isAcuse && v.fechaPago){
+        const dp=v.diasParaPago;
+        const txt = dp==null ? "" : (dp<0 ? ("vencido hace "+(-dp)+" d") : (dp===0 ? "vence hoy" : ("faltan "+dp+" d")));
+        pagoInfo='<span class="edad">Pago programado: <b>'+fmt(v.fechaPago)+'</b>'+(txt?" · "+txt:"")+'</span>';
+      }
+      statusHtml='<div class="stuck '+st+'"><span class="meter">'+v.dias+' d</span>'+
+        '<span class="cap">en <b>'+s.lbl+'</b>'+limite+'</span></div>'+
+        (pagoInfo || '<span class="edad">'+v.edad+' d desde la entrega</span>')+
+        (foco?'<span class="foco"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg> Foco rojo</span>':"");
+
+      // Controles de captura según el paso actual
+      if(s.key==="solped"){
+        actions='<div class="cap-in"><input type="text" placeholder="Número de SOLPED / requisición" id="in-'+v.id+'"><button class="act-btn prim" data-solped="'+esc(v.folio)+'">Guardar SOLPED</button></div>';
+      } else if(s.key==="oc"){
+        actions='<div class="cap-in"><input type="text" placeholder="Número de orden de compra" id="in-'+v.id+'"><button class="act-btn prim" data-oc="'+esc(v.folio)+'">Guardar OC</button></div>';
+      } else if(s.key==="ocproc"){
+        actions='<label class="act-btn pay" for="file-'+v.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Subir acuse</label><input type="file" id="file-'+v.id+'" accept="application/pdf,image/*" style="display:none" data-acuse="'+esc(v.folio)+'">';
+      } else if(isAcuse){
+        actions='<button class="act-btn pay" data-pago="'+esc(v.folio)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Registrar pago</button>';
+      }
+    }
+
+    return '<div class="card '+st+(v.archivada?' archived':'')+'"><div class="bar"></div><div class="card-in">'+
+      '<div class="crow"><span class="cliente">'+esc(v.cliente)+'</span><span class="folio">'+esc(v.folio)+'</span><span class="monto">'+money(v.monto)+'</span></div>'+
+      '<div class="chips">'+chips+'</div>'+
+      stepper(v)+
+      '<div class="statusbar">'+statusHtml+'</div>'+
+      (actions?'<div class="actions">'+actions+'</div>':'')+
+    '</div></div>';
+  }
+
+  function kpis(){
+    const abiertas=VENTAS.filter(v=>!v.archivada && !STEPS[v.paso].done);
+    const foco=VENTAS.filter(focoRojo);
+    const espOC=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="oc");
+    const porPagar=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="acuse" && !v.pago);
+    const montoPagar=porPagar.reduce((a,v)=>a+v.monto,0);
+    const promOC = espOC.length? Math.round(espOC.reduce((a,v)=>a+v.dias,0)/espOC.length):0;
+    return kpi("blue",abiertas.length,"ventas en proceso")+
+      kpi("red",foco.length,"en foco rojo (OC o pago vencidos)")+
+      kpi("gold",espOC.length,"esperando OC · "+promOC+" d promedio")+
+      kpi("blue",money(montoPagar),porPagar.length+" por pagar (acuse subido)");
+  }
+  function kpi(cls,n,t){ return '<div class="kpi '+cls+'"><div class="n">'+n+'</div><div class="t">'+t+'</div></div>'; }
+
+  function filtros(){
+    const nA=v=>!v.archivada;
+    const f=[
+      ["todos","Todas",VENTAS.filter(nA).length],
+      ["foco","Foco rojo",VENTAS.filter(focoRojo).length],
+      ["oc","Esperando OC",VENTAS.filter(v=>nA(v)&&STEPS[v.paso].key==="oc").length],
+      ["pagar","Por pagar",VENTAS.filter(v=>nA(v)&&STEPS[v.paso].key==="acuse"&&!v.pago).length],
+      ["abiertos","En proceso",VENTAS.filter(v=>nA(v)&&!STEPS[v.paso].done).length],
+      ["archivadas","Archivadas",VENTAS.filter(v=>v.archivada).length],
+    ];
+    return f.map(([k,l,n])=>'<button class="'+(filtro===k?"on":"")+'" data-f="'+k+'">'+l+' <span class="count">'+n+'</span></button>').join("");
+  }
+
+  function render(){
+    document.getElementById("kpis").innerHTML=kpis();
+    document.getElementById("filters").innerHTML=filtros();
+    // orden: foco rojo primero, luego por días atorado desc
+    const rows=VENTAS.filter(pasa).sort((a,b)=>{
+      const fa=focoRojo(a)?1:0, fb=focoRojo(b)?1:0;
+      if(fb-fa) return fb-fa;
+      return b.dias-a.dias;
+    });
+    document.getElementById("list").innerHTML = rows.length? rows.map(card).join("")
+      : '<div style="text-align:center;color:var(--muted);padding:40px 0;">Nada en este filtro.</div>';
+    document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{ filtro=b.getAttribute("data-f"); render(); }));
+    document.querySelectorAll("[data-pago]").forEach(b=>b.addEventListener("click",()=>openPago(b.getAttribute("data-pago"))));
+    document.querySelectorAll("[data-comp]").forEach(b=>b.addEventListener("click",()=>emitirComplemento(b.getAttribute("data-comp"))));
+    document.querySelectorAll("[data-arch1]").forEach(b=>b.addEventListener("click",()=>archivar(b.getAttribute("data-arch1"),true)));
+    document.querySelectorAll("[data-arch0]").forEach(b=>b.addEventListener("click",()=>archivar(b.getAttribute("data-arch0"),false)));
+    document.querySelectorAll("[data-solped]").forEach(b=>b.addEventListener("click",()=>guardarCampo(b.getAttribute("data-solped"),"solped")));
+    document.querySelectorAll("[data-oc]").forEach(b=>b.addEventListener("click",()=>guardarCampo(b.getAttribute("data-oc"),"oc")));
+    document.querySelectorAll("[data-acuse]").forEach(inp=>inp.addEventListener("change",()=>subirAcuse(inp.getAttribute("data-acuse"),inp.files[0])));
+  }
+
+  // ---- Conexión con Odoo ----
+  const demo=()=>usandoDemo;
+  async function apiGuardar(payload){
+    if(demo()){ return true; } // en modo ejemplo no llama a la API
+    try{
+      const r=await fetch("/api/cobranza-guardar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const d=await r.json();
+      if(!d.ok) throw new Error(d.error||"Error al guardar");
+      return true;
+    }catch(e){ alert("No se pudo guardar: "+e.message); return false; }
+  }
+  async function guardarCampo(folio,campo){
+    const v=findV(folio); if(!v) return;
+    const inp=document.getElementById("in-"+v.id); const val=(inp?inp.value:"").trim();
+    if(!val){ alert("Escribe el número."); return; }
+    if(demo()){ v[campo]=val; recompute(v); render(); return; }
+    if(await apiGuardar({id:v.id,[campo]:val})) cargar();
+  }
+  async function subirAcuse(folio,file){
+    const v=findV(folio); if(!v||!file) return;
+    const datas=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+    if(demo()){ v.acuse=true; v.acuseFecha=new Date().toISOString().slice(0,10); recompute(v); render(); return; }
+    if(await apiGuardar({id:v.id,acuse:{name:file.name,datas,mimetype:file.type||"application/pdf"}})) cargar();
+  }
+
+  // ---- pago / complemento / archivar ----
+  let pagoFolio=null;
+  function openPago(folio){
+    const v=findV(folio); if(!v) return; pagoFolio=folio;
+    document.getElementById("pg-sub").textContent=v.cliente+" · "+v.folio+" · "+money(v.monto);
+    document.getElementById("pg-fecha").value=new Date().toISOString().slice(0,10);
+    document.getElementById("pg-ref").value=""; document.getElementById("pg-comp").checked=false;
+    document.getElementById("ov-pago").classList.add("show");
+  }
+  function cerrarPago(){ document.getElementById("ov-pago").classList.remove("show"); }
+  async function guardarPago(){
+    const v=findV(pagoFolio); if(!v) return;
+    const fecha=document.getElementById("pg-fecha").value;
+    if(!fecha){ alert("Indica la fecha de pago."); return; }
+    const pago={fecha, ref:document.getElementById("pg-ref").value.trim()||"—", complemento:document.getElementById("pg-comp").checked};
+    if(demo()){ v.pago=pago; if(pago.complemento){v.paso=5;v.dias=0;} cerrarPago(); render(); return; }
+    if(await apiGuardar({id:v.id,pago})){ cerrarPago(); cargar(); }
+  }
+  async function emitirComplemento(folio){
+    const v=findV(folio); if(!v) return;
+    if(demo()){ v.pago=v.pago||{}; v.pago.complemento=true; v.paso=5; v.dias=0; render(); return; }
+    if(await apiGuardar({id:v.id,complemento:true})) cargar();
+  }
+  async function archivar(folio,val){
+    const v=findV(folio); if(!v) return;
+    if(demo()){ v.archivada=val; render(); return; }
+    if(await apiGuardar({id:v.id,archivada:val})) cargar();
+  }
+  document.getElementById("ov-pago").addEventListener("click",e=>{ if(e.target.id==="ov-pago") cerrarPago(); });
+
+  // recalcula paso/estado en modo ejemplo (sin servidor)
+  function recompute(v){
+    if(v.pago&&v.pago.complemento) v.paso=5;
+    else if(v.acuse) v.paso=4;
+    else if(v.oc) v.paso=3;
+    else if(v.solped) v.paso=2;
+    else v.paso=1;
+  }
+
+  function setBadge(){
+    const el=document.getElementById("src");
+    if(!el) return;
+    el.className="badge "+(usandoDemo?"sample":"live");
+    el.textContent=usandoDemo?"Datos de ejemplo":"En vivo · Odoo";
+  }
+
+  function cargar(){
+    fetch("/api/cobranza-listar")
+      .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+      .then(j=>{ if(!j||!j.ok) throw 0; usandoDemo=false; VENTAS=j.ventas||[]; setBadge(); render(); })
+      .catch(()=>{ usandoDemo=true; VENTAS=SAMPLE.slice(); setBadge(); render(); });
+  }
+
+  window.onAuthReady=function(){ cargar(); };
+  if(!window.REQUIRE_ROLE){ document.addEventListener("DOMContentLoaded", cargar); }
+  setTimeout(()=>{ if(!document.getElementById("list").innerHTML){ usandoDemo=true; VENTAS=SAMPLE.slice(); setBadge(); render(); } }, 1500);
+</script>
+</body>
+</html>
