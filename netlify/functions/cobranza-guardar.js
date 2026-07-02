@@ -28,6 +28,7 @@ export default async (req) => {
     if (body.oc !== undefined) data.oc = String(body.oc || "").trim();
     if (body.pago !== undefined) data.pago = body.pago; // {fecha, ref, complemento} o null
     if (body.complemento !== undefined) { data.pago = data.pago || {}; data.pago.complemento = !!body.complemento; }
+    if (body.archivada !== undefined) data.archivada = !!body.archivada;
     if (body.acuseFecha !== undefined) data.acuseFecha = body.acuseFecha;
 
     // 3) Acuse (archivo) opcional: reemplaza el anterior y fija la fecha que arranca el reloj de pago.
