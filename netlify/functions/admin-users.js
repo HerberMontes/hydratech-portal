@@ -56,6 +56,19 @@ export const handler = async (event, context) => {
         return J(200, { ok: true, id: d.id });
       }
 
+      if (body.action === "setpass") {
+        if (!body.id) return J(400, { ok: false, error: "Falta el usuario." });
+        if (!body.password || String(body.password).length < 8) return J(400, { ok: false, error: "La contraseña debe tener al menos 8 caracteres." });
+        // Cambia la contraseña y deja el correo confirmado, para que pueda entrar de inmediato.
+        const r = await fetch(base + "/admin/users/" + body.id, {
+          method: "PUT", headers: H,
+          body: JSON.stringify({ password: String(body.password), confirm: true }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.msg || d.error_description || "HTTP " + r.status);
+        return J(200, { ok: true });
+      }
+
       if (body.action === "invite") {
         if (!body.email) return J(400, { ok: false, error: "Falta el correo." });
         const r = await fetch(base + "/invite", { method: "POST", headers: H, body: JSON.stringify({ email: body.email }) });
