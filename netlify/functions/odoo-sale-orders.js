@@ -3,7 +3,7 @@
 // Solo trae órdenes que:
 //   1) tengan AL MENOS una línea de producto tipo "Servicio"  (order_line.product_id.type = 'service')
 //   2) sean de la fecha de corte en adelante  (REPORTES_DESDE, formato YYYY-MM-DD)
-//   3) no estén canceladas
+//   3) sean ORDEN DE VENTA confirmada (state sale/done); las cotizaciones NO entran
 import { executeKw, checkToken, json } from "./lib/odoo.js";
 
 const DESDE = process.env.REPORTES_DESDE || ""; // ej. "2026-06-26"
@@ -31,7 +31,8 @@ export default async (req) => {
     const subs = [];
     if (DESDE) subs.push([["date_order", ">=", DESDE + " 00:00:00"]]);
     subs.push([[SERVICE_FIELD, "=", "service"]]);
-    subs.push([["state", "!=", "cancel"]]);
+    // Reportes = solo SERVICIO y ORDEN DE VENTA confirmada (no cotizaciones draft/sent, no canceladas).
+    subs.push([["state", "in", ["sale", "done"]]]);
     if (q) subs.push(["|", ["name", "ilike", q], ["partner_id", "ilike", q]]);
     const domain = AND(subs);
 
