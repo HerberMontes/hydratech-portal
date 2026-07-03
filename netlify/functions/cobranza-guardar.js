@@ -7,6 +7,8 @@ import { executeKw, checkToken, json } from "./lib/odoo.js";
 
 const ATT = "portal_cobranza.json";
 const ACUSE_PREFIX = "portal_acuse";
+const EVID_PREFIX = "portal_evidencia";
+const hoy = () => new Date().toISOString().slice(0, 10);
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "Método no permitido." }, 405);
@@ -23,15 +25,28 @@ export default async (req) => {
       { fields: ["id", "datas"], limit: 1 });
     if (ex.length) { try { data = JSON.parse(Buffer.from(ex[0].datas || "", "base64").toString("utf8")); } catch (e) {} }
 
-    // 2) Aplicar solo los campos que llegan.
-    if (body.solped !== undefined) data.solped = String(body.solped || "").trim();
-    if (body.oc !== undefined) data.oc = String(body.oc || "").trim();
+    // 2) Aplicar solo los campos que llegan (con fecha del paso para los relojes).
+    if (body.solped !== undefined) { data.solped = String(body.solped || "").trim(); if (data.solped && !data.solpedFecha) data.solpedFecha = hoy(); }
+    if (body.oc !== undefined) { data.oc = String(body.oc || "").trim(); if (data.oc && !data.ocFecha) data.ocFecha = hoy(); }
     if (body.pago !== undefined) data.pago = body.pago; // {fecha, ref, complemento} o null
     if (body.complemento !== undefined) { data.pago = data.pago || {}; data.pago.complemento = !!body.complemento; }
     if (body.archivada !== undefined) data.archivada = !!body.archivada;
     if (body.acuseFecha !== undefined) data.acuseFecha = body.acuseFecha;
 
-    // 3) Acuse (archivo) opcional: reemplaza el anterior y fija la fecha que arranca el reloj de pago.
+    // 3) Evidencia / remisión firmada (archivo) opcional -> marca "Evidencia".
+    if (body.evidencia && body.evidencia.datas) {
+      const ext = ((body.evidencia.name || "").split(".").pop() || "pdf").toLowerCase();
+      const prev = await executeKw("ir.attachment", "search",
+        [[["res_model", "=", "sale.order"], ["res_id", "=", id], ["name", "like", EVID_PREFIX + "%"]]], {});
+      if (prev.length) await executeKw("ir.attachment", "unlink", [prev]).catch(() => {});
+      await executeKw("ir.attachment", "create", [{
+        name: EVID_PREFIX + "." + ext, res_model: "sale.order", res_id: id, type: "binary",
+        mimetype: body.evidencia.mimetype || "application/pdf", datas: body.evidencia.datas,
+      }]);
+      if (!data.evidenciaFecha) data.evidenciaFecha = hoy();
+    }
+
+    // 4) Acuse (archivo) opcional: reemplaza el anterior y fija la fecha que arranca el reloj de pago.
     if (body.acuse && body.acuse.datas) {
       const ext = ((body.acuse.name || "").split(".").pop() || "pdf").toLowerCase();
       const acuseName = ACUSE_PREFIX + "." + ext;
@@ -42,8 +57,7 @@ export default async (req) => {
         name: acuseName, res_model: "sale.order", res_id: id, type: "binary",
         mimetype: body.acuse.mimetype || "application/pdf", datas: body.acuse.datas,
       }]);
-      // Si no mandaron fecha explícita, el acuse se toma como recibido hoy.
-      if (body.acuseFecha === undefined) data.acuseFecha = new Date().toISOString().slice(0, 10);
+      if (body.acuseFecha === undefined) data.acuseFecha = hoy();
     }
 
     data.updatedAt = new Date().toISOString();

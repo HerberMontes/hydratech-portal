@@ -12,6 +12,7 @@ const SERVICE_FIELD = process.env.SERVICE_TYPE_FIELD || "order_line.product_id.t
 const REP = "portal_reporte.json";
 const COB = "portal_cobranza.json";
 const ACUSE_PREFIX = "portal_acuse";
+const EVID_PREFIX = "portal_evidencia";
 const DAY = 24 * 60 * 60 * 1000;
 
 // Umbral del paso "Esperando OC" (regla del negocio: máximo 10 días).
@@ -53,12 +54,13 @@ export default async (req) => {
     // 2) Adjuntos de todas las órdenes en una sola consulta
     const atts = await executeKw("ir.attachment", "search_read",
       [[["res_model", "=", "sale.order"], ["res_id", "in", ids],
-        "|", "|", ["name", "=", REP], ["name", "=", COB], ["name", "like", ACUSE_PREFIX + "%"]]],
+        "|", "|", "|", ["name", "=", REP], ["name", "=", COB], ["name", "like", ACUSE_PREFIX + "%"], ["name", "like", EVID_PREFIX + "%"]]],
       { fields: ["res_id", "name", "datas"] }).catch(() => []);
-    const repByOrder = {}, cobByOrder = {}, acuseByOrder = {};
+    const repByOrder = {}, cobByOrder = {}, acuseByOrder = {}, evidByOrder = {};
     for (const a of atts) {
       if (a.name === REP) { try { repByOrder[a.res_id] = JSON.parse(Buffer.from(a.datas || "", "base64").toString("utf8")); } catch (e) {} }
       else if (a.name === COB) { try { cobByOrder[a.res_id] = JSON.parse(Buffer.from(a.datas || "", "base64").toString("utf8")); } catch (e) {} }
+      else if ((a.name || "").indexOf(EVID_PREFIX) === 0) evidByOrder[a.res_id] = true;
       else if ((a.name || "").indexOf(ACUSE_PREFIX) === 0) acuseByOrder[a.res_id] = true;
     }
 
@@ -75,12 +77,16 @@ export default async (req) => {
       }
     }
 
-    // 4) Construir cada venta. Entra TODA orden de venta confirmada (servicio o material):
-    // ya siendo orden de venta, es algo entregado/hecho y por tanto cobrable.
+    // Umbrales rojos por paso
+    const SOLPED_MAX = 3, OC_MAX2 = 10, ACUSE_MAX = 5;
+
+    // 4) Construir cada venta. Entra TODA orden de venta confirmada (servicio o material).
     const ventas = [];
     for (const o of orders) {
       const rep = repByOrder[o.id];
-      const reporteAprobado = !!(rep && rep.status === "approved"); // informativo (solo servicios)
+      const reporteAprobado = !!(rep && rep.status === "approved");
+      const evidenciaAdjunta = !!evidByOrder[o.id];
+      const tieneEvidencia = reporteAprobado || evidenciaAdjunta; // servicio (reporte) o material (remisión)
 
       const cob = cobByOrder[o.id] || {};
       const solped = (cob.solped || "").trim();
@@ -90,37 +96,50 @@ export default async (req) => {
       const pago = cob.pago || null;
       const pagado = !!(pago && pago.complemento);
 
-      // referencia de entrega para la antigüedad general
-      const entregaRef = (rep && rep.approvedAt) || o.date_order || "";
-      const edad = daysSince(entregaRef, now) || 0;
+      // fechas de referencia de cada paso (para relojes exactos)
+      const evidenciaFecha = cob.evidenciaFecha || (rep && rep.approvedAt) || "";
+      const solpedFecha = cob.solpedFecha || "";
+      const ocFecha = cob.ocFecha || "";
+      const edad = daysSince(evidenciaFecha || o.date_order, now) || 0;
 
-      // paso actual = primer paso incompleto
+      // paso actual (flujo de 5 pasos, sin OC en proceso)
+      // 0 Evidencia · 1 SOLPED · 2 Esperando OC · 3 Acuse subido · 4 Pagado
       let paso;
-      if (!solped) paso = 1;                          // SOLPED
-      else if (!oc) paso = 2;                          // Esperando OC (crítico, 10 días)
-      else if (!acuseAdjunto) paso = 3;               // OC en proceso
-      else if (!pagado) paso = 4;                     // Acuse subido → reloj de pago
-      else paso = 5;                                  // Pagado
+      if (!tieneEvidencia) paso = 0;
+      else if (!solped) paso = 1;
+      else if (!oc) paso = 2;
+      else if (!pagado) paso = 3;
+      else paso = 4;
 
-      // días en el paso actual + fecha de pago + foco rojo
       const termId = Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null;
       const plazoDias = termId != null && daysByTerm[termId] != null ? daysByTerm[termId] : null;
-      let dias, fechaPago = "", diasParaPago = null, focoRojo = false;
+      let dias = 0, fechaPago = "", diasParaPago = null, focoRojo = false;
 
-      if (paso === 4) {
-        dias = acuseFecha ? (daysSince(acuseFecha, now) || 0) : edad;
-        if (acuseFecha && plazoDias != null) {
-          fechaPago = addDays(acuseFecha, plazoDias);
-          const fp = parseDate(fechaPago);
-          diasParaPago = fp != null ? Math.round((fp - now) / DAY) : null;
-          // foco rojo si ya venció y aún no hay pago registrado
-          if (!pago && diasParaPago != null && diasParaPago < 0) focoRojo = true;
+      if (paso === 0) {
+        dias = daysSince(o.date_order, now) || 0; // esperando evidencia
+      } else if (paso === 1) {
+        dias = daysSince(evidenciaFecha, now) || 0;
+        if (dias > SOLPED_MAX) focoRojo = true;
+      } else if (paso === 2) {
+        dias = daysSince(solpedFecha, now) || 0;
+        if (dias > OC_MAX2) focoRojo = true;
+      } else if (paso === 3) {
+        if (!acuseAdjunto) {
+          // esperando que ingresen la factura (subir acuse) — máx 5 días desde la OC
+          dias = daysSince(ocFecha, now) || 0;
+          if (dias > ACUSE_MAX) focoRojo = true;
+        } else {
+          // acuse subido → corren los días de crédito hacia el pago
+          dias = acuseFecha ? (daysSince(acuseFecha, now) || 0) : 0;
+          if (acuseFecha && plazoDias != null) {
+            fechaPago = addDays(acuseFecha, plazoDias);
+            const fp = parseDate(fechaPago);
+            diasParaPago = fp != null ? Math.round((fp - now) / DAY) : null;
+            if (!pago && diasParaPago != null && diasParaPago < 0) focoRojo = true;
+          }
         }
-      } else if (paso === 5) {
-        dias = 0;
       } else {
-        dias = edad; // aproximación: días desde la entrega
-        if (paso === 2 && dias > OC_MAX) focoRojo = true; // regla de los 10 días
+        dias = 0; // pagado
       }
 
       ventas.push({
@@ -129,7 +148,8 @@ export default async (req) => {
         cliente: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
         monto: o.amount_total || 0,
         solped, oc,
-        evidencia: reporteAprobado,
+        evidencia: tieneEvidencia,
+        reporteAprobado, evidenciaAdjunta,
         acuse: acuseAdjunto,
         acuseFecha,
         pago,
