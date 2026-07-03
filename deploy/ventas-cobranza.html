@@ -93,6 +93,7 @@
   .card.archived{opacity:.6}
   .cap-in{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
   .cap-in input{flex:1;min-width:180px;border:1.5px solid var(--line2);border-radius:9px;padding:9px 12px;font:inherit;font-size:14px;color:var(--ink);background:var(--field)}
+  .hintline{font-size:11.5px;color:var(--muted);align-self:center}
 
   .ov{position:fixed;inset:0;background:rgba(27,33,56,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
   .ov.show{display:flex}
@@ -160,13 +161,12 @@
 </div>
 
 <script>
-  // Los 6 pasos del flujo, con umbrales de días para amarillo/rojo.
+  // Flujo de 5 pasos, con umbrales de días para amarillo/rojo.
   const STEPS=[
-    {key:"entregado", lbl:"Entregado",     amber:2,  red:4},
-    {key:"solped",    lbl:"SOLPED",        amber:2,  red:4},
+    {key:"evidencia", lbl:"Evidencia",     amber:0,  red:0},
+    {key:"solped",    lbl:"SOLPED",        amber:2,  red:3,  critico:true},
     {key:"oc",        lbl:"Esperando OC",  amber:7,  red:10, critico:true},
-    {key:"ocproc",    lbl:"OC en proceso", amber:3,  red:6},
-    {key:"acuse",     lbl:"Acuse subido",  amber:23, red:30, critico:true},
+    {key:"acuse",     lbl:"Acuse subido",  amber:4,  red:5,  critico:true},
     {key:"pagado",    lbl:"Pagado",        done:true},
   ];
   const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
@@ -176,13 +176,12 @@
   let VENTAS=[];
   let usandoDemo=false;
   const SAMPLE=[
-    {id:-1,cliente:"Deacero · Ramos Arizpe", folio:"REM-2041", monto:310000, solped:"4500231", evidencia:true, paso:2, dias:12, edad:19, pago:null, archivada:false, plazoDias:30, terminos:"30 días"},
-    {id:-2,cliente:"Ternium · Planta 2",     folio:"REM-2038", monto:420000, solped:"RQ-88120", evidencia:true, acuse:true, paso:4, dias:34, edad:52, pago:null, archivada:false, plazoDias:30, fechaPago:"2026-06-20", diasParaPago:-12, terminos:"30 días", focoRojo:true},
-    {id:-3,cliente:"Nemak · García",         folio:"REM-2044", monto:180000, solped:"4500377", evidencia:true, paso:3, dias:4,  edad:11, pago:null, archivada:false, terminos:"45 días"},
-    {id:-4,cliente:"Frisa · Sta. Catarina",  folio:"REM-2049", monto:95000,  solped:"",        evidencia:true, paso:1, dias:3,  edad:3,  pago:null, archivada:false, terminos:"30 días"},
-    {id:-5,cliente:"Grupo Simec · Apodaca",  folio:"REM-2036", monto:220000, solped:"SOL-7741", evidencia:true, paso:2, dias:6,  edad:14, pago:null, archivada:false, terminos:"30 días"},
-    {id:-6,cliente:"Villacero · Guadalupe",  folio:"REM-2031", monto:260000, solped:"4500198", evidencia:true, acuse:true, paso:4, dias:18, edad:40, pago:null, archivada:false, plazoDias:30, fechaPago:"2026-07-08", diasParaPago:6, terminos:"30 días"},
-    {id:-8,cliente:"Metalsa · Apodaca",      folio:"REM-2020", monto:140000, solped:"4500090", evidencia:true, acuse:true, paso:5, dias:0,  edad:61, pago:{fecha:"2026-06-28", ref:"SPEI-7781", complemento:true}, archivada:false, terminos:"30 días"},
+    {id:-1,cliente:"Deacero · Ramos Arizpe", folio:"REM-2041", monto:310000, evidencia:false, reporteAprobado:false, evidenciaAdjunta:false, solped:"", oc:"", acuse:false, paso:0, dias:2, edad:2, pago:null, archivada:false, terminos:"30 días"},
+    {id:-2,cliente:"Ternium · Planta 2",     folio:"REM-2038", monto:420000, evidencia:true, reporteAprobado:true, solped:"", oc:"", acuse:false, paso:1, dias:4, edad:4, pago:null, archivada:false, focoRojo:true, terminos:"30 días"},
+    {id:-3,cliente:"Nemak · García",         folio:"REM-2044", monto:180000, evidencia:true, evidenciaAdjunta:true, solped:"4500377", oc:"", acuse:false, paso:2, dias:6, edad:12, pago:null, archivada:false, terminos:"45 días"},
+    {id:-5,cliente:"Grupo Simec · Apodaca",  folio:"REM-2036", monto:220000, evidencia:true, reporteAprobado:true, solped:"SOL-7741", oc:"OC-99120", acuse:false, paso:3, dias:6, edad:20, pago:null, archivada:false, focoRojo:true, terminos:"30 días"},
+    {id:-6,cliente:"Villacero · Guadalupe",  folio:"REM-2031", monto:260000, evidencia:true, reporteAprobado:true, solped:"4500198", oc:"OC-77410", acuse:true, paso:3, dias:18, edad:40, pago:null, archivada:false, plazoDias:30, fechaPago:"2026-07-08", diasParaPago:6, terminos:"30 días"},
+    {id:-8,cliente:"Metalsa · Apodaca",      folio:"REM-2020", monto:140000, evidencia:true, reporteAprobado:true, solped:"4500090", oc:"OC-55010", acuse:true, paso:4, dias:0, edad:61, pago:{fecha:"2026-06-28", ref:"SPEI-7781", complemento:true}, archivada:false, terminos:"30 días"},
   ];
 
   function statusDe(v){
@@ -190,9 +189,11 @@
     if(s.done) return "done";
     if(s.key==="acuse" && v.pago) return "amber"; // pagado, falta complemento
     if(v.focoRojo) return "red";
-    const red = (s.key==="acuse" && v.plazoDias!=null) ? v.plazoDias : s.red;
+    // El paso "Acuse" tiene dos relojes: antes de subir el acuse = 5 días; después = días de crédito.
+    let red=s.red, amber=s.amber;
+    if(s.key==="acuse" && v.acuse && v.plazoDias!=null){ red=v.plazoDias; amber=Math.max(1,v.plazoDias-7); }
     if(red!=null && v.dias>red) return "red";
-    if(s.amber!=null && v.dias>s.amber) return "amber";
+    if(amber!=null && v.dias>amber) return "amber";
     return "green";
   }
   function focoRojo(v){
@@ -230,45 +231,56 @@
     const st=statusDe(v);
     const s=STEPS[v.paso];
     const foco=focoRojo(v);
-    // chips: solped, evidencia, acuse
+    // chips: evidencia, solped, oc, acuse
     let chips="";
-    chips += v.solped
-      ? '<span class="chip ok">SOLPED '+esc(v.solped)+'</span>'
-      : '<span class="chip bad">Falta SOLPED</span>';
-    chips += v.evidencia ? '<span class="chip ok">Reporte aprobado &#10003;</span>' : '';
-    if(v.acuse) chips += '<span class="chip ok">Acuse subido &#10003;</span>';
+    chips += v.reporteAprobado ? '<span class="chip ok">Reporte &#10003;</span>'
+           : v.evidenciaAdjunta ? '<span class="chip ok">Remisión &#10003;</span>'
+           : '<span class="chip bad">Falta evidencia</span>';
+    chips += v.solped ? '<span class="chip ok">SOLPED '+esc(v.solped)+'</span>' : '<span class="chip warn">Falta SOLPED</span>';
+    if(v.oc) chips += '<span class="chip ok">OC '+esc(v.oc)+'</span>';
+    if(v.acuse) chips += '<span class="chip ok">Acuse &#10003;</span>';
 
     let statusHtml, actions="";
     if(v.archivada){
-      statusHtml='<div class="stuck done"><span class="cap">Archivada · pagada y con complemento en '+v.edad+' días</span></div>';
+      statusHtml='<div class="stuck done"><span class="cap">Archivada · pagada y con complemento</span></div>';
       actions='<button class="act-btn" data-arch0="'+esc(v.folio)+'">Desarchivar</button>';
     } else if(s.done){
-      statusHtml='<div class="stuck green"><span class="meter">&#10003;</span><span class="cap">Pagada y con complemento &#183; '+v.edad+' d desde la entrega</span></div>';
+      statusHtml='<div class="stuck green"><span class="meter">&#10003;</span><span class="cap">Pagada y con complemento</span></div>';
       actions='<button class="act-btn prim" data-arch1="'+esc(v.folio)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>Archivar</button>';
     } else if(s.key==="acuse" && v.pago){
       statusHtml='<div class="stuck amber"><span class="meter">&#10003;</span><span class="cap">Pagado el '+fmt(v.pago.fecha)+' ('+esc(v.pago.ref)+') &#183; <b>falta complemento (REP)</b></span></div>';
       actions='<button class="act-btn prim" data-comp="'+esc(v.folio)+'">Emitir complemento</button>';
     } else {
       const isAcuse = s.key==="acuse";
-      const limite = s.critico ? (isAcuse && v.plazoDias!=null ? (' · plazo '+v.plazoDias+' d') : (' de '+s.red+' máx.')) : '';
+      const acuseEsperando = isAcuse && !v.acuse;   // ya hay OC, falta subir el acuse (máx 5 d)
+      let limite="";
+      if(s.critico){
+        if(isAcuse && v.acuse && v.plazoDias!=null) limite=' · plazo '+v.plazoDias+' d';
+        else limite=' de '+s.red+' máx.';
+      }
       let pagoInfo="";
-      if(isAcuse && v.fechaPago){
+      if(isAcuse && v.acuse && v.fechaPago){
         const dp=v.diasParaPago;
         const txt = dp==null ? "" : (dp<0 ? ("vencido hace "+(-dp)+" d") : (dp===0 ? "vence hoy" : ("faltan "+dp+" d")));
         pagoInfo='<span class="edad">Pago programado: <b>'+fmt(v.fechaPago)+'</b>'+(txt?" · "+txt:"")+'</span>';
       }
+      const cap = acuseEsperando ? 'esperando ingresar factura' : ('en <b>'+s.lbl+'</b>'+limite);
       statusHtml='<div class="stuck '+st+'"><span class="meter">'+v.dias+' d</span>'+
-        '<span class="cap">en <b>'+s.lbl+'</b>'+limite+'</span></div>'+
-        (pagoInfo || '<span class="edad">'+v.edad+' d desde la entrega</span>')+
+        '<span class="cap">'+(acuseEsperando?cap:('en <b>'+s.lbl+'</b>'+limite))+'</span></div>'+
+        (pagoInfo || '')+
         (foco?'<span class="foco"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg> Foco rojo</span>':"");
 
       // Controles de captura según el paso actual
-      if(s.key==="solped"){
+      if(s.key==="evidencia"){
+        actions='<label class="act-btn pay" for="ev-'+v.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Subir remisión firmada</label>'+
+          '<input type="file" id="ev-'+v.id+'" accept="application/pdf,image/*" style="display:none" data-evid="'+esc(v.folio)+'">'+
+          '<span class="hintline">En servicios se marca solo al aprobar el reporte.</span>';
+      } else if(s.key==="solped"){
         actions='<div class="cap-in"><input type="text" placeholder="Número de SOLPED / requisición" id="in-'+v.id+'"><button class="act-btn prim" data-solped="'+esc(v.folio)+'">Guardar SOLPED</button></div>';
       } else if(s.key==="oc"){
         actions='<div class="cap-in"><input type="text" placeholder="Número de orden de compra" id="in-'+v.id+'"><button class="act-btn prim" data-oc="'+esc(v.folio)+'">Guardar OC</button></div>';
-      } else if(s.key==="ocproc"){
-        actions='<label class="act-btn pay" for="file-'+v.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Subir acuse</label><input type="file" id="file-'+v.id+'" accept="application/pdf,image/*" style="display:none" data-acuse="'+esc(v.folio)+'">';
+      } else if(acuseEsperando){
+        actions='<label class="act-btn pay" for="file-'+v.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Subir acuse (factura ingresada)</label><input type="file" id="file-'+v.id+'" accept="application/pdf,image/*" style="display:none" data-acuse="'+esc(v.folio)+'">';
       } else if(isAcuse){
         actions='<button class="act-btn pay" data-pago="'+esc(v.folio)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Registrar pago</button>';
       }
@@ -329,6 +341,7 @@
     document.querySelectorAll("[data-solped]").forEach(b=>b.addEventListener("click",()=>guardarCampo(b.getAttribute("data-solped"),"solped")));
     document.querySelectorAll("[data-oc]").forEach(b=>b.addEventListener("click",()=>guardarCampo(b.getAttribute("data-oc"),"oc")));
     document.querySelectorAll("[data-acuse]").forEach(inp=>inp.addEventListener("change",()=>subirAcuse(inp.getAttribute("data-acuse"),inp.files[0])));
+    document.querySelectorAll("[data-evid]").forEach(inp=>inp.addEventListener("change",()=>subirEvidencia(inp.getAttribute("data-evid"),inp.files[0])));
   }
 
   // ---- Conexión con Odoo ----
@@ -354,6 +367,12 @@
     const datas=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
     if(demo()){ v.acuse=true; v.acuseFecha=new Date().toISOString().slice(0,10); recompute(v); render(); return; }
     if(await apiGuardar({id:v.id,acuse:{name:file.name,datas,mimetype:file.type||"application/pdf"}})) cargar();
+  }
+  async function subirEvidencia(folio,file){
+    const v=findV(folio); if(!v||!file) return;
+    const datas=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(file); });
+    if(demo()){ v.evidencia=true; v.evidenciaAdjunta=true; recompute(v); render(); return; }
+    if(await apiGuardar({id:v.id,evidencia:{name:file.name,datas,mimetype:file.type||"application/pdf"}})) cargar();
   }
 
   // ---- pago / complemento / archivar ----
@@ -388,11 +407,11 @@
 
   // recalcula paso/estado en modo ejemplo (sin servidor)
   function recompute(v){
-    if(v.pago&&v.pago.complemento) v.paso=5;
-    else if(v.acuse) v.paso=4;
+    if(v.pago&&v.pago.complemento) v.paso=4;
     else if(v.oc) v.paso=3;
     else if(v.solped) v.paso=2;
-    else v.paso=1;
+    else if(v.evidencia) v.paso=1;
+    else v.paso=0;
   }
 
   function setBadge(){
