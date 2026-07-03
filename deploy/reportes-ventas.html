@@ -6,31 +6,64 @@
 <title>Reportes de ventas · HydraTech</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="assets/hydratech-icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>window.REQUIRE_ROLE="ventas";</script>
+<script defer src="auth-gate.js"></script>
 <style>
-  *{box-sizing:border-box;}
-  body{margin:0; min-height:100vh; font-family:'IBM Plex Sans',system-ui,sans-serif; color:#e7eaf5;
-       background:radial-gradient(900px 600px at 70% -10%, #20294a 0%, #141829 55%, #0f1322 100%);
-       display:flex; align-items:center; justify-content:center; padding:24px;}
-  .box{max-width:520px; text-align:center;}
-  .kicker{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.22em; text-transform:uppercase; color:#5f6aa0;}
-  h1{font-family:'Archivo',sans-serif; font-weight:800; font-size:34px; margin:12px 0 10px; color:#fff;}
-  p{color:#8a93bd; font-size:15px; line-height:1.6;}
-  .badge{display:inline-block; margin:8px 0 22px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em;
-         text-transform:uppercase; color:#c9a14a; border:1px solid #5a4a22; background:#241d10; padding:5px 11px; border-radius:6px;}
-  a.back{display:inline-flex; align-items:center; gap:8px; margin-top:26px; color:#bcd0ff; font-weight:700; font-size:14px; text-decoration:none;}
-  a.back:hover{color:#fff;}
+  :root{--blue:#263370;--ink:#1b2138;--body:#4a5267;--muted:#717a90;--line:#e6e9f0;--line2:#d8deea;--soft:#f7f9fc;
+    --green:#16a34a;--gold:#c9a14a;--shadow:0 1px 2px rgba(27,33,56,.04),0 14px 32px -18px rgba(27,33,56,.18)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px}
+  #ht-bar{background:#fff;border-bottom:3px solid var(--blue)}
+  .ht-in{max-width:1000px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between}
+  .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--body);font-weight:600;font-size:14px}
+  .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  main{max-width:1000px;margin:0 auto;padding:34px 20px 70px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--blue)}
+  h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.02em;margin:6px 0 6px}
+  .sub{color:var(--muted);font-size:14px;max-width:640px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:26px}
+  .card{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);text-decoration:none;color:inherit;transition:transform .12s ease,box-shadow .12s ease}
+  a.card:hover{transform:translateY(-2px);box-shadow:0 1px 2px rgba(27,33,56,.04),0 20px 40px -18px rgba(27,33,56,.28);border-color:var(--line2)}
+  .card .ic{width:44px;height:44px;border-radius:12px;background:rgba(38,51,112,.09);color:var(--blue);display:grid;place-items:center}
+  .card .ic svg{width:22px;height:22px}
+  .card h2{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px}
+  .card p{font-size:13px;color:var(--muted);line-height:1.5}
+  .card .go{margin-top:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);font-weight:500;display:flex;align-items:center;gap:6px}
+  .card.soon{opacity:.7;cursor:default}
+  .card.soon .ic{background:rgba(201,161,74,.14);color:var(--gold)}
+  .tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(201,161,74,.16);color:#8f6f28;align-self:flex-start}
 </style>
-  <script>window.REQUIRE_ROLE="ventas";</script>
-  <script defer src="auth-gate.js"></script>
 </head>
 <body>
-  <div class="box">
-    <div class="kicker">Reportes de ventas</div>
-    <h1>En construcción</h1>
-    <div class="badge">Por configurar</div>
-    <p>Aquí irá el resumen de ventas desde Odoo: órdenes, importes y seguimiento por periodo, cliente o vendedor. Lo configuramos en el siguiente paso.</p>
-    <a class="back" href="acceso.html"><span style="font-size:16px;">&#8592;</span> Volver a herramientas</a>
+<div id="ht-bar"><div class="ht-in">
+  <a class="ht-back" href="acceso.html"><span style="font-size:18px;">&#8592;</span> HydraTech</a>
+  <span class="ht-tool">Reportes de ventas</span>
+</div></div>
+
+<main>
+  <div class="eyebrow">Reportes de ventas</div>
+  <h1>Seguimiento comercial y de cobranza</h1>
+  <p class="sub">Elige una vista. Todo se alimenta de Odoo, desde el periodo configurado en adelante.</p>
+
+  <div class="grid">
+    <a class="card" href="ventas-cobranza.html">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <h2>Seguimiento de cobranza</h2>
+      <p>Dónde está cada venta desde la entrega hasta el pago: SOLPED, orden de compra, acuse, pago y complemento. Con foco rojo en los pasos críticos.</p>
+      <span class="go">Abrir <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <div class="card soon">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+      <span class="tag">Próximamente</span>
+      <h2>Resumen de ventas</h2>
+      <p>Órdenes e importes por periodo, cliente o vendedor. Lo construimos en el siguiente paso.</p>
+    </div>
   </div>
+</main>
 </body>
 </html>
