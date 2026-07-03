@@ -40,7 +40,8 @@ export default async (req) => {
     const subs = [];
     if (DESDE) subs.push([["date_order", ">=", DESDE + " 00:00:00"]]);
     subs.push([[SERVICE_FIELD, "=", "service"]]);
-    subs.push([["state", "!=", "cancel"]]);
+    // Cobranza = post-venta: solo órdenes YA CONFIRMADAS como venta (no cotizaciones draft/sent, no canceladas).
+    subs.push([["state", "in", ["sale", "done"]]]);
     if (q) subs.push(["|", ["name", "ilike", q], ["partner_id", "ilike", q]]);
 
     const orders = await executeKw("sale.order", "search_read", [AND(subs)],
@@ -74,12 +75,12 @@ export default async (req) => {
       }
     }
 
-    // 4) Construir cada venta (solo las con reporte APROBADO = entregadas)
+    // 4) Construir cada venta. Entra TODA orden de venta confirmada (servicio o material):
+    // ya siendo orden de venta, es algo entregado/hecho y por tanto cobrable.
     const ventas = [];
     for (const o of orders) {
       const rep = repByOrder[o.id];
-      const reporteAprobado = !!(rep && rep.status === "approved");
-      if (!reporteAprobado) continue; // aún no entra a cobranza
+      const reporteAprobado = !!(rep && rep.status === "approved"); // informativo (solo servicios)
 
       const cob = cobByOrder[o.id] || {};
       const solped = (cob.solped || "").trim();
