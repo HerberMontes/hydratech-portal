@@ -235,7 +235,7 @@
     chips += v.solped
       ? '<span class="chip ok">SOLPED '+esc(v.solped)+'</span>'
       : '<span class="chip bad">Falta SOLPED</span>';
-    chips += v.evidencia ? '<span class="chip ok">Evidencia &#10003;</span>' : '<span class="chip warn">Sin evidencia</span>';
+    chips += v.evidencia ? '<span class="chip ok">Reporte aprobado &#10003;</span>' : '';
     if(v.acuse) chips += '<span class="chip ok">Acuse subido &#10003;</span>';
 
     let statusHtml, actions="";
