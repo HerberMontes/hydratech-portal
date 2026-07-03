@@ -131,7 +131,7 @@
 <main>
   <div class="eyebrow">Seguimiento post-venta <span id="src" class="badge sample">Cargando…</span></div>
   <h1>Cobranza · dónde está cada venta</h1>
-  <p class="sub">Del servicio entregado hasta el pago. Cada venta avanza por 6 pasos; el medidor muestra cuántos días lleva atorada en el paso actual. Los pasos críticos son <b>Esperando OC</b> (máx. 10 días) y <b>Pago</b>.</p>
+  <p class="sub">De la evidencia de entrega hasta el pago. Cada venta avanza por 5 pasos; el medidor muestra cuántos días lleva atorada en el paso actual. Los pasos críticos son <b>SOLPED</b> (3 d), <b>Esperando OC</b> (10 d) y <b>Acuse / Pago</b>.</p>
 
   <div class="kpis" id="kpis"></div>
   <div class="filters" id="filters"></div>
@@ -300,10 +300,12 @@
     const foco=VENTAS.filter(focoRojo);
     const espOC=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="oc");
     const porPagar=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="acuse" && !v.pago);
+    const montoPend=abiertas.reduce((a,v)=>a+(v.monto||0),0);   // TODO lo pendiente de cobrar
+    const montoFoco=foco.reduce((a,v)=>a+(v.monto||0),0);
     const montoPagar=porPagar.reduce((a,v)=>a+v.monto,0);
     const promOC = espOC.length? Math.round(espOC.reduce((a,v)=>a+v.dias,0)/espOC.length):0;
-    return kpi("blue",abiertas.length,"ventas en proceso")+
-      kpi("red",foco.length,"en foco rojo (OC o pago vencidos)")+
+    return kpi("blue",money(montoPend),"pendiente de cobrar · "+abiertas.length+" ventas")+
+      kpi(foco.length?"red":"blue",money(montoFoco),foco.length+" en foco rojo (OC o pago vencidos)")+
       kpi("gold",espOC.length,"esperando OC · "+promOC+" d promedio")+
       kpi("blue",money(montoPagar),porPagar.length+" por pagar (acuse subido)");
   }
