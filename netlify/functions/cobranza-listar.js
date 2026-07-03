@@ -8,6 +8,9 @@
 import { executeKw, checkToken, json } from "./lib/odoo.js";
 
 const DESDE = process.env.REPORTES_DESDE || "";
+// Órdenes atrasadas (anteriores al corte) que se incluyen por única vez.
+// En Netlify: COBRANZA_EXTRA = "S00841,S00902,S00915"
+const EXTRA = (process.env.COBRANZA_EXTRA || "").split(",").map((s) => s.trim()).filter(Boolean);
 const SERVICE_FIELD = process.env.SERVICE_TYPE_FIELD || "order_line.product_id.type";
 const REP = "portal_reporte.json";
 const COB = "portal_cobranza.json";
@@ -37,11 +40,14 @@ export default async (req) => {
     const q = (url.searchParams.get("q") || "").trim();
     const now = Date.now();
 
-    // 1) Universo de órdenes (mismo filtro que Reportes de venta)
+    // 1) Universo de órdenes
     const subs = [];
-    if (DESDE) subs.push([["date_order", ">=", DESDE + " 00:00:00"]]);
-    subs.push([[SERVICE_FIELD, "=", "service"]]);
-    // Cobranza = post-venta: solo órdenes YA CONFIRMADAS como venta (no cotizaciones draft/sent, no canceladas).
+    // (desde el corte REPORTES_DESDE) O (órdenes atrasadas específicas de COBRANZA_EXTRA)
+    if (DESDE && EXTRA.length) subs.push(["|", ["date_order", ">=", DESDE + " 00:00:00"], ["name", "in", EXTRA]]);
+    else if (DESDE) subs.push([["date_order", ">=", DESDE + " 00:00:00"]]);
+    else if (EXTRA.length) subs.push([["name", "in", EXTRA]]);
+    // Cobranza = post-venta: solo órdenes CONFIRMADAS (no cotizaciones, no canceladas).
+    // Entra TODA orden de venta, sea servicio o material.
     subs.push([["state", "in", ["sale", "done"]]]);
     if (q) subs.push(["|", ["name", "ilike", q], ["partner_id", "ilike", q]]);
 
