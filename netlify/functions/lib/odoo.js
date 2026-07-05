@@ -65,7 +65,7 @@ export function json(body, status = 200) {
 const TIPOS_BITACORA = ["Llamada","Correo","WhatsApp","Visita","Reunión","Nota"];
 const RESULTADOS_BITACORA = ["Contactado","Sin respuesta","Pendiente de ellos","Avanzó","Se enfrió"];
 
-export function parseBitacora(body){
+export function parseBitacora(body, notasLibres){
   let s = String(body || "");
   // 1) decodificar entidades HTML (dos pasadas por si vienen doblemente escapadas)
   for (let i = 0; i < 2 && /&(lt|gt|amp|nbsp|quot|#39);/.test(s); i++) {
@@ -83,7 +83,23 @@ export function parseBitacora(body){
     const m = plano.match(/^(Llamada|Correo|WhatsApp|Visita|Reunión|Nota)\b/);
     if (m) tipo = m[1];
   }
-  if (TIPOS_BITACORA.indexOf(tipo) < 0) return null;
+  if (TIPOS_BITACORA.indexOf(tipo) < 0) {
+    /* NOTAS LIBRES: si se pide, aceptar también lo que la gente escribe
+       DIRECTO en el chatter de Odoo (sin el formato del portal), para que
+       toda actividad registrada salga en el reporte. Se excluyen los
+       mensajes automáticos de Odoo. */
+    if (!notasLibres) return null;
+    const AUTOMATICOS = [
+      /o_mail_notification/i, /hay un nuevo lead/i, /new lead.*(team|equipo)/i,
+      /lead enriquecido/i, /lead enrichment/i, /o_partner_autocomplete/i,
+      /oportunidad creada/i, /opportunity created/i,
+      /calificaci[oó]n bant/i, /etapa cambiada/i, /stage changed/i,
+    ];
+    if (AUTOMATICOS.some((rx) => rx.test(s))) return null;
+    const nota = plano.replace(/\s*\n\s*/g," · ").replace(/\s+/g," ").trim();
+    if (nota.length < 3) return null; // mensajes de seguimiento sin texto
+    return { tipo: "Nota", res: "", nota };
+  }
   let res = mRes ? mRes[1].trim() : "";
   // limpiar el encabezado (tipo y resultado) del texto plano para quedarnos con la nota
   if (plano.startsWith(tipo)) plano = plano.slice(tipo.length).replace(/^[\s:·—-]+/,"");
@@ -91,4 +107,58 @@ export function parseBitacora(body){
   if (res && plano.startsWith(res)) plano = plano.slice(res.length).replace(/^[\s:·—-]+/,"");
   const nota = plano.replace(/\s*\n\s*/g," · ").replace(/\s+/g," ").trim();
   return { tipo, res, nota };
+}
+
+/* ============================================================
+   DICCIONARIO DE ETAPAS ROBUSTO A IDIOMAS
+   En Odoo el nombre de la etapa es TRADUCIBLE: la que el usuario ve como
+   "Por contactar" puede tener el nombre base "New" (etapa por defecto
+   renombrada desde la interfaz en español). El API regresa el nombre base,
+   así que clasificar por nombre falla. Este helper lee crm.stage en el idioma
+   base Y en cada idioma español instalado, y regresa:
+     - nombres: { id -> Set(todas las variantes del nombre) }
+     - display: { id -> nombre para mostrar (gana la variante en español) }
+   La segmentación de los reportes se hace entonces POR ID de etapa: donde
+   esté parado físicamente el registro, ahí cuenta.
+============================================================ */
+const normEt = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+export async function diccionarioEtapas() {
+  const nombres = {};   // id -> Set de variantes
+  const display = {};   // id -> nombre preferido (español si existe)
+  const add = (arr, esEspanol) => (arr || []).forEach((st) => {
+    const n = String(st.name || "").trim();
+    if (!n) return;
+    (nombres[st.id] = nombres[st.id] || new Set()).add(n);
+    if (esEspanol || !display[st.id]) display[st.id] = n;
+  });
+  add(await executeKw("crm.stage", "search_read", [[]], { fields: ["id", "name"] }).catch(() => []), false);
+  let langs = [];
+  try {
+    const ls = await executeKw("res.lang", "search_read", [[["active", "=", true]]], { fields: ["code"] });
+    langs = ls.map((l) => l.code).filter((c) => /^es/i.test(c));
+  } catch (e) {}
+  for (const code of langs) {
+    add(await executeKw("crm.stage", "search_read", [[]],
+      { fields: ["id", "name"], context: { lang: code } }).catch(() => []), true);
+  }
+  return {
+    nombres, display,
+    // ids de las etapas cuyo nombre (en CUALQUIER idioma) coincide con la lista dada
+    idsDe(listaNombres) {
+      const objetivo = listaNombres.map(normEt);
+      return Object.entries(nombres)
+        .filter(([, set]) => [...set].some((n) => objetivo.includes(normEt(n))))
+        .map(([id]) => Number(id));
+    },
+    // ¿la etapa <id> corresponde a alguno de estos nombres? regresa el nombre canónico o null
+    canonicaDe(id, listaNombres) {
+      const set = nombres[id];
+      if (!set) return null;
+      for (const canon of listaNombres) {
+        if ([...set].some((n) => normEt(n) === normEt(canon))) return canon;
+      }
+      return null;
+    },
+  };
 }
