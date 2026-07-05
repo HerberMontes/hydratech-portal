@@ -60,10 +60,14 @@ export default async (req) => {
     const elegido = sellers.find(s => s.name === vendedorPick) || sellers[0];
     const tagId = elegido.tagId;
 
-    // 2) Leads de ese vendedor (tipo lead u opportunity que aún estén en etapas de alta)
-    const leads = await executeKw("crm.lead", "search_read",
+    // 2) Leads de ese vendedor. SEGMENTACIÓN: este reporte cubre SOLO el flujo
+    //    de prospección (Por contactar → Alta en proceso). Lo que ya avanzó a
+    //    etapas de oportunidad (Nuevo → Ganado) vive en el reporte comercial,
+    //    incluidas sus actividades.
+    const todosLosLeads = await executeKw("crm.lead", "search_read",
       [[["tag_ids", "in", [tagId]], ["active", "=", true]]],
       { fields: ["id", "name", "stage_id", "type", "create_date", "date_last_stage_update", "partner_name", "contact_name"], limit: 1000 });
+    const leads = todosLosLeads.filter(l => ETAPAS.includes(m2oName(l.stage_id)));
 
     // 3) Embudo FOTO ACTUAL: cuántos hay hoy en cada etapa de alta
     const enEtapa = Object.fromEntries(ETAPAS.map(e => [e, []]));

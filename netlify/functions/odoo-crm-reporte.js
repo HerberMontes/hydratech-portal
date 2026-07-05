@@ -110,6 +110,25 @@ export default async (req) => {
     // Todas las consultas filtran por esta etiqueta (-1 = sin coincidencias).
     const userDomain = ["tag_ids", "in", [tagId || -1]];
 
+    /* ----- SEGMENTACIÓN DEL FLUJO POR ETAPA (regla de negocio) -----
+       PROSPECTOS  = etapas del embudo de alta: Por contactar → Cita agendada →
+                     Presentado → Alta en proceso. Viven en el reporte de prospectos.
+       OPORTUNIDADES = de "Nuevo" en adelante hasta "Ganado". Son las de ESTE reporte.
+       Nota: Odoo marca type=opportunity incluso a los prospectos, por eso el corte
+       correcto es POR ETAPA, no por type. Aquí se excluyen las etapas de prospecto
+       tanto de los números como de las actividades/minuta. */
+    const ETAPAS_PROSPECTO = ["Por contactar", "Cita agendada", "Presentado", "Alta en proceso"];
+    let etapasProspectoIds = [];
+    try {
+      const sts = await executeKw("crm.stage", "search_read", [[]], { fields: ["id", "name"] });
+      etapasProspectoIds = sts
+        .filter((st) => ETAPAS_PROSPECTO.includes(String(st.name || "").trim()))
+        .map((st) => st.id);
+    } catch (e) {}
+    const soloOportunidades = etapasProspectoIds.length
+      ? [["stage_id", "not in", etapasProspectoIds]]
+      : [];
+
     // Equipo: tomado de un lead del vendedor (mejor esfuerzo)
     try {
       const t = await executeKw("crm.lead", "search_read",
@@ -120,10 +139,10 @@ export default async (req) => {
     /* ----- 2) RESULTADO (crm.lead, confiable) ----- */
     // Creadas en la semana (valor agregado al pipeline + nuevas oportunidades)
     const creadas = await executeKw("crm.lead", "search_read",
-      [[userDomain, ["create_date", ">=", W.start], ["create_date", "<=", W.end]]],
+      [[userDomain, ...soloOportunidades, ["create_date", ">=", W.start], ["create_date", "<=", W.end]]],
       { fields: ["expected_revenue", "type"] });
     const valorPipeline = creadas.reduce((s, r) => s + (r.expected_revenue || 0), 0);
-    const nuevasOpps = creadas.filter((r) => r.type === "opportunity").length;
+    const nuevasOpps = creadas.length; // creadas ya en etapas de oportunidad (Nuevo→)
 
     // Ganadas en la semana (probability=100 y cerradas en el rango)
     const ganadas = await executeKw("crm.lead", "search_read",
@@ -143,16 +162,16 @@ export default async (req) => {
     let sinPaso = 0, vencidas = 0;
     try {
       sinPaso = await executeKw("crm.lead", "search_count",
-        [[userDomain, ["type", "=", "opportunity"], ["active", "=", true], ["activity_ids", "=", false]]]);
+        [[userDomain, ...soloOportunidades, ["active", "=", true], ["probability", "<", 100], ["activity_ids", "=", false]]]);
     } catch (e) {}
     try {
       vencidas = await executeKw("crm.lead", "search_count",
-        [[userDomain, ["active", "=", true], ["activity_state", "=", "overdue"]]]);
+        [[userDomain, ...soloOportunidades, ["active", "=", true], ["activity_state", "=", "overdue"]]]);
     } catch (e) {}
 
     /* ----- 4) OPORTUNIDADES ABIERTAS (salud del pipeline + etapas + seguimiento) ----- */
     const abiertas = await executeKw("crm.lead", "search_read",
-      [[userDomain, ["type", "=", "opportunity"], ["active", "=", true]]],
+      [[userDomain, ...soloOportunidades, ["active", "=", true], ["probability", "<", 100]]],
       { fields: ["partner_name", "contact_name", "partner_id", "stage_id",
                  "expected_revenue", "activity_summary", "activity_date_deadline",
                  "date_last_stage_update", "create_date", "write_date"],
@@ -242,8 +261,10 @@ export default async (req) => {
     const trend = DIAS.map((d) => ({ day: d, value: 0 }));
     let diagLeads = 0, diagComments = 0, diagMuestra = [];
     try {
+      // Solo leads en etapas de OPORTUNIDAD: las actividades de prospectos
+      // (Por contactar → Alta en proceso) viven en el reporte de prospectos.
       const repLeads = tagId
-        ? await executeKw("crm.lead", "search", [[userDomain]], { limit: 1000 })
+        ? await executeKw("crm.lead", "search", [[userDomain, ...soloOportunidades]], { limit: 1000 })
         : [];
       diagLeads = repLeads.length;
       if (repLeads.length) {
@@ -353,6 +374,8 @@ export default async (req) => {
         etiqueta: tagNombre || "(NO ENCONTRADA — revisa que exista la etiqueta 'Vendedor · Nombre' en los leads)",
         tagId,
         rango: { inicio: W.start, fin: W.end, semanaISO: W.num },
+        segmentacion: "solo etapas de oportunidad (Nuevo→Ganado); excluye " + ETAPAS_PROSPECTO.join(", "),
+        etapasProspectoExcluidas: etapasProspectoIds,
         leadsDelVendedor: diagLeads,
         comentariosEnRango: diagComments,
         bitacorasValidas: completadas,
