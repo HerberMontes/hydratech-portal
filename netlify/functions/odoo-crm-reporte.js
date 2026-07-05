@@ -82,12 +82,30 @@ export default async (req) => {
         email = emp[0].work_email || "";
       }
     }
-    // Etiqueta del vendedor (MISMA convención que odoo-crm-lead.js).
-    let tagId = 0;
+    // Si no vino un id numérico, aceptar el nombre directo (?vendedor=Juan Arjón)
+    const vendParam = (url.searchParams.get("vendedor") || "").trim();
+    if (vendedor === "—" && vendParam && isNaN(Number(vendParam))) vendedor = vendParam;
+
+    // Etiqueta del vendedor (MISMA convención que odoo-crm-lead.js), con
+    // búsqueda ROBUSTA: exacta primero y, si no, sin acentos/mayúsculas y por
+    // tokens del nombre (así "Juan Arjon" encuentra "Vendedor · Juan Arjón").
+    const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    let tagId = 0, tagNombre = "";
     if (vendedor && vendedor !== "—") {
-      const tg = await executeKw("crm.tag", "search_read",
-        [[["name", "=", "Vendedor · " + vendedor]]], { fields: ["id"], limit: 1 }).catch(() => []);
-      if (tg && tg.length) tagId = tg[0].id;
+      const tgs = await executeKw("crm.tag", "search_read",
+        [[["name", "like", "Vendedor%"]]], { fields: ["id", "name"] }).catch(() => []);
+      const objetivo = norm(vendedor);
+      const sinPrefijo = (n) => norm(n).replace(/^vendedor\s*[·:\-]?\s*/, "");
+      let hit = tgs.find((t) => sinPrefijo(t.name) === objetivo);
+      if (!hit) {
+        const toks = objetivo.split(" ").filter(Boolean);
+        hit = tgs.find((t) => { const n = norm(t.name); return toks.length && toks.every((tk) => n.includes(tk)); });
+      }
+      if (!hit) {
+        // último intento: que el nombre de la etiqueta esté contenido en el del empleado
+        hit = tgs.find((t) => { const n = sinPrefijo(t.name); return n && objetivo.includes(n); });
+      }
+      if (hit) { tagId = hit.id; tagNombre = hit.name; }
     }
     // Todas las consultas filtran por esta etiqueta (-1 = sin coincidencias).
     const userDomain = ["tag_ids", "in", [tagId || -1]];
@@ -222,10 +240,12 @@ export default async (req) => {
       .replace(/\s+/g, " ").trim();
     const TIPOS_BIT = ["Llamada", "Correo", "WhatsApp", "Visita", "Reunión", "Nota"];
     const trend = DIAS.map((d) => ({ day: d, value: 0 }));
+    let diagLeads = 0, diagComments = 0, diagMuestra = [];
     try {
       const repLeads = tagId
         ? await executeKw("crm.lead", "search", [[userDomain]], { limit: 1000 })
         : [];
+      diagLeads = repLeads.length;
       if (repLeads.length) {
         // Nombres de los leads (para mostrar el cliente en la minuta)
         const nm = await executeKw("crm.lead", "read",
@@ -249,11 +269,15 @@ export default async (req) => {
         };
 
         /* 5a) FUENTE PRINCIPAL: bitácora (mail.message tipo comment) */
+        // Sin filtro de message_type: según la versión de Odoo, las notas del
+        // chatter pueden guardarse como 'comment' o 'notification'. El parser
+        // de abajo ya filtra por el formato de la bitácora (<b>Tipo</b>).
         const msgs = await executeKw("mail.message", "search_read",
           [[["model", "=", "crm.lead"], ["res_id", "in", repLeads],
-            ["message_type", "=", "comment"],
             ["date", ">=", W.start], ["date", "<=", W.end]]],
           { fields: ["body", "date", "res_id"], order: "date asc", limit: 3000 }).catch(() => []);
+        diagComments = msgs.length;
+        diagMuestra = msgs.slice(0, 3).map((m) => ({ date: m.date, body: String(m.body || "").slice(0, 140) }));
         msgs.forEach((m) => {
           const b = m.body || "";
           const mb = b.match(/<b>([^<]+)<\/b>/);
@@ -328,6 +352,20 @@ export default async (req) => {
       generado: "HydraTech CRM",
     };
 
+    if (url.searchParams.get("debug") === "1") {
+      return json({ ok: true, reporte, diag: {
+        parametros: { vendedor: url.searchParams.get("vendedor"), semana },
+        empleado: vendedor,
+        etiqueta: tagNombre || "(NO ENCONTRADA — revisa que exista la etiqueta 'Vendedor · Nombre' en los leads)",
+        tagId,
+        rango: { inicio: W.start, fin: W.end, semanaISO: W.num },
+        leadsDelVendedor: diagLeads,
+        comentariosEnRango: diagComments,
+        bitacorasValidas: completadas,
+        minutaEntradas: minutaC.length,
+        muestraComentarios: diagMuestra,
+      }});
+    }
     return json({ ok: true, reporte });
   } catch (e) {
     return json({ ok: false, error: String(e.message || e) }, 500);

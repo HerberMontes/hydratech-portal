@@ -140,9 +140,11 @@ export default async (req) => {
     let avances = 0, citas = 0, visitas = 0, llamadas = 0;
     const minuta = []; // detalle por día para la hoja 2 del reporte
     if (leadIds.length) {
+      // Sin filtro de message_type (las notas pueden ser 'comment' o
+      // 'notification' según la versión de Odoo); el parser filtra por formato.
       const msgs = await executeKw("mail.message", "search_read",
         [[["model", "=", "crm.lead"], ["res_id", "in", leadIds],
-          ["date", ">=", startStr], ["date", "<=", endStr], ["message_type", "=", "comment"]]],
+          ["date", ">=", startStr], ["date", "<=", endStr]]],
         { fields: ["body", "date", "res_id"], order: "date asc", limit: 3000 }).catch(() => []);
       msgs.forEach(m => {
         const b = m.body || "";

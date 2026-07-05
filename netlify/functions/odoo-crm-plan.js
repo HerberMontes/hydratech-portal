@@ -17,20 +17,49 @@ function tipoDe(cat, name){ name=(name||"").toLowerCase();
   return "todo"; }
 
 // Resuelve correo -> empleado -> etiqueta del vendedor.
+// ROBUSTO: correo sin distinguir mayúsculas, etiqueta tolerante a acentos y
+// apellidos, y si la etiqueta no existe se CREA (así el vendedor queda ligado
+// desde su primer registro y el reporte siempre lo encuentra).
+const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+
 async function tagDeVendedor(email){
   if(!email) return { tagId:0, nombre:"—" };
   let nombre="—";
   try{
-    const emp = await executeKw("hr.employee","search_read",[[["work_email","=",email]]],{fields:["name"],limit:1});
+    const emp = await executeKw("hr.employee","search_read",[[["work_email","=ilike",email]]],{fields:["name"],limit:1});
     if(emp&&emp.length) nombre=emp[0].name;
   }catch(e){}
   if(nombre==="—") return { tagId:0, nombre };
   let tagId=0;
   try{
+    // 1) exacta
     const tg = await executeKw("crm.tag","search_read",[[["name","=",vendTag(nombre)]]],{fields:["id"],limit:1});
     if(tg&&tg.length) tagId=tg[0].id;
+    // 2) tolerante (acentos / mayúsculas / apellidos extra)
+    if(!tagId){
+      const tgs = await executeKw("crm.tag","search_read",[[["name","like","Vendedor%"]]],{fields:["id","name"]}).catch(()=>[]);
+      const objetivo=norm(nombre);
+      const sinPref=(n)=>norm(n).replace(/^vendedor\s*[·:\-]?\s*/,"");
+      let hit=tgs.find(t=>sinPref(t.name)===objetivo);
+      if(!hit){ const toks=objetivo.split(" ").filter(Boolean); hit=tgs.find(t=>{const n=norm(t.name);return toks.length&&toks.every(k=>n.includes(k));}); }
+      if(hit) tagId=hit.id;
+    }
+    // 3) si no existe, se crea
+    if(!tagId) tagId = await executeKw("crm.tag","create",[{ name: vendTag(nombre) }]);
   }catch(e){}
   return { tagId, nombre };
+}
+
+// LIGA el lead al vendedor: le agrega su etiqueta si no la tiene (operación 4 de
+// Odoo = "link", idempotente). Se llama en cada registro de actividad para que
+// TODO lo que el vendedor toque quede atribuido y el reporte lo pueda extraer,
+// incluso en leads creados directamente en Odoo (sin etiqueta original).
+async function ligarLeadAVendedor(leadId, email){
+  try{
+    const { tagId } = await tagDeVendedor(email);
+    if(tagId && leadId) await executeKw("crm.lead","write",[[Number(leadId)],{ tag_ids:[[4, tagId]] }]);
+    return tagId;
+  }catch(e){ return 0; }
 }
 
 export default async (req) => {
@@ -59,6 +88,7 @@ export default async (req) => {
         if(resModelId) vals.res_model_id=resModelId; else vals.res_model="crm.lead";
         if(typeId) vals.activity_type_id=typeId;
         const id = await executeKw("mail.activity","create",[vals]);  // user_id por defecto = usuario de la API
+        await ligarLeadAVendedor(b.leadId, b.email);
         return json({ ok:true, id });
       }
       if (b.action === "calificar" && b.leadId) {
@@ -78,6 +108,7 @@ export default async (req) => {
           const body = `<b>Calificación BANT</b><br>Presupuesto: ${et(bant.b)} · Autoridad: ${et(bant.a)} · Necesidad: ${et(bant.n)} · Plazo: ${et(bant.t)}<br>Movida a <b>Por cotizar</b>.`;
           await executeKw("crm.lead","message_post",[[Number(b.leadId)]],{ body, message_type:"comment" });
         }catch(e){}
+        await ligarLeadAVendedor(b.leadId, b.email);
         return json({ ok:true });
       }
       // ---- BITÁCORA: documenta lo que hizo el vendedor para empujar el lead/oportunidad ----
@@ -92,6 +123,10 @@ export default async (req) => {
         if (resTxt) body += ` · <span>${resTxt}</span>`;
         if (nota)   body += `<br>${nota}`;
         await executeKw("crm.lead","message_post",[[Number(b.leadId)]],{ body, message_type:"comment" });
+        // LIGA escritura↔lectura: garantiza la etiqueta del vendedor en el lead
+        // para que este avance salga en el reporte (aunque el lead se haya
+        // creado directo en Odoo, sin etiqueta).
+        await ligarLeadAVendedor(b.leadId, b.email);
 
         // Siguiente paso (opcional): crea la actividad agendada.
         let schedId = null;
