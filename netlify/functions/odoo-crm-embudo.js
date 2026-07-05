@@ -5,7 +5,7 @@
 //   curso    : 1 = recalcular con los días corridos (botón "Actualizar"); si no, foto normal
 // Devuelve: lista de vendedores, el embudo de LEADS por etapa (foto actual) y el
 // MOVIMIENTO de la semana (cuántos entraron a cada etapa en el periodo) + actividad.
-import { executeKw, checkToken, json, parseBitacora } from "./lib/odoo.js";
+import { executeKw, checkToken, json, parseBitacora, diccionarioEtapas } from "./lib/odoo.js";
 
 const VEND_PREFIX = "Vendedor · ";
 // Etapas del embudo de altas, en orden (nombres EXACTOS del Kanban de Odoo).
@@ -67,12 +67,24 @@ export default async (req) => {
     const todosLosLeads = await executeKw("crm.lead", "search_read",
       [[["tag_ids", "in", [tagId]], ["active", "=", true]]],
       { fields: ["id", "name", "stage_id", "type", "create_date", "date_last_stage_update", "partner_name", "contact_name"], limit: 1000 });
-    const leads = todosLosLeads.filter(l => ETAPAS.includes(m2oName(l.stage_id)));
+    // Clasificación POR ID de etapa con diccionario multi-idioma: respeta dónde
+    // está parado físicamente el registro aunque el nombre base esté en inglés
+    // (etapa por defecto renombrada en español desde la interfaz).
+    let dic = null;
+    try { dic = await diccionarioEtapas(); } catch (e) {}
+    const etapaCanon = (m2o) => {
+      const id = Array.isArray(m2o) ? m2o[0] : null;
+      if (dic && id != null) { const c = dic.canonicaDe(id, ETAPAS); if (c) return c; }
+      const n = m2oName(m2o);
+      return ETAPAS.includes(n) ? n : null;
+    };
+    todosLosLeads.forEach(l => { l._etapa = etapaCanon(l.stage_id); });
+    const leads = todosLosLeads.filter(l => l._etapa);
 
     // 3) Embudo FOTO ACTUAL: cuántos hay hoy en cada etapa de alta
     const enEtapa = Object.fromEntries(ETAPAS.map(e => [e, []]));
     leads.forEach(l => {
-      const st = m2oName(l.stage_id);
+      const st = l._etapa;
       if (enEtapa[st]) enEtapa[st].push(l);
     });
     const totalEmbudo = ETAPAS.reduce((a, e) => a + enEtapa[e].length, 0);
@@ -101,7 +113,7 @@ export default async (req) => {
     const prevStart = odooDate(prevMon) + " 00:00:00";
     const prevEnd = odooDate(prevDom) + " 23:59:59";
     leads.forEach(l => {
-      const st = m2oName(l.stage_id);
+      const st = l._etapa;
       const mov = l.date_last_stage_update;
       if (st && movimiento[st] !== undefined && mov && mov >= startStr && mov <= endStr) movimiento[st]++;
       if (l.create_date && l.create_date >= startStr && l.create_date <= endStr) nuevosLeads++;
@@ -118,8 +130,8 @@ export default async (req) => {
     };
     const estancados = leads
       .map(l => {
-        const st = m2oName(l.stage_id);
-        if (!ETAPAS.includes(st)) return null;
+        const st = l._etapa;
+        if (!st) return null;
         const dias = daysSince(l.date_last_stage_update || l.create_date, w.now);
         if (dias == null || dias <= 7) return null;
         return {
@@ -151,7 +163,7 @@ export default async (req) => {
           ["date", ">=", startStr], ["date", "<=", endStr]]],
         { fields: ["body", "date", "res_id"], order: "date asc", limit: 3000 }).catch(() => []);
       msgs.forEach(m => {
-        const pb = parseBitacora(m.body); // parser compartido (lib/odoo.js)
+        const pb = parseBitacora(m.body, true); // true = incluir notas libres escritas directo en Odoo
         if (!pb) return;
         const tipo = pb.tipo;
         avances++;

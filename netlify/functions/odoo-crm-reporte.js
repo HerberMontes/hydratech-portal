@@ -3,7 +3,7 @@
 // Arma el reporte semanal de un vendedor desde Odoo (crm.lead + mail.activity).
 // Período: una semana lunes–domingo. Si no se pasa 'semana', usa la última completa.
 // Identificación del vendedor: por correo del empleado -> res.users.
-import { executeKw, checkToken, json, parseBitacora } from "./lib/odoo.js";
+import { executeKw, checkToken, json, parseBitacora, diccionarioEtapas } from "./lib/odoo.js";
 
 /* ---------- utilidades de fecha (semana ISO lunes–domingo) ---------- */
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -135,18 +135,22 @@ export default async (req) => {
        correcto es POR ETAPA, no por type. Aquí se excluyen las etapas de prospecto
        tanto de los números como de las actividades/minuta. */
     const ETAPAS_PROSPECTO = ["Por contactar", "Cita agendada", "Presentado", "Alta en proceso"];
-    const etProsp = ETAPAS_PROSPECTO.map(norm);
-    let etapasProspectoIds = [];
+    // Diccionario multi-idioma: clasifica POR ID de etapa (donde esté parado
+    // físicamente el registro), sin importar si el nombre base está en inglés
+    // porque la etapa por defecto fue renombrada desde la interfaz en español.
+    let dic = null, etapasProspectoIds = [];
     try {
-      const sts = await executeKw("crm.stage", "search_read", [[]], { fields: ["id", "name"] });
-      etapasProspectoIds = sts
-        .filter((st) => etProsp.includes(norm(st.name)))
-        .map((st) => st.id);
+      dic = await diccionarioEtapas();
+      etapasProspectoIds = dic.idsDe(ETAPAS_PROSPECTO);
     } catch (e) {}
-    // Las etapas por defecto de Odoo se guardan en inglés y solo se traducen en
-    // la interfaz; para mostrar en el reporte las regresamos al español.
+    // Nombre a mostrar de una etapa (gana la variante en español)
     const ETAPA_ES = { "New": "Nuevo", "Qualified": "Calificado", "Proposition": "Propuesta", "Won": "Ganado" };
-    const etapaES = (n) => ETAPA_ES[String(n || "").trim()] || n;
+    const etapaES = (m2o) => {
+      const id = Array.isArray(m2o) ? m2o[0] : null;
+      if (dic && id != null && dic.display[id]) return dic.display[id];
+      const n = String(m2oName(m2o) || "").trim();
+      return ETAPA_ES[n] || n;
+    };
     const soloOportunidades = etapasProspectoIds.length
       ? [["stage_id", "not in", etapasProspectoIds]]
       : [];
@@ -202,7 +206,7 @@ export default async (req) => {
     const opps = abiertas.slice(0, 5);
     const oportunidades = opps.map((o) => ({
       cliente: o.partner_name || m2oName(o.partner_id) || o.contact_name || "—",
-      etapa: etapaES(m2oName(o.stage_id)) || "—",
+      etapa: etapaES(o.stage_id) || "—",
       monto: mxn(o.expected_revenue),
       paso: o.activity_summary || "",
       fecha: fechaCorta(o.activity_date_deadline),
@@ -232,7 +236,7 @@ export default async (req) => {
     // Desglose por etapa (dónde está parado el pipeline)
     const porEtapa = {};
     abiertas.forEach((o) => {
-      const st = etapaES(m2oName(o.stage_id)) || "—";
+      const st = etapaES(o.stage_id) || "—";
       (porEtapa[st] = porEtapa[st] || { nombre: st, opps: 0, monto: 0, edades: [] });
       porEtapa[st].opps++;
       porEtapa[st].monto += o.expected_revenue || 0;
@@ -259,7 +263,7 @@ export default async (req) => {
         cliente: o.partner_name || m2oName(o.partner_id) || o.contact_name || "—",
         monto: o.expected_revenue || 0,
         montoFmt: "$" + Math.round(o.expected_revenue || 0).toLocaleString("en-US"),
-        etapa: etapaES(m2oName(o.stage_id)) || "—",
+        etapa: etapaES(o.stage_id) || "—",
         dias: diasDesde(o.write_date) || 0,
       }))
       .filter((o) => o.dias >= 4)
@@ -324,7 +328,7 @@ export default async (req) => {
         msgs.forEach((m) => {
           // Parser compartido: entiende etiquetas reales, ESCAPADAS (formato
           // actual en la base) y texto plano. Ver lib/odoo.js.
-          const pb = parseBitacora(m.body);
+          const pb = parseBitacora(m.body, true); // true = incluir notas libres escritas directo en Odoo
           if (!pb) return;
           completadas++;
           if (pb.tipo === "Llamada") llamadas++;
