@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Embudo de leads · HydraTech</title>
+<meta name="robots" content="noindex">
+<script>window.REQUIRE_ROLE="crm-gerencia";</script>
+<script defer src="auth-gate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#263370;--ink:#1b2138;--body:#4a5267;--muted:#717a90;--line:#e6e9f0;--line2:#d8deea;--soft:#f7f9fc;--field:#fafbfd;
+    --green:#16a34a;--red:#e5484d;--gold:#c9a14a;--shadow:0 1px 2px rgba(27,33,56,.04),0 12px 30px -16px rgba(27,33,56,.16)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-size:15px}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  #ht-bar{background:#fff;border-bottom:3px solid var(--blue)}
+  .ht-in{max-width:1040px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;justify-content:space-between}
+  .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--body);font-weight:600;font-size:14px}
+  .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  main{max-width:1040px;margin:0 auto;padding:24px 20px 60px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue)}
+  .badge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;margin-left:8px}
+  .badge.live{background:rgba(22,163,74,.12);color:var(--green)} .badge.sample{background:rgba(201,161,74,.16);color:#8f6f28}
+  h1{font-family:'Archivo',sans-serif;font-weight:800;font-size:25px;letter-spacing:-.02em;margin-top:5px}
+  .period{font-size:13px;color:var(--muted);margin-top:3px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:20px 0 8px}
+  .ctl{display:flex;flex-direction:column;gap:5px}
+  .ctl label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  select{appearance:none;border:1.5px solid var(--line2);background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23717a90' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;border-radius:9px;padding:9px 32px 9px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;min-width:170px}
+  .btn{font-family:'IBM Plex Sans';font-size:13px;font-weight:600;border-radius:9px;padding:10px 15px;cursor:pointer;border:1.5px solid var(--line2);background:#fff;color:var(--blue);display:inline-flex;align-items:center;gap:7px}
+  .btn.prim{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn svg{width:15px;height:15px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  .who{display:flex;align-items:center;gap:11px;margin:16px 0 4px}
+  .who .av{width:40px;height:40px;border-radius:11px;background:rgba(38,51,112,.09);color:var(--blue);display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px}
+  .who .nm{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px}
+  .who .rl{font-size:12px;color:var(--muted)}
+
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 22px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px 14px;box-shadow:var(--shadow)}
+  .kpi .n{font-family:'Archivo',sans-serif;font-weight:800;font-size:24px;line-height:1;color:var(--blue)}
+  .kpi .t{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.3}
+
+  .sech{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:24px 2px 14px}
+
+  /* embudo */
+  .funnel{display:flex;flex-direction:column;gap:10px}
+  .stage{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;position:relative;overflow:hidden}
+  .stage-top{display:flex;align-items:center;gap:12px}
+  .stage-idx{width:26px;height:26px;border-radius:8px;background:var(--blue);color:#fff;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px;flex:none}
+  .stage-name{font-family:'Archivo',sans-serif;font-weight:700;font-size:15px}
+  .stage-n{margin-left:auto;font-family:'Archivo',sans-serif;font-weight:800;font-size:26px;color:var(--blue);line-height:1}
+  .stage-n small{font-size:12px;color:var(--muted);font-weight:500;margin-left:4px}
+  .bar{height:10px;background:var(--soft);border-radius:999px;overflow:hidden;margin-top:11px}
+  .bar > div{height:100%;background:var(--blue);border-radius:999px}
+  .stage-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:var(--muted)}
+  .stage-meta b{color:var(--ink)}
+  .stage-meta .warn{color:var(--gold)}
+  .stage-meta .mov{color:var(--green)}
+  .conv{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);margin:-4px 0}
+  .conv b{color:var(--blue)}
+
+  .note{font-size:12.5px;color:var(--muted);margin-top:20px;display:flex;gap:8px;align-items:flex-start;background:#fff;border:1px dashed var(--line2);border-radius:12px;padding:12px 14px}
+  .note svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--blue)}
+
+  @media(max-width:760px){.strip{grid-template-columns:1fr 1fr}}
+  @media print{.ht-in .ht-back,.controls .btn,#ht-bar{display:none}.controls{display:none}main{padding:0}.stage{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="ht-bar"><div class="ht-in">
+  <a class="ht-back" href="acceso.html"><span style="font-size:18px;">&#8592;</span> HydraTech</a>
+  <span class="ht-tool">CRM · Reporte gerencial</span>
+</div></div>
+
+<main>
+  <div class="eyebrow">Embudo de prospección <span id="src" class="badge sample">Cargando…</span></div>
+  <h1>Cómo va el vendedor con sus leads</h1>
+  <div class="period"><span id="periodo">—</span> · <span id="corte">—</span></div>
+
+  <div class="controls">
+    <div class="ctl"><label>Vendedor</label><select id="selVend"></select></div>
+    <div class="ctl"><label>Semana</label><select id="selSem"></select></div>
+    <button class="btn prim" id="btnUpd" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar semana en curso</button>
+    <button class="btn" id="btnPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>Descargar PDF</button>
+  </div>
+
+  <div class="who">
+    <div class="av" id="w-av">·</div>
+    <div><div class="nm" id="w-nm">—</div><div class="rl">Embudo de altas de proveedor</div></div>
+  </div>
+
+  <div class="strip" id="strip"></div>
+
+  <div class="sech">Embudo por etapa · foto actual</div>
+  <div class="funnel" id="funnel"></div>
+
+  <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span>El <b>embudo</b> muestra dónde están parados hoy los leads del vendedor. El <b>movimiento</b> (en verde) es cuánto entró a cada etapa en la semana elegida. En la <b>semana en curso</b>, usa <b>Actualizar</b> para recalcular con los días corridos.</span>
+  </div>
+</main>
+
+<script>
+  const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  let vendActual="", semActual=0, cursoOn=false, DATA=null, usandoDemo=false;
+
+  const SAMPLE={
+    periodo:"Semana 27 · 30 jun–6 jul 2026", corteLabel:"En curso · al 3 jul", enCurso:true,
+    vendedores:["Juan Arjón"], vendedor:{nombre:"Juan Arjón", ini:"JA"},
+    totalEmbudo:14,
+    embudo:[
+      {etapa:"Por contactar", n:7, pct:50, atorados:1, convDesdeAnterior:null},
+      {etapa:"Cita agendada", n:4, pct:29, atorados:0, convDesdeAnterior:57},
+      {etapa:"Presentado",    n:2, pct:14, atorados:1, convDesdeAnterior:50},
+      {etapa:"Alta en proceso", n:1, pct:7, atorados:0, convDesdeAnterior:50},
+    ],
+    movimiento:{"Por contactar":5,"Cita agendada":3,"Presentado":2,"Alta en proceso":1}, nuevosLeads:5,
+    actividad:{avances:12, citas:3, visitas:2, llamadas:6},
+  };
+
+  function render(d){
+    DATA=d;
+    document.getElementById("periodo").textContent=d.periodo||"—";
+    document.getElementById("corte").textContent=d.corteLabel||"";
+    const src=document.getElementById("src");
+    src.className="badge "+(usandoDemo?"sample":"live"); src.textContent=usandoDemo?"Datos de ejemplo":"En vivo · Odoo";
+
+    // vendedor
+    document.getElementById("w-av").textContent=(d.vendedor&&d.vendedor.ini)||"·";
+    document.getElementById("w-nm").textContent=(d.vendedor&&d.vendedor.nombre)||"—";
+
+    // selector de vendedor
+    const sv=document.getElementById("selVend");
+    if(sv.options.length!==(d.vendedores||[]).length){
+      sv.innerHTML=(d.vendedores||[]).map(n=>'<option'+(n===(d.vendedor&&d.vendedor.nombre)?" selected":"")+'>'+esc(n)+'</option>').join("");
+    }
+
+    // botón actualizar solo en semana en curso
+    document.getElementById("btnUpd").style.display = d.enCurso ? "inline-flex" : "none";
+
+    // strip de KPIs
+    const a=d.actividad||{};
+    document.getElementById("strip").innerHTML=
+      kpi(d.totalEmbudo||0,"leads en el embudo")+
+      kpi(d.nuevosLeads||0,"prospectos nuevos (semana)")+
+      kpi(a.citas||0,"citas/reuniones (semana)")+
+      kpi(a.avances||0,"avances registrados (semana)");
+
+    // embudo
+    const maxN=Math.max(1,...(d.embudo||[]).map(e=>e.n));
+    let html="";
+    (d.embudo||[]).forEach((e,i)=>{
+      if(i>0 && e.convDesdeAnterior!=null) html+='<div class="conv">↓ pasa el <b>'+e.convDesdeAnterior+'%</b></div>';
+      const mov=(d.movimiento||{})[e.etapa]||0;
+      html+='<div class="stage">'+
+        '<div class="stage-top"><div class="stage-idx">'+(i+1)+'</div><div class="stage-name">'+esc(e.etapa)+'</div>'+
+          '<div class="stage-n">'+e.n+'<small>leads</small></div></div>'+
+        '<div class="bar"><div style="width:'+Math.round(e.n/maxN*100)+'%"></div></div>'+
+        '<div class="stage-meta">'+
+          '<span><b>'+e.pct+'%</b> del embudo</span>'+
+          (mov>0?'<span class="mov">+'+mov+' esta semana</span>':'')+
+          (e.atorados>0?'<span class="warn">'+e.atorados+' atorado'+(e.atorados>1?"s":"")+' (+7 d)</span>':'')+
+        '</div>'+
+      '</div>';
+    });
+    document.getElementById("funnel").innerHTML=html || '<div style="color:var(--muted);padding:20px 0;">Sin leads en el embudo para este vendedor.</div>';
+  }
+  function kpi(n,t){ return '<div class="kpi"><div class="n">'+n+'</div><div class="t">'+t+'</div></div>'; }
+
+  function opcionesSemana(){
+    const s=document.getElementById("selSem");
+    const op=['<option value="0">Semana en curso</option>'];
+    for(let i=1;i<=8;i++) op.push('<option value="'+i+'">Hace '+i+' semana'+(i>1?"s":"")+'</option>');
+    s.innerHTML=op.join("");
+  }
+
+  function cargar(){
+    const params=new URLSearchParams();
+    if(vendActual) params.set("vendedor",vendActual);
+    params.set("semana",semActual);
+    if(cursoOn && semActual===0) params.set("curso","1");
+    fetch("/api/odoo-crm-embudo?"+params.toString())
+      .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+      .then(j=>{ if(!j||!j.ok) throw 0; usandoDemo=false; render(j); })
+      .catch(()=>{ usandoDemo=true; render(SAMPLE); });
+  }
+
+  document.getElementById("selVend").addEventListener("change",e=>{ vendActual=e.target.value; cursoOn=false; cargar(); });
+  document.getElementById("selSem").addEventListener("change",e=>{ semActual=parseInt(e.target.value,10)||0; cursoOn=false; cargar(); });
+  document.getElementById("btnUpd").addEventListener("click",()=>{ cursoOn=true; cargar(); });
+  document.getElementById("btnPdf").addEventListener("click",()=>window.print());
+
+  opcionesSemana();
+  window.onAuthReady=function(){ cargar(); };
+  if(!window.REQUIRE_ROLE){ document.addEventListener("DOMContentLoaded", cargar); }
+  setTimeout(()=>{ if(!document.getElementById("funnel").innerHTML){ usandoDemo=true; render(SAMPLE); } }, 1500);
+</script>
+</body>
+</html>
