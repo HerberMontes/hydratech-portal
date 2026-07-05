@@ -132,12 +132,18 @@ export default async (req) => {
 
     // 5) Actividad del vendedor en la semana (mail.message de bitácora sobre sus leads)
     const leadIds = leads.map(l => l.id);
+    const nombreLead = Object.fromEntries(leads.map(l => [l.id, l.partner_name || l.contact_name || l.name || "—"]));
+    const limpiarHtml = (h) => String(h || "")
+      .replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ").trim();
     let avances = 0, citas = 0, visitas = 0, llamadas = 0;
+    const minuta = []; // detalle por día para la hoja 2 del reporte
     if (leadIds.length) {
       const msgs = await executeKw("mail.message", "search_read",
         [[["model", "=", "crm.lead"], ["res_id", "in", leadIds],
           ["date", ">=", startStr], ["date", "<=", endStr], ["message_type", "=", "comment"]]],
-        { fields: ["body"], limit: 3000 }).catch(() => []);
+        { fields: ["body", "date", "res_id"], order: "date asc", limit: 3000 }).catch(() => []);
       msgs.forEach(m => {
         const b = m.body || "";
         const mb = b.match(/<b>([^<]+)<\/b>/);
@@ -147,6 +153,20 @@ export default async (req) => {
         if (tipo === "Visita") visitas++;
         if (tipo === "Llamada") llamadas++;
         if (tipo === "Reunión") citas++;
+        if (minuta.length < 120) {
+          const ms = b.match(/<span>([^<]+)<\/span>/);
+          const res = ms ? ms[1].trim() : "";
+          let nota = limpiarHtml(b);
+          if (nota.startsWith(tipo)) nota = nota.slice(tipo.length).replace(/^[\s:·—-]+/, "");
+          if (res && nota.startsWith(res)) nota = nota.slice(res.length).replace(/^[\s:·—-]+/, "");
+          if (res) nota = nota ? (res + " — " + nota) : res;
+          minuta.push({
+            fecha: m.date,
+            cliente: nombreLead[m.res_id] || "—",
+            tipo,
+            nota: nota.length > 220 ? nota.slice(0, 217) + "…" : nota,
+          });
+        }
       });
     }
 
@@ -160,6 +180,7 @@ export default async (req) => {
       embudo,
       movimiento, nuevosLeads, nuevosPrev,
       estancados,
+      minuta,
       actividad: { avances, citas, visitas, llamadas, altas: movimiento["Alta en proceso"] || 0 },
     });
   } catch (e) {

@@ -208,49 +208,92 @@ export default async (req) => {
       .slice(0, 4);
     const riesgoTotal = seguimiento.reduce((s, o) => s + o.monto, 0);
 
-    /* ----- 5) ACTIVIDAD (mail.message sobre los leads del vendedor) ----- */
-    // Como hay un solo usuario de Odoo, no atribuimos por autor sino por los
-    // LEADS del vendedor (sus registros etiquetados). Es un proxy correcto y
-    // por-persona de su actividad. Mejor esfuerzo: si no hay historial, queda en 0.
+    /* ----- 5) ACTIVIDAD (bitácora del CRM sobre los leads del vendedor) ----- */
+    // Los vendedores registran su actividad como COMENTARIOS de bitácora con el
+    // formato "<b>Tipo</b> · <span>Resultado</span><br>nota" (igual que en
+    // crm-actividad y el embudo). Esa es la fuente principal del reporte y de
+    // la minuta. Respaldo: actividades formales de Odoo (mail.activity), por si
+    // algún equipo las usa.
     let completadas = 0, llamadas = 0, reuniones = 0;
+    const minutaC = []; // detalle por día para la hoja 2 del reporte
+    const limpiarHtml = (h) => String(h || "")
+      .replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ").trim();
+    const TIPOS_BIT = ["Llamada", "Correo", "WhatsApp", "Visita", "Reunión", "Nota"];
     const trend = DIAS.map((d) => ({ day: d, value: 0 }));
     try {
       const repLeads = tagId
         ? await executeKw("crm.lead", "search", [[userDomain]], { limit: 1000 })
         : [];
       if (repLeads.length) {
-        const baseMsg = [
-          ["model", "=", "crm.lead"],
-          ["res_id", "in", repLeads],
-          ["mail_activity_type_id", "!=", false],
-          ["date", ">=", W.start], ["date", "<=", W.end],
-        ];
-        completadas = await executeKw("mail.message", "search_count", [baseMsg]);
+        // Nombres de los leads (para mostrar el cliente en la minuta)
+        const nm = await executeKw("crm.lead", "read",
+          [repLeads, ["partner_name", "contact_name", "name"]]).catch(() => []);
+        const nameMap = Object.fromEntries(nm.map((l) => [l.id, l.partner_name || l.contact_name || l.name || "—"]));
 
-        // Por día (7 consultas pequeñas)
-        for (let i = 0; i < 7; i++) {
-          const dStart = new Date(W.monday); dStart.setUTCDate(W.monday.getUTCDate() + i);
-          const a = `${dStart.getUTCFullYear()}-${String(dStart.getUTCMonth() + 1).padStart(2, "0")}-${String(dStart.getUTCDate()).padStart(2, "0")}`;
-          trend[i].value = await executeKw("mail.message", "search_count",
-            [[["model", "=", "crm.lead"], ["res_id", "in", repLeads],
-              ["mail_activity_type_id", "!=", false],
-              ["date", ">=", a + " 00:00:00"], ["date", "<=", a + " 23:59:59"]]]);
+        const pushMinuta = (fecha, resId, tipo, nota) => {
+          if (minutaC.length >= 120) return;
+          minutaC.push({
+            fecha,
+            cliente: nameMap[resId] || "—",
+            tipo,
+            nota: nota.length > 220 ? nota.slice(0, 217) + "…" : nota,
+          });
+        };
+        const marcarTrend = (fecha) => {
+          const t = Date.parse(String(fecha).replace(" ", "T") + "Z");
+          if (isNaN(t)) return;
+          const idx = Math.floor((t - W.monday.getTime()) / 86400000);
+          if (idx >= 0 && idx < 7) trend[idx].value++;
+        };
+
+        /* 5a) FUENTE PRINCIPAL: bitácora (mail.message tipo comment) */
+        const msgs = await executeKw("mail.message", "search_read",
+          [[["model", "=", "crm.lead"], ["res_id", "in", repLeads],
+            ["message_type", "=", "comment"],
+            ["date", ">=", W.start], ["date", "<=", W.end]]],
+          { fields: ["body", "date", "res_id"], order: "date asc", limit: 3000 }).catch(() => []);
+        msgs.forEach((m) => {
+          const b = m.body || "";
+          const mb = b.match(/<b>([^<]+)<\/b>/);
+          const tipo = mb ? mb[1].trim() : "";
+          if (TIPOS_BIT.indexOf(tipo) < 0) return;
+          completadas++;
+          if (tipo === "Llamada") llamadas++;
+          if (tipo === "Reunión") reuniones++;
+          marcarTrend(m.date);
+          // nota = resultado (span) + texto libre de la bitácora, sin etiquetas
+          const ms = b.match(/<span>([^<]+)<\/span>/);
+          const res = ms ? ms[1].trim() : "";
+          let nota = limpiarHtml(b);
+          if (nota.startsWith(tipo)) nota = nota.slice(tipo.length).replace(/^[\s:·—-]+/, "");
+          if (res && nota.startsWith(res)) nota = nota.slice(res.length).replace(/^[\s:·—-]+/, "");
+          if (res) nota = nota ? (res + " — " + nota) : res;
+          pushMinuta(m.date, m.res_id, tipo, nota);
+        });
+
+        /* 5b) RESPALDO: actividades formales de Odoo, solo si no hubo bitácora */
+        if (!completadas) {
+          const baseMsg = [
+            ["model", "=", "crm.lead"], ["res_id", "in", repLeads],
+            ["mail_activity_type_id", "!=", false],
+            ["date", ">=", W.start], ["date", "<=", W.end],
+          ];
+          const msgsAct = await executeKw("mail.message", "search_read",
+            [baseMsg],
+            { fields: ["date", "res_id", "mail_activity_type_id", "body", "subject"],
+              order: "date asc", limit: 200 }).catch(() => []);
+          msgsAct.forEach((m) => {
+            completadas++;
+            const tNom = (m2oName(m.mail_activity_type_id) || "Actividad");
+            const tLow = tNom.toLowerCase();
+            if (tLow.includes("llam") || tLow.includes("call")) llamadas++;
+            if (tLow.includes("reun") || tLow.includes("meet")) reuniones++;
+            marcarTrend(m.date);
+            pushMinuta(m.date, m.res_id, tNom, limpiarHtml(m.body) || limpiarHtml(m.subject));
+          });
         }
-
-        // Llamadas / reuniones por tipo de actividad (nombres pueden variar)
-        const tipos = await executeKw("mail.activity.type", "search_read",
-          [[]], { fields: ["id", "name", "category"] }).catch(() => []);
-        const idsPorCat = (cat, kw) => tipos
-          .filter((t) => (t.category === cat) || (t.name || "").toLowerCase().includes(kw))
-          .map((t) => t.id);
-        const callIds = idsPorCat("phonecall", "llam");
-        const meetIds = idsPorCat("meeting", "reuni");
-        if (callIds.length)
-          llamadas = await executeKw("mail.message", "search_count",
-            [[...baseMsg, ["mail_activity_type_id", "in", callIds]]]);
-        if (meetIds.length)
-          reuniones = await executeKw("mail.message", "search_count",
-            [[...baseMsg, ["mail_activity_type_id", "in", meetIds]]]);
       }
     } catch (e) { /* sin historial de actividades -> queda en 0 */ }
 
@@ -281,6 +324,7 @@ export default async (req) => {
       riesgoTotalFmt: "$" + Math.round(riesgoTotal).toLocaleString("en-US"),
       act: { llamadas, reuniones, avances: completadas, nuevas: nuevasOpps },
       res: { ganadas: ganadas.length, cierre, montoCerradoFmt: "$" + Math.round(montoCerrado).toLocaleString("en-US") },
+      minuta: minutaC,
       generado: "HydraTech CRM",
     };
 
