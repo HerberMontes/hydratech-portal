@@ -59,6 +59,15 @@ export default async (req) => {
       // ----- Relacionales: mejor esfuerzo, nunca bloquean -----
       const stageId = await resolverIdSeguro("crm.stage", b.stage, false);
       if (stageId) vals.stage_id = stageId;
+    } else {
+      // PROSPECTO: debe arrancar SIEMPRE en el embudo de alta ("Por contactar").
+      // Si no se fija la etapa, Odoo lo manda a la etapa por defecto del
+      // pipeline ("New"/"Nuevo") y se cuela al reporte de OPORTUNIDADES.
+      const stageId = await resolverIdSeguro("crm.stage", b.stage || "Por contactar", false);
+      if (stageId) vals.stage_id = stageId;
+    }
+
+    if (vals.type === "opportunity") {
 
       // Etiquetas manuales (mejor esfuerzo)
       if (Array.isArray(b.tags) && b.tags.length) {

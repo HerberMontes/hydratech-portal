@@ -135,13 +135,18 @@ export default async (req) => {
        correcto es POR ETAPA, no por type. Aquí se excluyen las etapas de prospecto
        tanto de los números como de las actividades/minuta. */
     const ETAPAS_PROSPECTO = ["Por contactar", "Cita agendada", "Presentado", "Alta en proceso"];
+    const etProsp = ETAPAS_PROSPECTO.map(norm);
     let etapasProspectoIds = [];
     try {
       const sts = await executeKw("crm.stage", "search_read", [[]], { fields: ["id", "name"] });
       etapasProspectoIds = sts
-        .filter((st) => ETAPAS_PROSPECTO.includes(String(st.name || "").trim()))
+        .filter((st) => etProsp.includes(norm(st.name)))
         .map((st) => st.id);
     } catch (e) {}
+    // Las etapas por defecto de Odoo se guardan en inglés y solo se traducen en
+    // la interfaz; para mostrar en el reporte las regresamos al español.
+    const ETAPA_ES = { "New": "Nuevo", "Qualified": "Calificado", "Proposition": "Propuesta", "Won": "Ganado" };
+    const etapaES = (n) => ETAPA_ES[String(n || "").trim()] || n;
     const soloOportunidades = etapasProspectoIds.length
       ? [["stage_id", "not in", etapasProspectoIds]]
       : [];
@@ -197,7 +202,7 @@ export default async (req) => {
     const opps = abiertas.slice(0, 5);
     const oportunidades = opps.map((o) => ({
       cliente: o.partner_name || m2oName(o.partner_id) || o.contact_name || "—",
-      etapa: m2oName(o.stage_id) || "—",
+      etapa: etapaES(m2oName(o.stage_id)) || "—",
       monto: mxn(o.expected_revenue),
       paso: o.activity_summary || "",
       fecha: fechaCorta(o.activity_date_deadline),
@@ -227,7 +232,7 @@ export default async (req) => {
     // Desglose por etapa (dónde está parado el pipeline)
     const porEtapa = {};
     abiertas.forEach((o) => {
-      const st = m2oName(o.stage_id) || "—";
+      const st = etapaES(m2oName(o.stage_id)) || "—";
       (porEtapa[st] = porEtapa[st] || { nombre: st, opps: 0, monto: 0, edades: [] });
       porEtapa[st].opps++;
       porEtapa[st].monto += o.expected_revenue || 0;
@@ -254,7 +259,7 @@ export default async (req) => {
         cliente: o.partner_name || m2oName(o.partner_id) || o.contact_name || "—",
         monto: o.expected_revenue || 0,
         montoFmt: "$" + Math.round(o.expected_revenue || 0).toLocaleString("en-US"),
-        etapa: m2oName(o.stage_id) || "—",
+        etapa: etapaES(m2oName(o.stage_id)) || "—",
         dias: diasDesde(o.write_date) || 0,
       }))
       .filter((o) => o.dias >= 4)
