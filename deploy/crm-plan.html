@@ -362,7 +362,7 @@
     try{ const r=await fetch("/api/odoo-crm-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }
     catch(e){ return {ok:false,demo:true}; }
   }
-  async function hecho(id){ const d=await post({action:"done",activityId:id,email:repEmail}); toast(d.demo?"Actividad marcada (demo)":"Actividad registrada"); cargar(); }
+  async function hecho(id){ const d=await post({action:"done",activityId:id,email:repEmail}); if(d&&d.demo){toast("⚠ Sin conexión — NO se guardó");return;} if(!d||!d.ok){toast("⚠ No se pudo guardar: "+((d&&d.error)||"error"));return;} toast("Actividad registrada en Odoo"); cargar(); }
   async function agendar(id){ toast("Abriendo reprogramación…"); /* aquí abrirías un selector de fecha/tipo */ }
   async function agendarLead(leadId){ const d=await post({action:"schedule",leadId,tipo:"todo",summary:"Siguiente paso",email:repEmail}); toast(d.demo?"Siguiente paso agendado (demo)":"Siguiente paso agendado"); cargar(); }
 
@@ -405,8 +405,10 @@
     const f=document.getElementById('bit-sigfecha').value;
     if(f){ payload.sigFecha=f; payload.sigTipo=bitSel.sigtipo||"todo"; payload.sigNota=document.getElementById('bit-signota').value; }
     const d=await post(payload);
+    if(d && d.demo){ toast("⚠ Sin conexión — el avance NO se guardó. Intenta de nuevo."); return; }
+    if(!d || !d.ok){ toast("⚠ No se pudo guardar: "+((d&&d.error)||"error del servidor")); return; }
     cerrarBit();
-    toast(d&&d.demo?"Avance registrado (demo)":(f?"Avance registrado · siguiente paso agendado":"Avance registrado"));
+    toast(f?"Avance registrado en Odoo · siguiente paso agendado":"Avance registrado en Odoo");
     cargar();
   }
   document.getElementById('ov-bit').addEventListener('click',e=>{ if(e.target.id==='ov-bit') cerrarBit(); });
