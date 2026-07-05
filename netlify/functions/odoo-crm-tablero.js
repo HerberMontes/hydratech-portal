@@ -20,7 +20,9 @@ function rango(semana, year){
   const sun=new Date(mon); sun.setUTCDate(mon.getUTCDate()+6);
   const f=(d)=>`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;
   return { start:f(mon)+" 00:00:00", end:f(sun)+" 23:59:59",
-    num:isoWeekNum(mon), label:`Semana ${isoWeekNum(mon)} · ${mon.getUTCDate()}–${sun.getUTCDate()} ${MESES[sun.getUTCMonth()]} ${sun.getUTCFullYear()}` };
+    num:isoWeekNum(mon), label: mon.getUTCMonth()===sun.getUTCMonth()
+      ? `Semana ${isoWeekNum(mon)} · ${mon.getUTCDate()}–${sun.getUTCDate()} ${MESES[sun.getUTCMonth()]} ${sun.getUTCFullYear()}`
+      : `Semana ${isoWeekNum(mon)} · ${mon.getUTCDate()} ${MESES[mon.getUTCMonth()]} – ${sun.getUTCDate()} ${MESES[sun.getUTCMonth()]} ${sun.getUTCFullYear()}` };
 }
 
 export default async (req) => {

@@ -3,7 +3,7 @@
 // Lee las BITÁCORAS que los vendedores registran (mail.message en crm.lead) y las
 // clasifica por tipo (Llamada/Correo/WhatsApp/Visita/Reunión/Nota) y resultado.
 // Atribución por ETIQUETA "Vendedor · <Nombre>", igual que el resto del CRM.
-import { executeKw, checkToken, json, parseBitacora as parseBitacoraLib } from "./lib/odoo.js";
+import { executeKw, checkToken, json, parseBitacora as parseBitacoraLib, diccionarioEtapas } from "./lib/odoo.js";
 
 const VEND_PREFIX = "Vendedor · ";
 const LEAD_STAGES = ["Por contactar", "Cita agendada", "Presentado", "Alta en proceso"];
@@ -80,6 +80,9 @@ export default async (req) => {
       [[["tag_ids","in",allTagIds]]],
       { fields:["id","tag_ids","stage_id","active","type","date_last_stage_update","activity_date_deadline","expected_revenue"],
         limit:3000, context:{ active_test:false } });
+    // Diccionario multi-idioma para clasificar etapas por ID
+    let dic = null;
+    try { dic = await diccionarioEtapas(); } catch (e) {}
     const leadVendor = {};   // leadId -> nombre vendedor
     const leadIds = [];
     leads.forEach(l=>{
@@ -89,7 +92,8 @@ export default async (req) => {
       leadVendor[l.id] = v;
       leadIds.push(l.id);
       const a = acc[v]; if(!a) return;
-      const etapa = m2oName(l.stage_id);
+      const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : null;
+      const etapa = (dic && dic.canonicaDe(sid, [...LEAD_STAGES, ...OPP_STAGES, S_GANADO])) || m2oName(l.stage_id);
       const abierto = l.active && etapa !== S_GANADO;
       if(abierto){
         a.abiertos++;

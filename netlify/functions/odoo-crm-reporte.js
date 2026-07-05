@@ -42,7 +42,10 @@ function rango(semana, year) {
     end: fmt(sun) + " 23:59:59",
     monday: mon, sunday: sun,
     num: isoWeekNum(mon),
-    label: `${mon.getUTCDate()} – ${sun.getUTCDate()} ${MESES[sun.getUTCMonth()]} ${sun.getUTCFullYear()}`,
+    // Si la semana cruza de mes, mostrar el mes en ambos extremos ("29 jun – 5 jul 2026")
+    label: mon.getUTCMonth() === sun.getUTCMonth()
+      ? `${mon.getUTCDate()} – ${sun.getUTCDate()} ${MESES[sun.getUTCMonth()]} ${sun.getUTCFullYear()}`
+      : `${mon.getUTCDate()} ${MESES[mon.getUTCMonth()]} – ${sun.getUTCDate()} ${MESES[sun.getUTCMonth()]} ${sun.getUTCFullYear()}`,
   };
 }
 
@@ -65,6 +68,49 @@ export default async (req) => {
   if (!checkToken(req)) return json({ ok: false, error: "No autorizado." }, 401);
 
   const url = new URL(req.url);
+
+  /* Modo radiografía: muestra CÓMO ve el API las etapas de Odoo (todas sus
+     variantes de nombre por idioma) y en qué etapa está parado cada lead
+     etiquetado. Sirve para detectar etapas renombradas con traducciones
+     divergentes y registros duplicados. Solo lectura, no cambia nada. */
+  if (url.searchParams.get("etapas") === "1") {
+    try {
+      const dic = await diccionarioEtapas();
+      const ETAPAS_PROSPECTO = ["Por contactar", "Cita agendada", "Presentado", "Alta en proceso"];
+      const prospIds = dic.idsDe(ETAPAS_PROSPECTO);
+      const etapas = Object.entries(dic.nombres).map(([id, set]) => ({
+        etapaId: Number(id),
+        nombres: [...set],
+        clasificacion: prospIds.includes(Number(id)) ? "PROSPECTOS (embudo de alta)" : "OPORTUNIDADES (Nuevo→Ganado)",
+      }));
+      const tgs = await executeKw("crm.tag", "search_read",
+        [[["name", "like", "Vendedor%"]]], { fields: ["id", "name"] }).catch(() => []);
+      const lds = await executeKw("crm.lead", "search_read",
+        [[["tag_ids", "in", tgs.map((t) => t.id)], ["active", "=", true]]],
+        { fields: ["id", "partner_name", "contact_name", "name", "stage_id", "expected_revenue", "create_date"], limit: 300 });
+      const leads = lds.map((l) => ({
+        id: l.id,
+        cliente: l.partner_name || l.contact_name || l.name,
+        etapaId: Array.isArray(l.stage_id) ? l.stage_id[0] : null,
+        etapaSegunAPI: Array.isArray(l.stage_id) ? l.stage_id[1] : "",
+        monto: l.expected_revenue || 0,
+        creado: l.create_date,
+      }));
+      // Posibles duplicados: mismo cliente capturado más de una vez
+      const porCliente = {};
+      leads.forEach((l) => {
+        const k = String(l.cliente || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+        if (!k) return;
+        (porCliente[k] = porCliente[k] || []).push({ id: l.id, etapa: l.etapaSegunAPI, creado: l.creado });
+      });
+      const posiblesDuplicados = Object.entries(porCliente)
+        .filter(([, arr]) => arr.length > 1)
+        .map(([cliente, registros]) => ({ cliente, registros }));
+      return json({ ok: true, queEsEsto: "Radiografía de etapas y leads (solo lectura)", etapas, totalLeadsEtiquetados: leads.length, posiblesDuplicados, leads });
+    } catch (e) {
+      return json({ ok: false, error: String(e.message || e) }, 500);
+    }
+  }
 
   /* Modo reparación: los PROSPECTOS capturados antes de la corrección quedaron
      físicamente en la etapa "Nuevo" (la etapa por defecto de Odoo). Este modo
@@ -317,7 +363,6 @@ export default async (req) => {
       .replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
       .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
       .replace(/\s+/g, " ").trim();
-    const TIPOS_BIT = ["Llamada", "Correo", "WhatsApp", "Visita", "Reunión", "Nota"];
     const trend = DIAS.map((d) => ({ day: d, value: 0 }));
     let diagLeads = 0, diagComments = 0, diagMuestra = [];
     try {

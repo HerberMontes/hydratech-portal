@@ -3,7 +3,7 @@
 // POST /api/odoo-crm-plan  {action:"done", activityId}            -> marca actividad hecha
 // POST /api/odoo-crm-plan  {action:"schedule", leadId, tipo, summary, date} -> agenda siguiente paso
 // Atribución por ETIQUETA del vendedor (sin usuario de Odoo). Misma convención que odoo-crm-lead.js.
-import { executeKw, checkToken, json } from "./lib/odoo.js";
+import { executeKw, checkToken, json, diccionarioEtapas } from "./lib/odoo.js";
 
 const vendTag = (name) => "Vendedor · " + name;
 const fmt = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
@@ -94,10 +94,13 @@ export default async (req) => {
       if (b.action === "calificar" && b.leadId) {
         const bant = b.bant || {};
         const vals = {};
-        // Etapa "Por cotizar" (por nombre). Ajusta el nombre si tu etapa se llama distinto.
-        const st = await executeKw("crm.stage","search_read",
-          [[["name","=","Por cotizar"]]],{fields:["id"],limit:1}).catch(()=>[]);
-        if (st && st.length) vals.stage_id = st[0].id;
+        // Etapa "Por cotizar" resuelta con el diccionario multi-idioma
+        // (tolera etapas renombradas cuyo nombre base quedó en otro idioma).
+        try {
+          const dic = await diccionarioEtapas();
+          const ids = dic.idsDe(["Por cotizar", "Qualified", "Calificado"]);
+          if (ids.length) vals.stage_id = ids[0];
+        } catch (e) {}
         // Prioridad automática según la calificación (el "semáforo" del BANT).
         const score = ["b","a","n","t"].reduce((s,k)=>s+(Number(bant[k])||0),0); // 0..8
         vals.priority = score>=6 ? "3" : score>=4 ? "2" : "1";

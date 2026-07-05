@@ -7,7 +7,7 @@
 // The page falls back to sample data if this function errors, so partial
 // failures degrade gracefully.
 
-const { executeKw, json, checkToken } = require('./lib/odoo');
+const { executeKw, json, checkToken, diccionarioEtapas } = require('./lib/odoo');
 
 const VEND_PREFIX = 'Vendedor · ';
 const S_NUEVO = 'Nuevo';
@@ -83,11 +83,18 @@ exports.handler = async (req) => {
     const startStr = odooDate(win.start) + ' 00:00:00';
     const endStr = odooDate(win.end) + ' 23:59:59';
 
-    // ---- 1. Stages (resolve names -> ids) ----
-    const stages = await executeKw('crm.stage', 'search_read',
-      [[]], { fields: ['id', 'name'] });
+    // ---- 1. Stages: diccionario multi-idioma (las etapas por defecto de Odoo
+    // guardan el nombre base en inglés aunque en pantalla se vean en español;
+    // clasificar por ID evita ese problema) ----
+    const dic = await diccionarioEtapas();
+    const CANON = [S_NUEVO, S_COTIZAR, S_ENVIADA, S_GANADO];
+    const canonPorId = {};
+    Object.keys(dic.nombres).forEach(id => {
+      const c = dic.canonicaDe(Number(id), CANON);
+      if (c) canonPorId[Number(id)] = c;
+    });
     const stageByName = {};
-    stages.forEach(s => { stageByName[s.name] = s.id; });
+    CANON.forEach(n => { const ids = dic.idsDe([n]); if (ids.length) stageByName[n] = ids[0]; });
 
     // ---- 2. Salespeople from tags "Vendedor · X" ----
     const tags = await executeKw('crm.tag', 'search_read',
@@ -114,7 +121,8 @@ exports.handler = async (req) => {
 
     // annotate
     open.forEach(o => {
-      o._stage = relName(o.stage_id);
+      const sid = Array.isArray(o.stage_id) ? o.stage_id[0] : null;
+      o._stage = canonPorId[sid] || relName(o.stage_id);
       o._age = daysSince(o.date_last_stage_update, now);
       o._rep = repFromTags(o.tag_ids);
       o._client = relName(o.partner_id) || o.name || '—';
@@ -128,7 +136,7 @@ exports.handler = async (req) => {
     // Won: currently in "Ganado" (or 100% probability) that reached it during the window.
     const wonAll = await executeKw('crm.lead', 'search_read',
       [[['type', '=', 'opportunity'],
-        ['stage_id', '=', stageByName[S_GANADO] || 0]]],
+        ['stage_id', 'in', dic.idsDe([S_GANADO]).length ? dic.idsDe([S_GANADO]) : [0]]]],
       { fields: ['id', 'expected_revenue', 'date_last_stage_update', 'create_date', 'tag_ids', 'date_closed'], limit: 2000 });
     const wonPeriod = wonAll.filter(w => {
       const ref = w.date_closed || w.date_last_stage_update;

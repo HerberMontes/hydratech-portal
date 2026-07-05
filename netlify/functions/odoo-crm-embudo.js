@@ -149,10 +149,6 @@ export default async (req) => {
     // 5) Actividad del vendedor en la semana (mail.message de bitácora sobre sus leads)
     const leadIds = leads.map(l => l.id);
     const nombreLead = Object.fromEntries(leads.map(l => [l.id, l.partner_name || l.contact_name || l.name || "—"]));
-    const limpiarHtml = (h) => String(h || "")
-      .replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-      .replace(/\s+/g, " ").trim();
     let avances = 0, citas = 0, visitas = 0, llamadas = 0;
     const minuta = []; // detalle por día para la hoja 2 del reporte
     if (leadIds.length) {

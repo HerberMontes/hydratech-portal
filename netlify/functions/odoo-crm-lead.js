@@ -1,7 +1,7 @@
 // netlify/functions/odoo-crm-lead.js
 // POST /api/odoo-crm-lead  -> crea un crm.lead (lead u oportunidad) en Odoo.
 // Recibe el JSON que envía deploy/crm.html. Odoo queda como base de datos.
-import { executeKw, checkToken, json } from "./lib/odoo.js";
+import { executeKw, checkToken, json, diccionarioEtapas } from "./lib/odoo.js";
 
 // Odoo guarda la prioridad como selección de texto: 0=Baja,1=Normal,2=Alta,3=Muy alta
 const PRIORIDAD = { "Normal": "1", "Media": "2", "Alta": "2", "Muy alta": "3" };
@@ -12,6 +12,18 @@ const vendTag = (name) => "Vendedor · " + name;
 
 // Busca el id de un registro relacional por nombre; si no existe (y se pide), lo crea.
 // NUNCA lanza: si algo falla, devuelve null para no bloquear la creación del lead.
+// Resuelve una ETAPA por nombre con el diccionario multi-idioma (tolera
+// etapas renombradas cuyo nombre base quedó en otro idioma). Respaldo: nombre exacto.
+async function resolverEtapa(nombre) {
+  if (!nombre) return null;
+  try {
+    const dic = await diccionarioEtapas();
+    const ids = dic.idsDe([nombre]);
+    if (ids.length) return ids[0];
+  } catch (e) {}
+  return resolverIdSeguro("crm.stage", nombre, false);
+}
+
 async function resolverIdSeguro(model, nombre, crearSiFalta = false, extra = {}) {
   if (!nombre) return null;
   try {
@@ -57,13 +69,13 @@ export default async (req) => {
       if (b.priority && PRIORIDAD[b.priority]) vals.priority = PRIORIDAD[b.priority];
 
       // ----- Relacionales: mejor esfuerzo, nunca bloquean -----
-      const stageId = await resolverIdSeguro("crm.stage", b.stage, false);
+      const stageId = await resolverEtapa(b.stage);
       if (stageId) vals.stage_id = stageId;
     } else {
       // PROSPECTO: debe arrancar SIEMPRE en el embudo de alta ("Por contactar").
       // Si no se fija la etapa, Odoo lo manda a la etapa por defecto del
       // pipeline ("New"/"Nuevo") y se cuela al reporte de OPORTUNIDADES.
-      const stageId = await resolverIdSeguro("crm.stage", b.stage || "Por contactar", false);
+      const stageId = await resolverEtapa(b.stage || "Por contactar");
       if (stageId) vals.stage_id = stageId;
     }
 
