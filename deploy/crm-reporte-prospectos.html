@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM · Reporte de prospección · HydraTech Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#263370;
+    --ink:#1b2138;
+    --gray:#4a5267;
+    --soft:#717a90;
+    --line:#e6e9f0;
+    --green:#16a34a;
+    --gold:#c9a14a;
+    --red:#e5484d;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html,body{
+    background:#f0f1f5;
+    font-family:"IBM Plex Sans", Arial, sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  .mono{
+    font-family:"IBM Plex Mono", monospace;
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:9px;
+    font-weight:500;
+    color:var(--soft);
+  }
+
+  .num{ font-family:"Archivo", sans-serif; font-weight:800; font-feature-settings:"tnum" 1; }
+
+  /* ---------- SHEET ---------- */
+  .sheet{
+    position:relative;
+    width:816px;
+    min-height:1056px;
+    background:#fff;
+    margin:24px auto;
+    padding:56px 60px 48px;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 8px 40px rgba(27,33,56,.14);
+  }
+  .sheet + .sheet{ page-break-before:always; }
+
+  /* ---------- HEADER ---------- */
+  .rep-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding-bottom:22px;
+    border-bottom:2px solid var(--ink);
+  }
+  .rep-head .kicker{
+    display:flex; align-items:center; gap:8px;
+    color:var(--navy); margin-bottom:14px;
+  }
+  .rep-head .kicker .dot{ width:6px; height:6px; background:var(--navy); border-radius:50%; }
+  .rep-head .kicker span{ color:var(--navy); }
+  .vend-name{
+    font-family:"Archivo", sans-serif;
+    font-weight:800;
+    font-size:38px;
+    line-height:1;
+    letter-spacing:-.01em;
+    color:var(--ink);
+  }
+  .vend-sub{
+    margin-top:8px;
+    font-size:12.5px;
+    color:var(--gray);
+    font-weight:500;
+  }
+
+  .week-block{ text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  .pill-green{
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(22,163,74,.10);
+    color:var(--green);
+    border:1px solid rgba(22,163,74,.28);
+    border-radius:100px;
+    padding:5px 12px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:9.5px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.1em;
+  }
+  .pill-green .live{ width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .week-num{ font-family:"Archivo", sans-serif; font-weight:800; font-size:22px; color:var(--navy); }
+  .week-range{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--gray); letter-spacing:.02em; }
+
+  /* ---------- SECTION HEADS ---------- */
+  .sec-head{ display:flex; align-items:baseline; gap:12px; margin:30px 0 16px; }
+  .sec-head h2{
+    font-family:"Archivo", sans-serif; font-weight:700;
+    font-size:15px; letter-spacing:.01em; color:var(--ink);
+  }
+  .sec-head .rule{ flex:1; height:1px; background:var(--line); }
+
+  /* ---------- KPI ROW ---------- */
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:22px; }
+  .kpi{
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 16px 15px;
+    background:#fff;
+    display:flex; flex-direction:column; min-height:118px;
+  }
+  .kpi .lbl{ margin-bottom:auto; line-height:1.4; }
+  .kpi .val{ font-size:40px; line-height:1; color:var(--ink); margin-top:14px; }
+  .kpi .delta{ margin-top:9px; font-family:"IBM Plex Mono", monospace; font-size:10px; font-weight:600; letter-spacing:.03em; }
+  .delta.up{ color:var(--green); }
+  .delta.down{ color:var(--red); }
+
+  .kpi-feature{ background:var(--navy); border-color:var(--navy); }
+  .kpi-feature .lbl{ color:rgba(255,255,255,.65); }
+  .kpi-feature .val{ color:#fff; }
+
+  .val-green{ color:var(--green); }
+
+  /* ---------- FUNNEL ---------- */
+  .funnel{ display:flex; flex-direction:column; }
+  .stage{
+    display:grid;
+    grid-template-columns:150px 1fr 62px;
+    align-items:center;
+    gap:16px;
+  }
+  .stage .st-name{ font-size:12.5px; font-weight:600; color:var(--ink); }
+  .stage .st-name .st-count{ font-family:"Archivo",sans-serif; font-weight:800; color:var(--navy); margin-left:4px; }
+  .bar-track{ height:34px; background:#f4f5f9; border-radius:5px; overflow:hidden; position:relative; }
+  .bar-fill{
+    height:100%;
+    background:var(--navy);
+    border-radius:5px;
+    display:flex; align-items:center;
+    padding-left:12px;
+    min-width:52px;
+  }
+  .bar-fill .pct{
+    font-family:"Archivo", sans-serif; font-weight:700;
+    color:#fff; font-size:12px; letter-spacing:.02em;
+  }
+  .bar-fill.f2{ background:#354289; }
+  .bar-fill.f3{ background:#4b5799; }
+  .bar-fill.f4{ background:#606bab; }
+  .chip-in{
+    justify-self:end;
+    display:inline-flex; align-items:center; gap:3px;
+    background:rgba(22,163,74,.10); color:var(--green);
+    border:1px solid rgba(22,163,74,.25);
+    border-radius:5px; padding:4px 8px;
+    font-family:"IBM Plex Mono", monospace; font-size:10px; font-weight:600;
+  }
+
+  .conv{
+    grid-column:2 / 3;
+    display:flex; align-items:center; gap:8px;
+    padding:7px 0 7px 4px;
+  }
+  .conv .track-line{ width:1px; height:20px; background:var(--line); margin-left:6px; }
+  .conv-label{
+    font-family:"IBM Plex Mono", monospace; font-size:9.5px;
+    text-transform:uppercase; letter-spacing:.08em; font-weight:600;
+    color:var(--green);
+  }
+  .conv-cuello .conv-label{ color:var(--gold); }
+  .conv-cuello{
+    background:rgba(201,161,74,.09);
+    border:1px solid rgba(201,161,74,.30);
+    border-radius:5px;
+    padding:6px 10px;
+    margin:4px 0 4px 4px;
+    align-self:start;
+    width:max-content;
+  }
+  .conv .arw{ color:var(--soft); font-size:11px; }
+  .conv-cuello .arw{ color:var(--gold); }
+
+  /* ---------- TWO COLUMNS ---------- */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:8px; }
+
+  .col-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .col-head h3{ font-family:"Archivo", sans-serif; font-weight:700; font-size:14px; color:var(--ink); }
+  .count-chip{
+    font-family:"IBM Plex Mono", monospace; font-size:10px; font-weight:600;
+    padding:4px 9px; border-radius:5px; letter-spacing:.03em;
+  }
+  .count-chip.red{ background:rgba(229,72,77,.10); color:var(--red); border:1px solid rgba(229,72,77,.28); }
+  .count-chip.green{ background:rgba(22,163,74,.10); color:var(--green); border:1px solid rgba(22,163,74,.28); }
+
+  /* stalled list */
+  .stall-list{ display:flex; flex-direction:column; gap:8px; }
+  .row-template, .row-template-critico{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 12px; border-radius:6px;
+    border:1px solid var(--line);
+    background:#fff;
+  }
+  .row-template{ border-left:3px solid var(--gold); }
+  .row-template-critico{ border-left:3px solid var(--red); background:rgba(229,72,77,.035); }
+  .row-body{ flex:1; }
+  .row-body .r-etapa{ font-size:11.5px; font-weight:600; color:var(--ink); line-height:1.35; }
+  .row-body .r-meta{ font-family:"IBM Plex Mono", monospace; font-size:9.5px; color:var(--soft); margin-top:4px; letter-spacing:.02em; }
+  .row-template-critico .r-etapa{ color:#b3282c; }
+  .r-days{ font-family:"Archivo", sans-serif; font-weight:800; font-size:15px; color:var(--gold); white-space:nowrap; }
+  .row-template-critico .r-days{ color:var(--red); }
+
+  .empty-state{
+    border:1px dashed rgba(22,163,74,.4);
+    background:rgba(22,163,74,.05);
+    border-radius:6px; padding:18px; text-align:center;
+    color:var(--green); font-size:12px; font-weight:600;
+  }
+
+  /* activity mini list */
+  .act-list{ display:flex; flex-direction:column; }
+  .act-metric{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 2px; border-bottom:1px solid var(--line);
+  }
+  .act-metric:last-child{ border-bottom:none; }
+  .act-metric .a-name{ font-size:12.5px; color:var(--gray); font-weight:500; }
+  .act-metric .a-val{ font-family:"Archivo", sans-serif; font-weight:800; font-size:20px; color:var(--ink); }
+
+  /* ---------- NOTES + SIGN ---------- */
+  .notes-box{
+    border:1px solid var(--line); border-radius:8px;
+    padding:16px; min-height:96px;
+    background:linear-gradient(transparent 27px, var(--line) 27px, transparent 28px);
+    background-size:100% 28px;
+    background-position:0 12px;
+  }
+  .sign-row{ display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:34px; }
+  .sign{ text-align:center; }
+  .sign .line{ border-top:1px solid var(--ink); padding-top:8px; }
+  .sign .role{ font-family:"IBM Plex Mono", monospace; font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--gray); font-weight:600; }
+
+  /* ---------- FOOTER ---------- */
+  .rep-foot{
+    margin-top:auto; padding-top:20px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:1px solid var(--line);
+  }
+  .rep-foot .f-left{ font-family:"IBM Plex Mono", monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--soft); }
+  .rep-foot .f-right{ font-family:"IBM Plex Mono", monospace; font-size:9px; letter-spacing:.06em; color:var(--soft); }
+
+  /* ---------- SHEET 2 · MINUTA ---------- */
+  .intro-line{ font-size:12.5px; color:var(--gray); margin-top:16px; font-style:italic; }
+
+  .dia-template{ margin-top:22px; }
+  .dia-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:8px; margin-bottom:2px;
+    border-bottom:1.5px solid var(--ink);
+  }
+  .dia-head #dia-titulo, .dia-head .dia-titulo{
+    font-family:"Archivo", sans-serif; font-weight:700; font-size:14px; color:var(--ink);
+  }
+  .dia-conteo{
+    font-family:"IBM Plex Mono", monospace; font-size:9.5px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.08em; color:var(--soft);
+  }
+
+  .act-template{
+    display:grid; grid-template-columns:52px 96px 1fr;
+    gap:14px; align-items:start;
+    padding:11px 2px; border-bottom:1px solid var(--line);
+  }
+  .act-hora{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--gray); font-weight:500; padding-top:2px; }
+  .tipo-chip{
+    justify-self:start;
+    font-family:"IBM Plex Mono", monospace; font-size:9px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.06em;
+    padding:4px 8px; border-radius:4px; white-space:nowrap;
+  }
+  .tipo-llamada{ background:rgba(38,51,112,.10); color:var(--navy); border:1px solid rgba(38,51,112,.22); }
+  .tipo-visita{ background:rgba(22,163,74,.10); color:var(--green); border:1px solid rgba(22,163,74,.25); }
+  .tipo-reunion{ background:rgba(201,161,74,.12); color:#9a7a2e; border:1px solid rgba(201,161,74,.32); }
+  .tipo-correo{ background:#eef0f4; color:var(--gray); border:1px solid var(--line); }
+  .tipo-whatsapp{ background:rgba(22,163,74,.10); color:var(--green); border:1px solid rgba(22,163,74,.25); }
+  .tipo-nota{ background:#f4f5f8; color:var(--soft); border:1px solid var(--line); }
+
+  .act-detail .act-cliente{ font-size:12.5px; font-weight:700; color:var(--ink); }
+  .act-detail .act-nota{ font-size:11.5px; color:var(--gray); line-height:1.5; margin-top:3px; }
+
+  .empty-minuta{
+    border:1px dashed var(--line); border-radius:6px;
+    padding:22px; text-align:center; color:var(--soft);
+    font-size:12px; margin-top:22px;
+  }
+
+  /* ---------- PRINT ---------- */
+  @page{ size:letter; margin:0; }
+  @media print{
+    html,body{ background:#fff; }
+    .sheet{ margin:0; box-shadow:none; width:816px; min-height:1056px; }
+    .sheet + .sheet{ page-break-before:always; }
+  }
+</style>
+
+<style>
+  /* ===== barra y controles HydraTech (integración CRM, no se imprimen) ===== */
+  #ht-bar{background:#141829;border-bottom:3px solid #263370;font-family:'IBM Plex Sans',system-ui,sans-serif}
+  #ht-bar .ht-bar-in{max-width:980px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  #ht-bar .ht-back{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#aeb6d4}
+  #ht-bar .ht-back img{height:18px;display:block}
+  #ht-bar .ht-back .wm{display:none;color:#fff;font-family:'Archivo',sans-serif;font-weight:800;font-size:15px}
+  #ht-bar .ht-tool{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b6390}
+  .ht-controls{max-width:980px;margin:0 auto;padding:16px 18px 4px;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;font-family:'IBM Plex Sans',system-ui,sans-serif}
+  .ht-controls .ht-f{display:flex;flex-direction:column;gap:5px}
+  .ht-controls label.ht-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#717a90}
+  .ht-controls select{font:inherit;font-size:14px;background:#fff;border:1.5px solid #d8deea;border-radius:9px;padding:9px 12px;color:#1b2138;min-width:190px}
+  .ht-controls select:focus{outline:none;border-color:#263370;box-shadow:0 0 0 3px rgba(38,51,112,.12)}
+  .ht-controls .ht-spacer{margin-left:auto}
+  .ht-btn{font:inherit;font-weight:600;font-size:13.5px;border:0;border-radius:9px;padding:10px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .ht-btn svg{width:15px;height:15px}
+  .ht-btn-primary{background:#263370;color:#fff}
+  .ht-btn-primary:hover{background:#1b2447}
+  .ht-btn-ghost{background:#fff;border:1.5px solid #d8deea;color:#4a5267}
+  .ht-btn-ghost:hover{border-color:#263370;color:#263370}
+  .ht-chk{display:flex;align-items:center;gap:8px;font-size:13.5px;color:#4a5267;padding:10px 0;cursor:pointer;user-select:none}
+  .ht-chk input{width:16px;height:16px;accent-color:#263370;cursor:pointer}
+  @media print{ #ht-bar,.ht-controls{display:none!important} }
+</style>
+<script>window.REQUIRE_ROLE="crm-gerencia";</script>
+<script defer src="auth-gate.js"></script>
+
+</head>
+<body>
+
+<div id="ht-bar">
+  <div class="ht-bar-in">
+    <a class="ht-back" href="acceso.html">
+      <span style="font-size:18px;line-height:1;">&#8592;</span>
+      <img src="assets/hydratech-wordmark-white.png" alt="HydraTech Group" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+      <span class="wm">HydraTech</span>
+    </a>
+    <span class="ht-tool">CRM &middot; Reporte de prospección</span>
+  </div>
+</div>
+<div class="ht-controls">
+  <div class="ht-f">
+    <label class="ht-lbl">Vista</label>
+    <select id="sel-vista" onchange="cambiarVista()">
+      <option value="oportunidades">Oportunidades (comercial)</option>
+      <option value="prospectos">Prospectos (embudo de leads)</option>
+    </select>
+  </div>
+  <div class="ht-f">
+    <label class="ht-lbl">Vendedor</label>
+    <select id="sel-vendedor" onchange="cargar()"></select>
+  </div>
+  <div class="ht-f">
+    <label class="ht-lbl">Semana</label>
+    <select id="sel-semana" onchange="cargar()"></select>
+  </div>
+  <div class="ht-spacer"></div>
+  <label class="ht-chk"><input type="checkbox" id="chk-minuta" checked onchange="toggleMinuta()">Minuta (hoja 2)</label>
+  <button class="ht-btn ht-btn-ghost" onclick="cargar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0 0 20.5 15"/></svg>Actualizar</button>
+  <button class="ht-btn ht-btn-primary" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Descargar PDF</button>
+</div>
+
+
+<!-- ==================== HOJA 1 · EMBUDO DE PROSPECCIÓN ==================== -->
+<section class="sheet">
+
+  <!-- 1. ENCABEZADO -->
+  <header class="rep-head">
+    <div>
+      <div class="kicker mono"><span class="dot"></span><span>HydraTech Group · Reporte semanal de prospección</span></div>
+      <h1 class="vend-name" id="vendedor-nombre">Juan Arjón</h1>
+      <div class="vend-sub">Vendedor · Servicios de mangueras e hidráulica industrial</div>
+    </div>
+    <div class="week-block">
+      <span class="pill-green" id="semana-estado"><span class="live"></span>Semana en curso</span>
+      <span class="week-num" id="semana-numero">Semana 27</span>
+      <span class="week-range" id="semana-rango">29 jun – 5 jul 2026</span>
+    </div>
+  </header>
+
+  <!-- 2. FILA DE 4 KPIs -->
+  <div class="kpi-row">
+    <div class="kpi kpi-feature">
+      <div class="lbl mono" style="color:rgba(255,255,255,.65)">Prospectos nuevos · esta semana</div>
+      <div class="val num" id="prospectos-nuevos">12</div>
+      <div class="delta up" id="prospectos-nuevos-delta">▲ vs 8 sem. previa</div>
+      <!-- Variante negativa: <div class="delta down" id="prospectos-nuevos-delta">▼ vs 15 sem. previa</div> -->
+    </div>
+    <div class="kpi">
+      <div class="lbl mono">Citas logradas</div>
+      <div class="val num" id="citas-logradas">6</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl mono">Leads en embudo</div>
+      <div class="val num" id="leads-totales">51</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl mono">Avances registrados</div>
+      <div class="val num val-green" id="avances-semana">9</div>
+    </div>
+  </div>
+
+  <!-- 3. EMBUDO -->
+  <div class="sec-head">
+    <h2>El embudo · abrir la puerta</h2>
+    <div class="rule"></div>
+  </div>
+
+  <div class="funnel">
+    <!-- Etapa 1 -->
+    <div class="stage">
+      <div class="st-name">Por contactar<span class="st-count num" id="embudo-porcontactar-conteo">24</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:100%"><span class="pct" id="embudo-porcontactar-pct">100%</span></div></div>
+      <span class="chip-in">▲ <span id="embudo-porcontactar-entraron">7</span></span>
+    </div>
+    <!-- Conversión 1→2 (normal) -->
+    <div class="conv">
+      <span class="arw">↳</span>
+      <span class="conv-label">conversión · pasa el <span id="conv-porcontactar-cita">63%</span></span>
+    </div>
+
+    <!-- Etapa 2 -->
+    <div class="stage">
+      <div class="st-name">Cita agendada<span class="st-count num" id="embudo-cita-conteo">15</span></div>
+      <div class="bar-track"><div class="bar-fill f2" style="width:62.5%"><span class="pct" id="embudo-cita-pct">63%</span></div></div>
+      <span class="chip-in">▲ <span id="embudo-cita-entraron">5</span></span>
+    </div>
+    <!-- Conversión 2→3 (CUELLO DE BOTELLA) -->
+    <div class="conv conv-cuello">
+      <span class="arw">↳</span>
+      <span class="conv-label">cuello · conversión · solo pasa el <span id="conv-cita-presentado">47%</span></span>
+    </div>
+
+    <!-- Etapa 3 -->
+    <div class="stage">
+      <div class="st-name">Presentado<span class="st-count num" id="embudo-presentado-conteo">7</span></div>
+      <div class="bar-track"><div class="bar-fill f3" style="width:29.2%"><span class="pct" id="embudo-presentado-pct">29%</span></div></div>
+      <span class="chip-in">▲ <span id="embudo-presentado-entraron">3</span></span>
+    </div>
+    <!-- Conversión 3→4 (normal) -->
+    <div class="conv">
+      <span class="arw">↳</span>
+      <span class="conv-label">conversión · pasa el <span id="conv-presentado-alta">71%</span></span>
+    </div>
+
+    <!-- Etapa 4 -->
+    <div class="stage">
+      <div class="st-name">Alta en proceso<span class="st-count num" id="embudo-alta-conteo">5</span></div>
+      <div class="bar-track"><div class="bar-fill f4" style="width:20.8%"><span class="pct" id="embudo-alta-pct">21%</span></div></div>
+      <span class="chip-in">▲ <span id="embudo-alta-entraron">2</span></span>
+    </div>
+  </div>
+
+  <!-- 4. DOS COLUMNAS -->
+  <div class="cols">
+    <!-- IZQUIERDA · Estancados -->
+    <div>
+      <div class="col-head">
+        <h3>Estancados / sin acción</h3>
+        <span class="count-chip red" id="estancados-conteo">5 leads</span>
+      </div>
+
+      <div class="stall-list" id="estancados-lista">
+        <!-- fila repetible -->
+        <div class="row-template-critico">
+          <div class="row-body">
+            <div class="r-etapa">Grupo Metálica del Norte</div>
+            <div class="r-meta">Alta en proceso · esperando autorización del cliente</div>
+          </div>
+          <div class="r-days">22 días<br><span style="font-size:9px;font-weight:500;font-family:'IBM Plex Mono',monospace">esperando el alta</span></div>
+        </div>
+        <!-- fila repetible -->
+        <div class="row-template-critico">
+          <div class="row-body">
+            <div class="r-etapa">Constructora Vela</div>
+            <div class="r-meta">Alta en proceso · esperando autorización del cliente</div>
+          </div>
+          <div class="r-days">19 días<br><span style="font-size:9px;font-weight:500;font-family:'IBM Plex Mono',monospace">esperando el alta</span></div>
+        </div>
+        <!-- fila repetible -->
+        <div class="row-template">
+          <div class="row-body">
+            <div class="r-etapa">Ensambles Cumbres</div>
+            <div class="r-meta">Presentado · sin siguiente paso</div>
+          </div>
+          <div class="r-days">18 días<br><span style="font-size:9px;font-weight:500;font-family:'IBM Plex Mono',monospace">sin acción</span></div>
+        </div>
+        <!-- fila repetible -->
+        <div class="row-template">
+          <div class="row-body">
+            <div class="r-etapa">Hidráulica del Golfo</div>
+            <div class="r-meta">Presentado · sin siguiente paso</div>
+          </div>
+          <div class="r-days">14 días<br><span style="font-size:9px;font-weight:500;font-family:'IBM Plex Mono',monospace">sin acción</span></div>
+        </div>
+        <!-- fila repetible -->
+        <div class="row-template">
+          <div class="row-body">
+            <div class="r-etapa">Refacciones MTY</div>
+            <div class="r-meta">Cita agendada · pendiente de confirmar</div>
+          </div>
+          <div class="r-days">11 días<br><span style="font-size:9px;font-weight:500;font-family:'IBM Plex Mono',monospace">sin acción</span></div>
+        </div>
+        <!-- Estado vacío (sin leads estancados):
+        <div class="empty-state">✓ Sin leads estancados</div>
+        -->
+      </div>
+    </div>
+
+    <!-- DERECHA · Actividad de la semana -->
+    <div>
+      <div class="col-head">
+        <h3>Actividad de la semana</h3>
+      </div>
+      <div class="act-list">
+        <div class="act-metric">
+          <span class="a-name">Llamadas de prospección</span>
+          <span class="a-val" id="act-llamadas">34</span>
+        </div>
+        <div class="act-metric">
+          <span class="a-name">Visitas a planta</span>
+          <span class="a-val" id="act-visitas">9</span>
+        </div>
+        <div class="act-metric">
+          <span class="a-name">Reuniones / presentaciones</span>
+          <span class="a-val" id="act-reuniones">6</span>
+        </div>
+        <div class="act-metric">
+          <span class="a-name">Solicitudes de alta iniciadas</span>
+          <span class="a-val" id="act-altas">4</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. NOTAS DE DIRECCIÓN + FIRMAS -->
+  <div class="sec-head">
+    <h2>Notas de dirección</h2>
+    <div class="rule"></div>
+  </div>
+  <div class="notes-box"></div>
+
+  <div class="sign-row">
+    <div class="sign"><div class="line"><span class="role">Vendedor</span></div></div>
+    <div class="sign"><div class="line"><span class="role">Dirección</span></div></div>
+  </div>
+
+  <!-- 6. PIE -->
+  <footer class="rep-foot">
+    <span class="f-left">HydraTech Group · Herramienta interna de dirección</span>
+    <span class="f-right">Generado <span id="generado-fecha">5 jul 2026</span></span>
+  </footer>
+
+</section>
+
+
+<!-- ==================== HOJA 2 · MINUTA SEMANAL ==================== -->
+<section class="sheet" id="hoja-minuta">
+
+  <!-- 1. ENCABEZADO -->
+  <header class="rep-head">
+    <div>
+      <div class="kicker mono"><span class="dot"></span><span>HydraTech Group · Minuta semanal — detalle de actividad</span></div>
+      <h1 class="vend-name" id="minuta-vendedor">Juan Arjón</h1>
+      <div class="vend-sub">Vendedor · Servicios de mangueras e hidráulica industrial</div>
+    </div>
+    <div class="week-block">
+      <span class="week-num" id="minuta-semana">Semana 27</span>
+      <span class="week-range" id="minuta-rango">29 jun – 5 jul 2026</span>
+      <span class="mono" style="color:var(--navy)">Hoja 2 · anexo del reporte</span>
+    </div>
+  </header>
+
+  <p class="intro-line">Qué se hizo con cada cliente, día por día, según la bitácora del CRM.</p>
+
+  <!-- 2. BLOQUES POR DÍA -->
+  <div id="minuta-cuerpo">
+
+    <!-- ===== LUNES ===== -->
+    <div class="dia-template">
+      <div class="dia-head">
+        <span class="dia-titulo" id="dia-titulo">Lunes 29 jun</span>
+        <span class="dia-conteo" id="dia-conteo">3 actividades</span>
+      </div>
+
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">09:40</span>
+        <span class="tipo-chip tipo-llamada" id="act-tipo">Llamada</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Aceros del Norte</div>
+          <div class="act-nota" id="act-nota">Primer contacto con jefe de mantenimiento. Detectan fugas recurrentes en líneas hidráulicas de prensa. Interesados en diagnóstico; se acordó enviar catálogo.</div>
+        </div>
+      </div>
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">11:15</span>
+        <span class="tipo-chip tipo-correo" id="act-tipo">Correo</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Bombas Regias</div>
+          <div class="act-nota" id="act-nota">Envío de catálogo de mangueras de alta presión y ficha de servicios de armado en sitio. Se solicita cita para levantamiento la próxima semana.</div>
+        </div>
+      </div>
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">16:00</span>
+        <span class="tipo-chip tipo-whatsapp" id="act-tipo">WhatsApp</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Talleres Poniente</div>
+          <div class="act-nota" id="act-nota">Seguimiento a referido. Confirman interés en cotización de mangueras hidráulicas SAE 100 R2. Piden agendar visita.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MARTES ===== -->
+    <div class="dia-template">
+      <div class="dia-head">
+        <span class="dia-titulo" id="dia-titulo">Martes 30 jun</span>
+        <span class="dia-conteo" id="dia-conteo">2 actividades</span>
+      </div>
+
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">10:00</span>
+        <span class="tipo-chip tipo-visita" id="act-tipo">Visita</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Constructora Vela</div>
+          <div class="act-nota" id="act-nota">Visita a planta para levantamiento de necesidades. Se identifican 14 puntos de reemplazo de manguera en maquinaria pesada. Cliente nuevo con potencial alto.</div>
+        </div>
+      </div>
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">13:30</span>
+        <span class="tipo-chip tipo-llamada" id="act-tipo">Llamada</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Hidráulica del Golfo</div>
+          <div class="act-nota" id="act-nota">Llamada para agendar cita de presentación de servicios. Quedó agendada para el jueves. Interesados en contrato de mantenimiento preventivo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MIÉRCOLES ===== -->
+    <div class="dia-template">
+      <div class="dia-head">
+        <span class="dia-titulo" id="dia-titulo">Miércoles 1 jul</span>
+        <span class="dia-conteo" id="dia-conteo">2 actividades</span>
+      </div>
+
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">09:20</span>
+        <span class="tipo-chip tipo-reunion" id="act-tipo">Reunión</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Grupo Metálica del Norte</div>
+          <div class="act-nota" id="act-nota">Presentación formal de servicios de armado y refacción de mangueras. Buena recepción del área de compras. Se inicia solicitud de alta como proveedor.</div>
+        </div>
+      </div>
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">15:45</span>
+        <span class="tipo-chip tipo-nota" id="act-tipo">Nota</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Refacciones MTY</div>
+          <div class="act-nota" id="act-nota">Sin respuesta a los dos últimos correos. Reprogramar contacto telefónico para la próxima semana antes de mover a inactivo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== JUEVES ===== -->
+    <div class="dia-template">
+      <div class="dia-head">
+        <span class="dia-titulo" id="dia-titulo">Jueves 2 jul</span>
+        <span class="dia-conteo" id="dia-conteo">2 actividades</span>
+      </div>
+
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">11:00</span>
+        <span class="tipo-chip tipo-visita" id="act-tipo">Visita</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Ensambles Cumbres</div>
+          <div class="act-nota" id="act-nota">Presentación de servicios en sitio con ingeniería de planta. Se muestra armado de manguera personalizada. Solicitan propuesta técnica y comercial.</div>
+        </div>
+      </div>
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">17:10</span>
+        <span class="tipo-chip tipo-correo" id="act-tipo">Correo</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Bombas Regias</div>
+          <div class="act-nota" id="act-nota">Se recibe documentación y se inicia solicitud de alta de cliente en el sistema. Pendiente autorización de crédito por parte del cliente.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIERNES ===== -->
+    <div class="dia-template">
+      <div class="dia-head">
+        <span class="dia-titulo" id="dia-titulo">Viernes 3 jul</span>
+        <span class="dia-conteo" id="dia-conteo">1 actividad</span>
+      </div>
+
+      <div class="act-template">
+        <span class="act-hora" id="act-hora">10:30</span>
+        <span class="tipo-chip tipo-reunion" id="act-tipo">Reunión</span>
+        <div class="act-detail">
+          <div class="act-cliente" id="act-cliente">Constructora Vela</div>
+          <div class="act-nota" id="act-nota">Cierre de presentación de servicios. Cliente acepta avanzar. Se inicia alta en proceso; se espera autorización interna del cliente para formalizar.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. ESTADO VACÍO (comentado):
+  <div class="empty-minuta">Sin actividades registradas en la bitácora esta semana.</div>
+  -->
+
+  <!-- 4. CIERRE · ACUERDOS + FIRMAS -->
+  <div class="sec-head">
+    <h2>Acuerdos de la sesión</h2>
+    <div class="rule"></div>
+  </div>
+  <div class="notes-box" id="acuerdos-area"></div>
+
+  <div class="sign-row">
+    <div class="sign"><div class="line"><span class="role">Vendedor</span></div></div>
+    <div class="sign"><div class="line"><span class="role">Dirección</span></div></div>
+  </div>
+
+  <footer class="rep-foot">
+    <span class="f-left">HydraTech Group · Confidencial — uso interno</span>
+    <span class="f-right">Generado 05 jul 2026</span>
+  </footer>
+
+</section>
+
+<script>
+/* ===== integración CRM · utilidades comunes (se inyecta en ambas páginas) ===== */
+const $id = (i)=>document.getElementById(i);
+const setTxt = (i,v)=>{ const e=$id(i); if(e&&v!=null) e.textContent=String(v); };
+const MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const DIAS_LARGO=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+function hoyFmt(){ const d=new Date(); return d.getDate()+" "+MESES[d.getMonth()]+" "+d.getFullYear(); }
+function isoWeek(d){ const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn); const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil((((t-ys)/86400000)+1)/7); }
+function tipoClase(t){
+  const s=String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if(s.indexOf("llam")>=0) return "tipo-llamada";
+  if(s.indexOf("visit")>=0) return "tipo-visita";
+  if(s.indexOf("reun")>=0||s.indexOf("meet")>=0||s.indexOf("cita")>=0) return "tipo-reunion";
+  if(s.indexOf("whats")>=0) return "tipo-whatsapp";
+  if(s.indexOf("correo")>=0||s.indexOf("mail")>=0) return "tipo-correo";
+  return "tipo-nota";
+}
+
+/* ---- minuta (hoja 2): clona los bloques de día y actividades del diseño ---- */
+const _minutaCuerpo = $id("minuta-cuerpo");
+const _diaTplNode = _minutaCuerpo ? _minutaCuerpo.querySelector(".dia-template") : null;
+const DIA_TPL = _diaTplNode ? _diaTplNode.cloneNode(true) : null;
+
+function llenarMinuta(items, meta){
+  meta = meta||{};
+  if(meta.vendedor) setTxt("minuta-vendedor", meta.vendedor);
+  if(meta.semana) setTxt("minuta-semana", meta.semana);
+  if(meta.rango) setTxt("minuta-rango", meta.rango);
+  if(!_minutaCuerpo || !DIA_TPL) return;
+  _minutaCuerpo.innerHTML="";
+  if(!Array.isArray(items) || !items.length){
+    const e=document.createElement("div");
+    e.className = window.EMPTY_MINUTA_CLASS || "empty-state";
+    e.textContent="Sin actividades registradas en la bitácora esta semana.";
+    _minutaCuerpo.appendChild(e);
+    return;
+  }
+  const porDia={};
+  items.forEach(it=>{ const f=String(it.fecha||"").slice(0,10); (porDia[f]=porDia[f]||[]).push(it); });
+  Object.keys(porDia).sort().forEach(f=>{
+    const arr=porDia[f];
+    const blk=DIA_TPL.cloneNode(true);
+    const dt=new Date(f+"T12:00:00Z");
+    const titulo=isNaN(dt)?f:(DIAS_LARGO[dt.getUTCDay()]+" "+dt.getUTCDate()+" "+MESES[dt.getUTCMonth()]);
+    const tEl=blk.querySelector('[id="dia-titulo"]'); if(tEl) tEl.textContent=titulo;
+    const cEl=blk.querySelector('[id="dia-conteo"]'); if(cEl) cEl.textContent=arr.length+(arr.length===1?" actividad":" actividades");
+    const actTpl=blk.querySelector(".act-template");
+    const ACT_TPL=actTpl?actTpl.cloneNode(true):null;
+    const cont=blk.querySelector(".dia-body")||blk;
+    blk.querySelectorAll(".act-template").forEach(n=>n.remove());
+    arr.forEach(it=>{
+      if(!ACT_TPL) return;
+      const r=ACT_TPL.cloneNode(true);
+      const h=r.querySelector('[id="act-hora"]'); if(h) h.textContent=String(it.fecha||"").slice(11,16);
+      const tp=r.querySelector('[id="act-tipo"]');
+      if(tp){
+        tp.textContent=it.tipo||"Nota";
+        tp.className=tp.className.split(/\s+/).filter(c=>c.indexOf("tipo-")!==0).join(" ").trim()+" "+tipoClase(it.tipo);
+      }
+      const cl=r.querySelector('[id="act-cliente"]'); if(cl) cl.textContent=it.cliente||"—";
+      const no=r.querySelector('[id="act-nota"]'); if(no) no.textContent=it.nota||"";
+      cont.appendChild(r);
+    });
+    _minutaCuerpo.appendChild(blk);
+  });
+}
+
+function toggleMinuta(){
+  const hoja=$id("hoja-minuta"), chk=$id("chk-minuta");
+  if(hoja&&chk) hoja.style.display = chk.checked ? "" : "none";
+}
+
+/* ---- controles compartidos ---- */
+function cambiarVista(){
+  const v=$id("sel-vista").value;
+  if(v!==window.VISTA_ACTUAL){
+    window.location.href = (v==="prospectos") ? "crm-reporte-prospectos.html" : "crm-reporte.html";
+  }
+}
+function initControls(){
+  const vsel=$id("sel-vista"); if(vsel) vsel.value=window.VISTA_ACTUAL;
+  const ws=$id("sel-semana");
+  const cur=isoWeek(new Date());
+  for(let n=cur;n>=Math.max(1,cur-7);n--){
+    const o=document.createElement("option");
+    o.value=n; o.textContent="Semana "+n+(n===cur?" (en curso)":"");
+    ws.appendChild(o);
+  }
+  const vs=$id("sel-vendedor");
+  fetch("/api/odoo-empleados").then(r=>r.json()).then(d=>{
+    if(d&&d.ok&&Array.isArray(d.empleados)&&d.empleados.length){
+      d.empleados.forEach(e=>{const o=document.createElement("option");o.value=e.id;o.textContent=e.name;vs.appendChild(o);});
+    }else{
+      const o=document.createElement("option");o.value="";o.textContent=$id("vendedor-nombre")?$id("vendedor-nombre").textContent:"";vs.appendChild(o);
+    }
+    cargar();
+  }).catch(()=>{
+    const o=document.createElement("option");o.value="";o.textContent=$id("vendedor-nombre")?$id("vendedor-nombre").textContent:"";vs.appendChild(o);
+    cargar();
+  });
+}
+
+/* ===== página PROSPECTOS: llena el diseño con /api/odoo-crm-embudo ===== */
+window.VISTA_ACTUAL="prospectos";
+window.EMPTY_MINUTA_CLASS="empty-state";
+
+const ETAPA_KEY={"Por contactar":"porcontactar","Cita agendada":"cita","Presentado":"presentado","Alta en proceso":"alta"};
+const CONV_IDS=["conv-porcontactar-cita","conv-cita-presentado","conv-presentado-alta"];
+
+function llenar(d){
+  const per=String(d.periodo||"");
+  const perSem=(per.split("·")[0]||"").trim();
+  const perRango=(per.split("·")[1]||"").trim();
+
+  setTxt("vendedor-nombre",(d.vendedor&&d.vendedor.nombre)||"—");
+  const estE=$id("semana-estado");
+  if(estE) estE.innerHTML='<span class="live"></span>'+String(d.corteLabel||"").replace(/[<>&"]/g,"");
+  if(perSem) setTxt("semana-numero",perSem);
+  if(perRango) setTxt("semana-rango",perRango);
+
+  setTxt("prospectos-nuevos", d.nuevosLeads||0);
+  const delta=$id("prospectos-nuevos-delta");
+  if(delta){
+    if(typeof d.nuevosPrev==="number"){
+      const up=(d.nuevosLeads||0)>=d.nuevosPrev;
+      delta.className="delta "+(up?"up":"down");
+      delta.textContent=(up?"\u25B2":"\u25BC")+" vs "+d.nuevosPrev+" sem. previa";
+      delta.style.display="";
+    }else{
+      delta.style.display="none";
+    }
+  }
+
+  const a=d.actividad||{};
+  setTxt("citas-logradas",a.citas||0);
+  setTxt("leads-totales",d.totalEmbudo||0);
+  setTxt("avances-semana",a.avances||0);
+
+  /* embudo por etapa + conversiones */
+  const emb=Array.isArray(d.embudo)?d.embudo:[];
+  const maxN=Math.max(1,...emb.map(e=>e.n||0));
+  emb.forEach((e,i)=>{
+    const k=ETAPA_KEY[e.etapa];
+    if(!k) return;
+    setTxt("embudo-"+k+"-conteo", e.n||0);
+    const pctEl=$id("embudo-"+k+"-pct");
+    if(pctEl){
+      pctEl.textContent=(e.pct||0)+"%";
+      const fill=pctEl.closest(".bar-fill")||pctEl.parentElement;
+      if(fill) fill.style.width=Math.max(14,Math.round((e.n||0)/maxN*100))+"%";
+    }
+    setTxt("embudo-"+k+"-entraron",(d.movimiento||{})[e.etapa]||0);
+
+    if(i>0){
+      const cid=CONV_IDS[i-1];
+      const inner=$id(cid);
+      if(inner){
+        const label=inner.closest(".conv-label")||inner.parentElement;
+        const box=label?label.closest(".conv"):null;
+        const conv=e.convDesdeAnterior;
+        if(conv==null){
+          if(box) box.classList.remove("conv-cuello");
+          label.innerHTML='conversión · <span id="'+cid+'">—</span>';
+        }else if(conv<50){
+          if(box) box.classList.add("conv-cuello");
+          label.innerHTML='cuello · conversión · solo pasa el <span id="'+cid+'">'+conv+'%</span>';
+        }else{
+          if(box) box.classList.remove("conv-cuello");
+          label.innerHTML='conversión · pasa el <span id="'+cid+'">'+conv+'%</span>';
+        }
+      }
+    }
+  });
+
+  /* estancados */
+  const lista=$id("estancados-lista");
+  const est=Array.isArray(d.estancados)?d.estancados:[];
+  setTxt("estancados-conteo", est.length+" lead"+(est.length===1?"":"s"));
+  if(lista){
+    const tC=lista.querySelector(".row-template-critico");
+    const tN=lista.querySelector(".row-template");
+    const TC=tC?tC.cloneNode(true):null, TN=tN?tN.cloneNode(true):null;
+    lista.innerHTML="";
+    if(!est.length){
+      const e=document.createElement("div");
+      e.className="empty-state";
+      e.textContent="\u2713 Sin leads estancados";
+      lista.appendChild(e);
+    }
+    est.forEach(x=>{
+      const T=x.critico?(TC||TN):(TN||TC);
+      if(!T) return;
+      const r=T.cloneNode(true);
+      const emp=r.querySelector(".r-etapa"); if(emp) emp.textContent=x.empresa||"—";
+      const met=r.querySelector(".r-meta"); if(met) met.textContent=(x.etapa||"")+" · "+(x.detalle||"");
+      const dd=r.querySelector(".r-days");
+      if(dd) dd.innerHTML=(x.dias||0)+' días<br><span style="font-size:9px;font-weight:500;font-family:\'IBM Plex Mono\',monospace">'+(x.critico?"esperando el alta":"sin acción")+'</span>';
+      lista.appendChild(r);
+    });
+  }
+
+  setTxt("act-llamadas",a.llamadas||0);
+  setTxt("act-visitas",a.visitas||0);
+  setTxt("act-reuniones",a.citas||0);
+  setTxt("act-altas",a.altas||0);
+  setTxt("generado-fecha", hoyFmt());
+
+  llenarMinuta(d.minuta,{vendedor:(d.vendedor&&d.vendedor.nombre)||"", semana:perSem, rango:perRango});
+}
+
+async function cargar(){
+  toggleMinuta();
+  const vs=$id("sel-vendedor");
+  const nombreVend=(vs&&vs.options[vs.selectedIndex])?vs.options[vs.selectedIndex].textContent:"";
+  const ws=$id("sel-semana");
+  const w=(ws&&ws.value)||String(isoWeek(new Date()));
+  const offset=Math.max(0, isoWeek(new Date())-(parseInt(w,10)||0));
+  const params=new URLSearchParams();
+  if(nombreVend) params.set("vendedor",nombreVend);
+  params.set("semana",offset);
+  if(offset===0) params.set("curso","1");
+  try{
+    const res=await fetch("/api/odoo-crm-embudo?"+params.toString());
+    const d=await res.json();
+    if(d && d.ok) llenar(d);
+    /* si falla, se queda el documento de ejemplo del diseño */
+  }catch(e){ /* sin conexión: se muestra el ejemplo del diseño */ }
+  toggleMinuta();
+}
+
+initControls();
+
+</script>
+</body>
+</html>
