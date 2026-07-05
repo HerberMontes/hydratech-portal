@@ -138,7 +138,11 @@ export async function diccionarioEtapas() {
     const ls = await executeKw("res.lang", "search_read", [[["active", "=", true]]], { fields: ["code"] });
     langs = ls.map((l) => l.code).filter((c) => /^es/i.test(c));
   } catch (e) {}
-  for (const code of langs) {
+  // Respaldo: si no se pudo leer la lista de idiomas (permisos), intentar los
+  // códigos de español más comunes. Odoo ignora contextos de idiomas no
+  // instalados regresando el nombre base, así que probar de más no daña.
+  if (!langs.length) langs = ["es_MX", "es_ES", "es_419", "es"];
+  for (const code of [...new Set(langs)]) {
     add(await executeKw("crm.stage", "search_read", [[]],
       { fields: ["id", "name"], context: { lang: code } }).catch(() => []), true);
   }
