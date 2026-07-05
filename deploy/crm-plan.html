@@ -362,9 +362,9 @@
     try{ const r=await fetch("/api/odoo-crm-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }
     catch(e){ return {ok:false,demo:true}; }
   }
-  async function hecho(id){ const d=await post({action:"done",activityId:id,email:repEmail}); if(d&&d.demo){toast("⚠ Sin conexión — NO se guardó");return;} if(!d||!d.ok){toast("⚠ No se pudo guardar: "+((d&&d.error)||"error"));return;} toast("Actividad registrada en Odoo"); cargar(); }
+  async function hecho(id){ if(bloqueadoPorEjemplo()) return; const d=await post({action:"done",activityId:id,email:repEmail}); if(d&&d.demo){toast("⚠ Sin conexión — NO se guardó");return;} if(!d||!d.ok){toast("⚠ No se pudo guardar: "+((d&&d.error)||"error"));return;} toast("Actividad registrada en Odoo"); cargar(); }
   async function agendar(id){ toast("Abriendo reprogramación…"); /* aquí abrirías un selector de fecha/tipo */ }
-  async function agendarLead(leadId){ const d=await post({action:"schedule",leadId,tipo:"todo",summary:"Siguiente paso",email:repEmail}); toast(d.demo?"Siguiente paso agendado (demo)":"Siguiente paso agendado"); cargar(); }
+  async function agendarLead(leadId){ if(bloqueadoPorEjemplo()) return; const d=await post({action:"schedule",leadId,tipo:"todo",summary:"Siguiente paso",email:repEmail}); if(d&&d.demo){toast("⚠ Sin conexión — NO se guardó");return;} if(!d||!d.ok){toast("⚠ No se pudo guardar: "+((d&&d.error)||"error"));return;} toast("Siguiente paso agendado en Odoo"); cargar(); }
 
   // ---- Calificar BANT (mueve Nuevo -> Por cotizar) ----
   let calLeadId=null; const cbs={b:null,a:null,n:null,t:null};
@@ -377,6 +377,7 @@
   function cerrarCal(){ document.getElementById('ov-cal').classList.remove('show'); }
   function selBant(b){ const g=b.parentElement; g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); cbs[g.dataset.b]=+b.dataset.v; }
   async function guardarCalificacion(){
+    if(bloqueadoPorEjemplo()) return;
     const d=await post({action:"calificar",leadId:calLeadId,bant:cbs,email:repEmail});
     cerrarCal();
     toast(d&&d.demo?"Calificada y movida a Por cotizar (demo)":"Calificada · movida a Por cotizar");
@@ -404,6 +405,7 @@
       nota:document.getElementById('bit-nota').value, email:repEmail };
     const f=document.getElementById('bit-sigfecha').value;
     if(f){ payload.sigFecha=f; payload.sigTipo=bitSel.sigtipo||"todo"; payload.sigNota=document.getElementById('bit-signota').value; }
+    if(bloqueadoPorEjemplo()) return;
     const d=await post(payload);
     if(d && d.demo){ toast("⚠ Sin conexión — el avance NO se guardó. Intenta de nuevo."); return; }
     if(!d || !d.ok){ toast("⚠ No se pudo guardar: "+((d&&d.error)||"error del servidor")); return; }
@@ -417,16 +419,31 @@
     try{
       const r=await fetch("/api/odoo-crm-plan?email="+encodeURIComponent(repEmail||""));
       const d=await r.json();
-      if(d&&d.ok&&d.plan){ render(d.plan); return; }
-      render(SAMPLE);
-    }catch(e){ render(SAMPLE); }
+      if(d&&d.ok&&d.plan){ MODO_EJEMPLO=false; const b=document.getElementById("banner-ejemplo"); if(b) b.remove(); render(d.plan); return; }
+      MODO_EJEMPLO=true; render(SAMPLE); bannerEjemplo();
+    }catch(e){ MODO_EJEMPLO=true; render(SAMPLE); bannerEjemplo(); }
   }
 
+  let MODO_EJEMPLO=false;
+  function bannerEjemplo(){
+    if(document.getElementById("banner-ejemplo")) return;
+    const b=document.createElement("div");
+    b.id="banner-ejemplo";
+    b.style.cssText="max-width:980px;margin:10px auto 0;padding:10px 16px;background:#fdf4e3;border:1.5px solid #e7d5a6;border-radius:10px;color:#8a6a1f;font-size:13px;font-weight:600";
+    b.textContent="⚠ Sin conexión con Odoo — estás viendo DATOS DE EJEMPLO. No se puede registrar nada hasta recuperar la conexión (recarga la página).";
+    const c=document.getElementById("content");
+    c.parentNode.insertBefore(b,c);
+  }
+  function bloqueadoPorEjemplo(){
+    if(!MODO_EJEMPLO) return false;
+    toast("⚠ Datos de ejemplo (sin conexión) — no se puede registrar. Recarga la página.");
+    return true;
+  }
   let tt; function toast(t){ document.getElementById("toast-t").textContent=t; const e=document.getElementById("toast"); e.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>e.classList.remove("show"),2400); }
 
   window.onAuthReady=function(user){ repEmail=(user&&user.email)||null; cargar(); };
   // En preview (sin auth-gate) muestra el ejemplo:
-  setTimeout(function(){ if(!repEmail && document.getElementById("content").textContent.indexOf("Cargando")>=0) render(SAMPLE); }, 800);
+  setTimeout(function(){ if(!repEmail && document.getElementById("content").textContent.indexOf("Cargando")>=0){ MODO_EJEMPLO=true; render(SAMPLE); bannerEjemplo(); } }, 800);
 </script>
 </body>
 </html>
