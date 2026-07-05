@@ -66,6 +66,40 @@ export default async (req) => {
 
   const url = new URL(req.url);
 
+  /* Modo reparación: los PROSPECTOS capturados antes de la corrección quedaron
+     físicamente en la etapa "Nuevo" (la etapa por defecto de Odoo). Este modo
+     los regresa a "Por contactar". Criterio seguro: leads con etiqueta de
+     vendedor, parados en Nuevo/New y con monto $0 (las oportunidades reales
+     traen monto). Primero muestra VISTA PREVIA; solo mueve con &confirmar=1. */
+  if (url.searchParams.get("reparar") === "prospectos") {
+    try {
+      const dic = await diccionarioEtapas();
+      const idsNuevo = dic.idsDe(["Nuevo", "New"]);
+      const idsPorContactar = dic.idsDe(["Por contactar"]);
+      if (!idsPorContactar.length) return json({ ok: false, error: "No existe la etapa 'Por contactar' en Odoo." }, 400);
+      const tgs = await executeKw("crm.tag", "search_read",
+        [[["name", "like", "Vendedor%"]]], { fields: ["id"] }).catch(() => []);
+      const tagIds = tgs.map((t) => t.id);
+      if (!idsNuevo.length || !tagIds.length)
+        return json({ ok: true, candidatos: [], movidos: 0, nota: "Nada que reparar." });
+      const cand = await executeKw("crm.lead", "search_read",
+        [[["tag_ids", "in", tagIds], ["stage_id", "in", idsNuevo],
+          ["expected_revenue", "=", 0], ["active", "=", true]]],
+        { fields: ["id", "partner_name", "contact_name", "name", "stage_id"], limit: 200 });
+      const lista = cand.map((l) => ({ id: l.id, cliente: l.partner_name || l.contact_name || l.name }));
+      if (url.searchParams.get("confirmar") !== "1") {
+        return json({ ok: true, modo: "VISTA PREVIA — no se movió nada",
+          candidatosAMover: lista,
+          instruccion: "Si la lista es correcta, agrega &confirmar=1 a esta misma dirección para moverlos a 'Por contactar'." });
+      }
+      if (cand.length)
+        await executeKw("crm.lead", "write", [cand.map((l) => l.id), { stage_id: idsPorContactar[0] }]);
+      return json({ ok: true, movidos: cand.length, aEtapa: "Por contactar", leads: lista });
+    } catch (e) {
+      return json({ ok: false, error: String(e.message || e) }, 500);
+    }
+  }
+
   /* Modo lista: regresa los vendedores REALES (desde las etiquetas
      "Vendedor · Nombre", la fuente de verdad de la atribución) para poblar el
      selector de AMBAS páginas de reporte. Antes oportunidades usaba Empleados
