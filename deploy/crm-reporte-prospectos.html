@@ -826,17 +826,28 @@ function initControls(){
     ws.appendChild(o);
   }
   const vs=$id("sel-vendedor");
-  fetch("/api/odoo-empleados").then(r=>r.json()).then(d=>{
-    if(d&&d.ok&&Array.isArray(d.empleados)&&d.empleados.length){
-      d.empleados.forEach(e=>{const o=document.createElement("option");o.value=e.id;o.textContent=e.name;vs.appendChild(o);});
-    }else{
+  // Fuente de verdad: las etiquetas "Vendedor · Nombre" (misma atribución que
+  // usan los reportes). Respaldo: lista de empleados; último recurso: el
+  // nombre de ejemplo del diseño.
+  const fallbackEmpleados=()=>{
+    fetch("/api/odoo-empleados").then(r=>r.json()).then(d=>{
+      if(d&&d.ok&&Array.isArray(d.empleados)&&d.empleados.length){
+        d.empleados.forEach(e=>{const o=document.createElement("option");o.value=e.name;o.textContent=e.name;vs.appendChild(o);});
+      }else{
+        const o=document.createElement("option");o.value="";o.textContent=$id("vendedor-nombre")?$id("vendedor-nombre").textContent:"";vs.appendChild(o);
+      }
+      cargar();
+    }).catch(()=>{
       const o=document.createElement("option");o.value="";o.textContent=$id("vendedor-nombre")?$id("vendedor-nombre").textContent:"";vs.appendChild(o);
-    }
-    cargar();
-  }).catch(()=>{
-    const o=document.createElement("option");o.value="";o.textContent=$id("vendedor-nombre")?$id("vendedor-nombre").textContent:"";vs.appendChild(o);
-    cargar();
-  });
+      cargar();
+    });
+  };
+  fetch("/api/odoo-crm-reporte?vendedores=1").then(r=>r.json()).then(d=>{
+    if(d&&d.ok&&Array.isArray(d.vendedores)&&d.vendedores.length){
+      d.vendedores.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;vs.appendChild(o);});
+      cargar();
+    }else fallbackEmpleados();
+  }).catch(fallbackEmpleados);
 }
 
 /* ===== página PROSPECTOS: llena el diseño con /api/odoo-crm-embudo ===== */
