@@ -139,6 +139,13 @@
 
 <div class="controls">
   <div class="f">
+    <label>Vista</label>
+    <select id="sel-vista" onchange="cambiarVista()">
+      <option value="oportunidades">Oportunidades (comercial)</option>
+      <option value="prospectos">Prospectos (embudo de leads)</option>
+    </select>
+  </div>
+  <div class="f">
     <label>Vendedor</label>
     <select id="sel-vendedor" onchange="cargar()"></select>
   </div>
@@ -266,17 +273,89 @@
     '<div class="ft"><div>Generado por '+esc(s.generado)+'</div><div>Confidencial · uso interno</div></div>';
   }
 
+  /* ---------- vista PROSPECTOS: embudo de leads dentro de la misma hoja ---------- */
+  const EMBUDO_SAMPLE={
+    periodo:"Semana 26 · 22–28 jun 2026", corteLabel:"Semana en curso", enCurso:true,
+    vendedor:{nombre:"Juan Arjón", ini:"JA"}, totalEmbudo:14,
+    embudo:[
+      {etapa:"Por contactar",n:7,pct:50,atorados:1,convDesdeAnterior:null},
+      {etapa:"Cita agendada",n:4,pct:29,atorados:0,convDesdeAnterior:57},
+      {etapa:"Presentado",n:2,pct:14,atorados:1,convDesdeAnterior:50},
+      {etapa:"Alta en proceso",n:1,pct:7,atorados:0,convDesdeAnterior:50},
+    ],
+    movimiento:{"Por contactar":5,"Cita agendada":3,"Presentado":2,"Alta en proceso":1}, nuevosLeads:5,
+    actividad:{avances:12,citas:3,visitas:2,llamadas:6},
+  };
+  function renderEmbudo(d){
+    const B="#263370",G="#16a34a",GD="#c9a14a",MU="#717a90",INK="#1b2138",LN="#e6e9f0",SF="#f7f9fc";
+    const a=d.actividad||{};
+    const maxN=Math.max(1,...(d.embudo||[]).map(e=>e.n));
+    const kpi=(n,t)=>'<div style="border:1px solid '+LN+';border-radius:12px;padding:12px 13px;background:#fff"><div style="font-family:Archivo,sans-serif;font-weight:800;font-size:23px;color:'+B+';line-height:1">'+n+'</div><div style="font-size:11px;color:'+MU+';margin-top:5px">'+t+'</div></div>';
+    let stages="";
+    (d.embudo||[]).forEach((e,i)=>{
+      if(i>0 && e.convDesdeAnterior!=null) stages+='<div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:'+MU+';margin:2px 0">&#8595; pasa el <b style="color:'+B+'">'+e.convDesdeAnterior+'%</b></div>';
+      const mov=(d.movimiento||{})[e.etapa]||0;
+      stages+='<div style="border:1px solid '+LN+';border-radius:14px;padding:14px 16px;background:#fff;margin-bottom:8px">'+
+        '<div style="display:flex;align-items:center;gap:12px">'+
+          '<div style="width:26px;height:26px;border-radius:8px;background:'+B+';color:#fff;display:grid;place-items:center;font-family:\'IBM Plex Mono\',monospace;font-size:12px">'+(i+1)+'</div>'+
+          '<div style="font-family:Archivo,sans-serif;font-weight:700;font-size:15px">'+esc(e.etapa)+'</div>'+
+          '<div style="margin-left:auto;font-family:Archivo,sans-serif;font-weight:800;font-size:24px;color:'+B+'">'+e.n+'<span style="font-size:12px;color:'+MU+';font-weight:500"> leads</span></div>'+
+        '</div>'+
+        '<div style="height:10px;background:'+SF+';border-radius:999px;overflow:hidden;margin-top:11px"><div style="height:100%;width:'+Math.round(e.n/maxN*100)+'%;background:'+B+';border-radius:999px"></div></div>'+
+        '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:'+MU+'">'+
+          '<span><b style="color:'+INK+'">'+e.pct+'%</b> del embudo</span>'+
+          (mov>0?'<span style="color:'+G+'">+'+mov+' esta semana</span>':'')+
+          (e.atorados>0?'<span style="color:'+GD+'">'+e.atorados+' atorado'+(e.atorados>1?"s":"")+' (+7 d)</span>':'')+
+        '</div></div>';
+    });
+    document.getElementById("sheet").innerHTML=
+      '<div class="eyebrow">Reporte semanal · Embudo de prospección</div>'+
+      '<div class="who">'+esc((d.vendedor&&d.vendedor.nombre)||"—")+'</div>'+
+      '<div class="rng" style="margin:2px 0 16px">'+esc(d.periodo||"")+' · '+esc(d.corteLabel||"")+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">'+
+        kpi(d.totalEmbudo||0,"leads en el embudo")+kpi(d.nuevosLeads||0,"prospectos nuevos (sem.)")+kpi(a.citas||0,"citas/reuniones (sem.)")+kpi(a.avances||0,"avances (semana)")+
+      '</div>'+
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:'+MU+';margin-bottom:12px">Embudo por etapa &#183; foto actual</div>'+
+      stages;
+  }
+
+  /* ---------- semana ISO para convertir número de semana en offset ---------- */
+  function isoWeek(d){ const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn); const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil((((t-ys)/86400000)+1)/7); }
+
+  function cambiarVista(){ cargar(); }
+
   /* ---------- carga de datos desde Odoo (con fallback) ---------- */
   async function cargar(){
-    const v = document.getElementById("sel-vendedor").value || "";
+    const vista = document.getElementById("sel-vista").value;
+    const vs = document.getElementById("sel-vendedor");
+    const nombreVend = vs.options[vs.selectedIndex] ? vs.options[vs.selectedIndex].textContent : "";
     const w = document.getElementById("sel-semana").value || SAMPLE.semana;
+
+    if(vista==="prospectos"){
+      // el embudo usa OFFSET de semana (0 = en curso) y filtra por NOMBRE de vendedor
+      const offset = Math.max(0, isoWeek(new Date()) - (parseInt(w,10)||0));
+      const params = new URLSearchParams();
+      if(nombreVend) params.set("vendedor", nombreVend);
+      params.set("semana", offset);
+      if(offset===0) params.set("curso","1"); // semana en curso: días corridos
+      try{
+        const res = await fetch("/api/odoo-crm-embudo?"+params.toString());
+        const d = await res.json();
+        if(d && d.ok){ renderEmbudo(d); return; }
+        renderEmbudo(EMBUDO_SAMPLE);
+      }catch(e){ renderEmbudo(EMBUDO_SAMPLE); }
+      return;
+    }
+
+    // vista comercial (la de siempre)
+    const v = vs.value || "";
     try{
       const res = await fetch("/api/odoo-crm-reporte?vendedor="+encodeURIComponent(v)+"&semana="+encodeURIComponent(w));
       const d = await res.json();
       if(d && d.ok && d.reporte) { render(d.reporte); return; }
       render(SAMPLE);
     }catch(e){
-      render(SAMPLE); // preview o función aún no creada
+      render(SAMPLE);
     }
   }
 
