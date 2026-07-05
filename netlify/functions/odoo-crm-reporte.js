@@ -65,6 +65,23 @@ export default async (req) => {
   if (!checkToken(req)) return json({ ok: false, error: "No autorizado." }, 401);
 
   const url = new URL(req.url);
+
+  /* Modo lista: regresa los vendedores REALES (desde las etiquetas
+     "Vendedor · Nombre", la fuente de verdad de la atribución) para poblar el
+     selector de AMBAS páginas de reporte. Antes oportunidades usaba Empleados
+     (hr.employee) y si el vendedor no cruzaba ahí, el reporte salía vacío. */
+  if (url.searchParams.get("vendedores") === "1") {
+    try {
+      const tgs = await executeKw("crm.tag", "search_read",
+        [[["name", "like", "Vendedor%"]]], { fields: ["id", "name"] });
+      const vendedores = [...new Set(tgs
+        .map((t) => String(t.name || "").replace(/^\s*Vendedor\s*[·:\-]?\s*/i, "").trim())
+        .filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+      return json({ ok: true, vendedores });
+    } catch (e) {
+      return json({ ok: false, error: String(e.message || e) }, 500);
+    }
+  }
   const empId = Number(url.searchParams.get("vendedor")) || 0;
   const semana = url.searchParams.get("semana");
   const year = new Date().getUTCFullYear();
