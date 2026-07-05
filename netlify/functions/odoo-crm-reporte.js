@@ -3,7 +3,7 @@
 // Arma el reporte semanal de un vendedor desde Odoo (crm.lead + mail.activity).
 // Período: una semana lunes–domingo. Si no se pasa 'semana', usa la última completa.
 // Identificación del vendedor: por correo del empleado -> res.users.
-import { executeKw, checkToken, json } from "./lib/odoo.js";
+import { executeKw, checkToken, json, parseBitacora } from "./lib/odoo.js";
 
 /* ---------- utilidades de fecha (semana ISO lunes–domingo) ---------- */
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -279,22 +279,16 @@ export default async (req) => {
         diagComments = msgs.length;
         diagMuestra = msgs.slice(0, 3).map((m) => ({ date: m.date, body: String(m.body || "").slice(0, 140) }));
         msgs.forEach((m) => {
-          const b = m.body || "";
-          const mb = b.match(/<b>([^<]+)<\/b>/);
-          const tipo = mb ? mb[1].trim() : "";
-          if (TIPOS_BIT.indexOf(tipo) < 0) return;
+          // Parser compartido: entiende etiquetas reales, ESCAPADAS (formato
+          // actual en la base) y texto plano. Ver lib/odoo.js.
+          const pb = parseBitacora(m.body);
+          if (!pb) return;
           completadas++;
-          if (tipo === "Llamada") llamadas++;
-          if (tipo === "Reunión") reuniones++;
+          if (pb.tipo === "Llamada") llamadas++;
+          if (pb.tipo === "Reunión") reuniones++;
           marcarTrend(m.date);
-          // nota = resultado (span) + texto libre de la bitácora, sin etiquetas
-          const ms = b.match(/<span>([^<]+)<\/span>/);
-          const res = ms ? ms[1].trim() : "";
-          let nota = limpiarHtml(b);
-          if (nota.startsWith(tipo)) nota = nota.slice(tipo.length).replace(/^[\s:·—-]+/, "");
-          if (res && nota.startsWith(res)) nota = nota.slice(res.length).replace(/^[\s:·—-]+/, "");
-          if (res) nota = nota ? (res + " — " + nota) : res;
-          pushMinuta(m.date, m.res_id, tipo, nota);
+          const nota = pb.res ? (pb.nota ? pb.res + " — " + pb.nota : pb.res) : pb.nota;
+          pushMinuta(m.date, m.res_id, pb.tipo, nota);
         });
 
         /* 5b) RESPALDO: actividades formales de Odoo, solo si no hubo bitácora */

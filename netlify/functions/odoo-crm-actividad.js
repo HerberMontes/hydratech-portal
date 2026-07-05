@@ -3,7 +3,7 @@
 // Lee las BITÁCORAS que los vendedores registran (mail.message en crm.lead) y las
 // clasifica por tipo (Llamada/Correo/WhatsApp/Visita/Reunión/Nota) y resultado.
 // Atribución por ETIQUETA "Vendedor · <Nombre>", igual que el resto del CRM.
-import { executeKw, checkToken, json } from "./lib/odoo.js";
+import { executeKw, checkToken, json, parseBitacora as parseBitacoraLib } from "./lib/odoo.js";
 
 const VEND_PREFIX = "Vendedor · ";
 const LEAD_STAGES = ["Por contactar", "Cita agendada", "Presentado", "Alta en proceso"];
@@ -35,10 +35,10 @@ function ventana(offset){
 
 // Extrae tipo y resultado del cuerpo de la bitácora: "<b>Llamada</b> · <span>Contactado</span><br>nota"
 function parseBitacora(body){
-  if(!body) return { tipo:null, res:null };
-  const mb=body.match(/<b>([^<]+)<\/b>/);
-  const ms=body.match(/<span>([^<]+)<\/span>/);
-  return { tipo: mb?mb[1].trim():null, res: ms?ms[1].trim():null };
+  // Delegado al parser compartido (lib/odoo.js): entiende etiquetas reales,
+  // escapadas y texto plano. Mantiene la misma firma { tipo, res }.
+  const p = parseBitacoraLib(body);
+  return p ? { tipo:p.tipo, res:p.res||null } : { tipo:null, res:null };
 }
 function diasEntre(dtStr, nowMs){
   if(!dtStr) return null;

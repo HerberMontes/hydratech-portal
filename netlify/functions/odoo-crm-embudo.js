@@ -5,7 +5,7 @@
 //   curso    : 1 = recalcular con los días corridos (botón "Actualizar"); si no, foto normal
 // Devuelve: lista de vendedores, el embudo de LEADS por etapa (foto actual) y el
 // MOVIMIENTO de la semana (cuántos entraron a cada etapa en el periodo) + actividad.
-import { executeKw, checkToken, json } from "./lib/odoo.js";
+import { executeKw, checkToken, json, parseBitacora } from "./lib/odoo.js";
 
 const VEND_PREFIX = "Vendedor · ";
 // Etapas del embudo de altas, en orden (nombres EXACTOS del Kanban de Odoo).
@@ -147,21 +147,15 @@ export default async (req) => {
           ["date", ">=", startStr], ["date", "<=", endStr]]],
         { fields: ["body", "date", "res_id"], order: "date asc", limit: 3000 }).catch(() => []);
       msgs.forEach(m => {
-        const b = m.body || "";
-        const mb = b.match(/<b>([^<]+)<\/b>/);
-        const tipo = mb ? mb[1].trim() : "";
-        if (["Llamada","Correo","WhatsApp","Visita","Reunión","Nota"].indexOf(tipo) < 0) return;
+        const pb = parseBitacora(m.body); // parser compartido (lib/odoo.js)
+        if (!pb) return;
+        const tipo = pb.tipo;
         avances++;
         if (tipo === "Visita") visitas++;
         if (tipo === "Llamada") llamadas++;
         if (tipo === "Reunión") citas++;
         if (minuta.length < 120) {
-          const ms = b.match(/<span>([^<]+)<\/span>/);
-          const res = ms ? ms[1].trim() : "";
-          let nota = limpiarHtml(b);
-          if (nota.startsWith(tipo)) nota = nota.slice(tipo.length).replace(/^[\s:·—-]+/, "");
-          if (res && nota.startsWith(res)) nota = nota.slice(res.length).replace(/^[\s:·—-]+/, "");
-          if (res) nota = nota ? (res + " — " + nota) : res;
+          const nota = pb.res ? (pb.nota ? pb.res + " — " + pb.nota : pb.res) : pb.nota;
           minuta.push({
             fecha: m.date,
             cliente: nombreLead[m.res_id] || "—",

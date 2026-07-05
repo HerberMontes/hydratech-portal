@@ -105,7 +105,7 @@ export default async (req) => {
         // Registra la calificación en el historial (chatter), mejor esfuerzo.
         try{
           const et = (v)=>["Sin definir/Bajo","Medio","Alto"][Number(v)||0] || "—";
-          const body = `<b>Calificación BANT</b><br>Presupuesto: ${et(bant.b)} · Autoridad: ${et(bant.a)} · Necesidad: ${et(bant.n)} · Plazo: ${et(bant.t)}<br>Movida a <b>Por cotizar</b>.`;
+          const body = `Calificación BANT\nPresupuesto: ${et(bant.b)} · Autoridad: ${et(bant.a)} · Necesidad: ${et(bant.n)} · Plazo: ${et(bant.t)}\nMovida a Por cotizar.`;
           await executeKw("crm.lead","message_post",[[Number(b.leadId)]],{ body, message_type:"comment" });
         }catch(e){}
         await ligarLeadAVendedor(b.leadId, b.email);
@@ -117,11 +117,14 @@ export default async (req) => {
         const RES  = { contacted:"Contactado", noresp:"Sin respuesta", waiting:"Pendiente de ellos", advanced:"Avanzó", cooled:"Se enfrió" };
         const tipoTxt = TIPO[b.tipo] || "Nota";
         const resTxt  = RES[b.resultado] || "";
-        const nota = String(b.nota || "").trim().replace(/</g, "&lt;");
-        // Se guarda en el chatter con formato legible; gerencia lo lee después.
-        let body = `<b>${tipoTxt}</b>`;
-        if (resTxt) body += ` · <span>${resTxt}</span>`;
-        if (nota)   body += `<br>${nota}`;
+        const nota = String(b.nota || "").trim();
+        // TEXTO PLANO a propósito: message_post por API escapa el HTML según la
+        // versión de Odoo (en la base real los <b> quedaron como &lt;b&gt; y se
+        // veían literales en el chatter). En plano se lee limpio en Odoo y el
+        // parser compartido (lib/odoo.js) lo entiende igual.
+        let body = tipoTxt;
+        if (resTxt) body += ` · ${resTxt}`;
+        if (nota)   body += `\n${nota}`;
         await executeKw("crm.lead","message_post",[[Number(b.leadId)]],{ body, message_type:"comment" });
         // LIGA escritura↔lectura: garantiza la etiqueta del vendedor en el lead
         // para que este avance salga en el reporte (aunque el lead se haya
@@ -156,7 +159,7 @@ export default async (req) => {
     const dominio = ["tag_ids","in",[tagId||-1]];
     const today = fmt(new Date());
 
-    const plan = { vendedor:nombre, hoy:0, vencidas:0, sinPaso:0, actividades:[], sinPasoLista:[], porCalificar:[], items:[] };
+    const plan = { vendedor:nombre, tagId, emailBuscado:email, hoy:0, vencidas:0, sinPaso:0, actividades:[], sinPasoLista:[], porCalificar:[], items:[] };
     if(!tagId) return json({ ok:true, plan });
 
     // Leads del vendedor (para contexto y para mapear actividades)
