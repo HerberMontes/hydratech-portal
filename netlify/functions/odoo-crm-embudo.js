@@ -90,13 +90,45 @@ export default async (req) => {
     // 4) MOVIMIENTO de la semana: leads que ENTRARON a cada etapa en el periodo
     //    (aprox: su último cambio de etapa cae dentro de la semana y están en esa etapa)
     const movimiento = Object.fromEntries(ETAPAS.map(e => [e, 0]));
-    let nuevosLeads = 0;
+    let nuevosLeads = 0, nuevosPrev = 0;
+    // semana previa (para el delta del KPI de prospectos nuevos) — mejor esfuerzo sobre leads activos
+    const prevMon = new Date(w.mon); prevMon.setUTCDate(prevMon.getUTCDate() - 7);
+    const prevDom = new Date(w.mon); prevDom.setUTCDate(prevDom.getUTCDate() - 1);
+    const prevStart = odooDate(prevMon) + " 00:00:00";
+    const prevEnd = odooDate(prevDom) + " 23:59:59";
     leads.forEach(l => {
       const st = m2oName(l.stage_id);
       const mov = l.date_last_stage_update;
       if (st && movimiento[st] !== undefined && mov && mov >= startStr && mov <= endStr) movimiento[st]++;
       if (l.create_date && l.create_date >= startStr && l.create_date <= endStr) nuevosLeads++;
+      if (l.create_date && l.create_date >= prevStart && l.create_date <= prevEnd) nuevosPrev++;
     });
+
+    // 4b) ESTANCADOS: leads con >7 días sin cambio de etapa (para la lista del reporte)
+    //     Los de "Alta en proceso" se marcan como críticos (esperando autorización).
+    const DETALLE = {
+      "Por contactar": "sin primer intento",
+      "Cita agendada": "sin confirmar reunión",
+      "Presentado": "sin siguiente paso",
+      "Alta en proceso": "esperando autorización del cliente",
+    };
+    const estancados = leads
+      .map(l => {
+        const st = m2oName(l.stage_id);
+        if (!ETAPAS.includes(st)) return null;
+        const dias = daysSince(l.date_last_stage_update || l.create_date, w.now);
+        if (dias == null || dias <= 7) return null;
+        return {
+          empresa: l.partner_name || l.contact_name || l.name || "—",
+          etapa: st,
+          detalle: DETALLE[st] || "sin acción",
+          dias,
+          critico: st === "Alta en proceso",
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.critico - a.critico) || (b.dias - a.dias))
+      .slice(0, 6);
 
     // 5) Actividad del vendedor en la semana (mail.message de bitácora sobre sus leads)
     const leadIds = leads.map(l => l.id);
@@ -126,8 +158,9 @@ export default async (req) => {
       vendedor: { nombre: elegido.name, ini: initials(elegido.name) },
       totalEmbudo,
       embudo,
-      movimiento, nuevosLeads,
-      actividad: { avances, citas, visitas, llamadas },
+      movimiento, nuevosLeads, nuevosPrev,
+      estancados,
+      actividad: { avances, citas, visitas, llamadas, altas: movimiento["Alta en proceso"] || 0 },
     });
   } catch (e) {
     return json({ ok: false, error: String(e.message || e) }, 500);

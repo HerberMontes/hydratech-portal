@@ -132,12 +132,15 @@ export default async (req) => {
         [[userDomain, ["active", "=", true], ["activity_state", "=", "overdue"]]]);
     } catch (e) {}
 
-    /* ----- 4) OPORTUNIDADES CLAVE (top 5 abiertas por monto) ----- */
-    const opps = await executeKw("crm.lead", "search_read",
+    /* ----- 4) OPORTUNIDADES ABIERTAS (salud del pipeline + etapas + seguimiento) ----- */
+    const abiertas = await executeKw("crm.lead", "search_read",
       [[userDomain, ["type", "=", "opportunity"], ["active", "=", true]]],
       { fields: ["partner_name", "contact_name", "partner_id", "stage_id",
-                 "expected_revenue", "activity_summary", "activity_date_deadline"],
-        order: "expected_revenue desc", limit: 5 });
+                 "expected_revenue", "activity_summary", "activity_date_deadline",
+                 "date_last_stage_update", "create_date", "write_date"],
+        order: "expected_revenue desc", limit: 500 });
+
+    const opps = abiertas.slice(0, 5);
     const oportunidades = opps.map((o) => ({
       cliente: o.partner_name || m2oName(o.partner_id) || o.contact_name || "—",
       etapa: m2oName(o.stage_id) || "—",
@@ -145,6 +148,65 @@ export default async (req) => {
       paso: o.activity_summary || "",
       fecha: fechaCorta(o.activity_date_deadline),
     }));
+
+    const DAY = 86400000;
+    const hoy = Date.now();
+    const diasDesde = (s) => {
+      if (!s) return null;
+      const t = Date.parse(String(s).replace(" ", "T") + "Z");
+      return isNaN(t) ? null : Math.max(0, Math.round((hoy - t) / DAY));
+    };
+
+    // Salud del pipeline
+    const pipelineAbierto = abiertas.reduce((s, r) => s + (r.expected_revenue || 0), 0);
+    const metaCobertura = Number(process.env.CRM_META_PIPELINE || 0); // MXN; 0 = sin meta configurada
+    const pipeline = {
+      abierto: pipelineAbierto,
+      abiertoFmt: mxn(pipelineAbierto),
+      abiertoExacto: "$" + Math.round(pipelineAbierto).toLocaleString("en-US") + " MXN",
+      opps: abiertas.length,
+      promedioFmt: abiertas.length ? mxn(pipelineAbierto / abiertas.length) : "$0",
+      meta: metaCobertura,
+      cobertura: metaCobertura ? Math.round((pipelineAbierto / metaCobertura) * 10) / 10 : null,
+    };
+
+    // Desglose por etapa (dónde está parado el pipeline)
+    const porEtapa = {};
+    abiertas.forEach((o) => {
+      const st = m2oName(o.stage_id) || "—";
+      (porEtapa[st] = porEtapa[st] || { nombre: st, opps: 0, monto: 0, edades: [] });
+      porEtapa[st].opps++;
+      porEtapa[st].monto += o.expected_revenue || 0;
+      const d = diasDesde(o.date_last_stage_update || o.create_date);
+      if (d != null) porEtapa[st].edades.push(d);
+    });
+    const maxMontoEtapa = Math.max(1, ...Object.values(porEtapa).map((e) => e.monto));
+    const etapas = Object.values(porEtapa)
+      .sort((a, b) => b.monto - a.monto)
+      .slice(0, 3)
+      .map((e) => {
+        const edad = e.edades.length ? Math.round(e.edades.reduce((a, b) => a + b, 0) / e.edades.length) : 0;
+        return {
+          nombre: e.nombre, opps: e.opps, montoFmt: mxn(e.monto),
+          pct: Math.round((e.monto / maxMontoEtapa) * 100),
+          edadProm: edad,
+          salud: edad > 10 ? "atorado" : edad > 6 ? "vigilar" : "sano",
+        };
+      });
+
+    // Requiere seguimiento: abiertas con más días sin tocar (proxy: última modificación)
+    const seguimiento = abiertas
+      .map((o) => ({
+        cliente: o.partner_name || m2oName(o.partner_id) || o.contact_name || "—",
+        monto: o.expected_revenue || 0,
+        montoFmt: "$" + Math.round(o.expected_revenue || 0).toLocaleString("en-US"),
+        etapa: m2oName(o.stage_id) || "—",
+        dias: diasDesde(o.write_date) || 0,
+      }))
+      .filter((o) => o.dias >= 4)
+      .sort((a, b) => b.dias - a.dias)
+      .slice(0, 4);
+    const riesgoTotal = seguimiento.reduce((s, o) => s + o.monto, 0);
 
     /* ----- 5) ACTIVIDAD (mail.message sobre los leads del vendedor) ----- */
     // Como hay un solo usuario de Odoo, no atribuimos por autor sino por los
@@ -212,6 +274,13 @@ export default async (req) => {
       sinPaso, vencidas,
       oportunidades,
       trend,
+      // --- campos nuevos para la plantilla "Reporte semanal comercial" ---
+      pipeline,
+      etapas,
+      seguimiento,
+      riesgoTotalFmt: "$" + Math.round(riesgoTotal).toLocaleString("en-US"),
+      act: { llamadas, reuniones, avances: completadas, nuevas: nuevasOpps },
+      res: { ganadas: ganadas.length, cierre, montoCerradoFmt: "$" + Math.round(montoCerrado).toLocaleString("en-US") },
       generado: "HydraTech CRM",
     };
 
