@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/hydratech-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -39,73 +39,7 @@
 
   /* hoja */
   .sheet-wrap{display:flex;justify-content:center;padding:6px 16px 40px}
-  .sheet{width:816px;max-width:100%;min-height:1056px;background:#fff;box-shadow:0 8px 40px rgba(27,33,56,.10);padding:38px 40px 32px;display:flex;flex-direction:column}
-
-  .hd{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid #263370}
-  .wordmark{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-  .wordmark .mk{width:26px;height:26px;border-radius:6px;background:#263370;position:relative;flex:none}
-  .wordmark .mk::after{content:"";position:absolute;inset:6px;border:2px solid #fff;border-radius:3px;border-right-color:transparent;border-bottom-color:transparent}
-  .wordmark .nm{font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;letter-spacing:.3px;color:#1b2138}
-  .hd .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:2.4px;color:#717a90;text-transform:uppercase}
-  .hd .who{font-family:'Archivo',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.5px;color:#1b2138;margin-top:5px;line-height:1.05}
-  .hd .sub{font-size:12.5px;color:#4a5267;margin-top:3px}
-  .hd .right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-  .hd .wk{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:#717a90;text-transform:uppercase}
-  .hd .rng{font-family:'Archivo',sans-serif;font-weight:700;font-size:15px;color:#1b2138;margin-top:2px}
-  .pill{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:999px}
-  .pill .d{width:8px;height:8px;border-radius:50%;flex:none}
-  .pill .t{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:1.4px;text-transform:uppercase}
-
-  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
-  .panel{border:1px solid #e6e9f0;border-radius:9px;overflow:hidden}
-  .panel .ph{padding:11px 15px;border-bottom:1px solid #e6e9f0}
-  .panel .ph .k{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:500}
-  .panel .ph .d{font-size:11px;color:#717a90;margin-top:2px}
-  .panel.act .ph{background:#f4f6fb;border-left:3px solid #263370}
-  .panel.act .ph .k{color:#263370}
-  .panel.out .ph{background:#f3f9f5;border-left:3px solid #16a34a}
-  .panel.out .ph .k{color:#157f3b}
-  .mets{display:grid;grid-template-columns:1fr 1fr}
-  .met{padding:13px 15px;border-top:1px solid #f0f2f7;border-left:1px solid #f0f2f7}
-  .met .ml{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.8px;color:#717a90;text-transform:uppercase;line-height:1.3;min-height:24px}
-  .met .mv{font-family:'Archivo',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.5px;line-height:1}
-  .met .ms{font-size:10.5px;color:#717a90;margin-top:3px}
-  .panel.act .met .mv{color:#263370}
-  .panel.out .met .mv{color:#157f3b}
-
-  .coach{display:flex;align-items:stretch;margin-top:16px;border:1px solid;border-radius:9px;overflow:hidden}
-  .coach .msg{flex:1;padding:13px 16px;display:flex;flex-direction:column;justify-content:center}
-  .coach .msg .k{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:500}
-  .coach .msg .t{font-size:12px;color:#4a5267;margin-top:4px;line-height:1.4;max-width:330px}
-  .coach .nums{display:flex}
-  .coach .num{padding:12px 20px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-width:150px}
-  .coach .num.bl{border-left:1px solid}
-  .coach .num .v{font-family:'Archivo',sans-serif;font-weight:800;font-size:34px;line-height:1}
-  .coach .num .c{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.6px;color:#4a5267;text-transform:uppercase;margin-top:4px;line-height:1.3}
-
-  .lower{display:grid;grid-template-columns:1.62fr 1fr;gap:16px;margin-top:18px}
-  .sectk{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;color:#263370;text-transform:uppercase;font-weight:500;margin-bottom:9px}
-  table{width:100%;border-collapse:collapse;font-size:11px}
-  thead th{text-align:left;padding:0 6px 7px 0;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:1px;color:#717a90;text-transform:uppercase;font-weight:500}
-  thead th.r{text-align:right}
-  tbody tr{border-bottom:1px solid #f0f2f7}
-  tbody td{padding:9px 6px;vertical-align:top}
-  td.cli{padding-left:0;font-weight:600;color:#1b2138;line-height:1.25}
-  td.amt{text-align:right;font-family:'Archivo',sans-serif;font-weight:700;color:#1b2138;white-space:nowrap}
-  td.dt{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#4a5267;white-space:nowrap;padding-right:0}
-  .stg{display:inline-block;padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;font-weight:500;white-space:nowrap}
-
-  .trend{border:1px solid #e6e9f0;border-radius:9px;padding:12px 14px 11px;display:flex;flex-direction:column}
-  .trend .tt{font-size:10.5px;color:#717a90;margin-top:2px}
-  .trend .days{display:flex;justify-content:space-between;margin-top:7px}
-  .trend .day{flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#717a90;text-transform:uppercase}
-
-  .notes{margin-top:18px;flex:1;display:flex;flex-direction:column}
-  .notes .nh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
-  .notes .area{flex:1;min-height:96px;border:1px solid #e6e9f0;border-radius:9px;background:repeating-linear-gradient(to bottom,transparent,transparent 30px,#f0f2f7 30px,#f0f2f7 31px);padding:8px 14px}
-  .sigs{display:flex;justify-content:space-between;gap:24px;margin-top:14px}
-  .sig{flex:1;border-top:1px solid #c4cad8;padding-top:5px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:#717a90;text-transform:uppercase}
-  .ft{margin-top:18px;padding-top:10px;border-top:1px solid #e6e9f0;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.5px;color:#a4abbd;text-transform:uppercase}
+  .sheet{width:816px;max-width:100%;min-height:1056px;background:#fff;box-shadow:0 8px 40px rgba(27,33,56,.10);padding:26px 44px 20px;color:#1b2138}
 
   @media print{
     @page{size:letter;margin:0}
@@ -115,9 +49,7 @@
     .sheet{box-shadow:none;width:100%;min-height:auto}
   }
   @media(max-width:840px){
-    .sheet{padding:24px 20px}
-    .twocol,.lower{grid-template-columns:1fr}
-    .hd .who{font-size:24px}
+    .sheet{padding:22px 18px}
   }
 </style>
 
@@ -163,173 +95,402 @@
 </div>
 
 <script>
-  /* ---------- datos de ejemplo (fallback si no existe la función) ---------- */
-  const SAMPLE = {
-    vendedor:"Carlos Méndez", equipo:"Equipo Industrial", rol:"Ejecutivo de cuenta sr.",
-    semana:"26", rango:"22 – 28 jun 2026", estado:"requiere",
-    actividad:[
-      {label:"Actividades completadas", value:"47", sub:"de 52 planeadas"},
-      {label:"Llamadas", value:"31", sub:"+6 vs. semana previa"},
-      {label:"Reuniones", value:"9", sub:"4 presenciales"},
-      {label:"Oportunidades nuevas", value:"5", sub:"al pipeline"},
+  /* ============================================================
+     utilidades
+  ============================================================ */
+  const esc = s => String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+  const MONO = "'IBM Plex Mono',monospace", ARCH = "'Archivo',sans-serif";
+  const INK="#1b2138", SUB="#4a5267", MU="#717a90", NAVY="#263370",
+        GREEN="#16a34a", GOLD="#c9a14a", RED="#e5484d", LN="#e6e9f0";
+  const MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  function hoyFmt(){ const d=new Date(); return d.getDate()+" "+MESES[d.getMonth()]+" "+d.getFullYear(); }
+  function isoWeek(d){ const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn); const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil((((t-ys)/86400000)+1)/7); }
+
+  /* ============================================================
+     PLANTILLA 1 · Reporte semanal comercial (vista OPORTUNIDADES)
+     Fuente: /api/odoo-crm-reporte
+  ============================================================ */
+  const SAMPLE_COMERCIAL = {
+    vendedor:"Roberto Cavazos Treviño", equipo:"Equipo Industrial", rol:"Ejecutivo de cuenta sr.",
+    semana:"27", rango:"29 jun – 5 jul 2026", estado:"requiere",
+    pipeline:{ abiertoFmt:"$4.82M", abiertoExacto:"$4,820,000 MXN", opps:18, promedioFmt:"$268K", meta:6000000, cobertura:2.4 },
+    seguimiento:[
+      {cliente:"Minera Peñoles · Mantenimiento", montoFmt:"$420,000", etapa:"Por cotizar", dias:9},
+      {cliente:"Aceros del Norte S.A.", montoFmt:"$680,000", etapa:"Cotización enviada", dias:7},
+      {cliente:"CEMEX · Planta García", montoFmt:"$310,000", etapa:"Cotización enviada", dias:5},
+      {cliente:"Frigorífico Monterrey", montoFmt:"$155,000", etapa:"Nuevo", dias:4},
     ],
-    resultado:[
-      {label:"Valor agregado al pipeline", value:"$1.84M", sub:"MXN · 6 opps"},
-      {label:"Oportunidades ganadas", value:"3", sub:"de 7 en cierre"},
-      {label:"Monto cerrado", value:"$612K", sub:"MXN"},
-      {label:"Avance entre etapas", value:"58%", sub:"tasa de avance"},
+    riesgoTotalFmt:"$1,565,000",
+    etapas:[
+      {nombre:"Por cotizar", opps:7, montoFmt:"$1.94M", pct:100, edadProm:11, salud:"atorado"},
+      {nombre:"Cotización enviada", opps:5, montoFmt:"$1.70M", pct:88, edadProm:8, salud:"vigilar"},
+      {nombre:"Nuevo", opps:6, montoFmt:"$1.18M", pct:61, edadProm:3, salud:"sano"},
     ],
-    sinPaso:4, vencidas:6,
-    oportunidades:[
-      {cliente:"Northern Pumps & Seals", etapa:"Negociación", monto:"$1.20M", paso:"Reunión técnica en sitio", fecha:"30 jun"},
-      {cliente:"Bajío Steel & Hose", etapa:"Propuesta", monto:"$480K", paso:"Enviar cotización revisada", fecha:"02 jul"},
-      {cliente:"Integral Hydraulics MX", etapa:"Cierre", monto:"$320K", paso:"Firma de contrato", fecha:"01 jul"},
-      {cliente:"Vega Construcción", etapa:"Calificación", monto:"$560K", paso:"Llamada de descubrimiento", fecha:"03 jul"},
-      {cliente:"West Industrial Parts", etapa:"Propuesta", monto:"$275K", paso:"", fecha:"—"},
-    ],
-    trend:[{day:"Lun",value:9},{day:"Mar",value:11},{day:"Mié",value:7},{day:"Jue",value:12},{day:"Vie",value:6},{day:"Sáb",value:2},{day:"Dom",value:0}],
+    act:{llamadas:34, reuniones:6, avances:22, nuevas:5},
+    res:{ganadas:3, cierre:27, montoCerradoFmt:"$612,000"},
+    sinPaso:2, vencidas:3,
     generado:"HydraTech CRM",
   };
 
-  const ETAPA = {
-    "Calificación":{c:"#4a5267",b:"#eef0f4"},
-    "Propuesta":{c:"#263370",b:"#eaedf6"},
-    "Negociación":{c:"#9c7a22",b:"#f6efda"},
-    "Cierre":{c:"#157f3b",b:"#e7f4ec"},
-  };
-  const esc = s => String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-
-  function sparkline(trend){
-    const W=280,H=96,padX=8,padTop=10,padBot=10;
-    const max=Math.max(...trend.map(t=>t.value),1), n=trend.length, step=(W-padX*2)/(n-1);
-    const pts=trend.map((t,i)=>[padX+i*step,(H-padBot)-(t.value/max)*(H-padTop-padBot)]);
-    const line=pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
-    const area=pts[0][0].toFixed(1)+","+(H-padBot)+" "+line+" "+pts[n-1][0].toFixed(1)+","+(H-padBot);
-    const dots=pts.map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3" fill="#fff" stroke="#263370" stroke-width="2"></circle>').join("");
-    return '<svg viewBox="0 0 280 96" width="100%" preserveAspectRatio="none" style="display:block"><polygon points="'+area+'" fill="#263370" fill-opacity="0.07"></polygon><polyline points="'+line+'" fill="none" stroke="#263370" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>'+dots+'</svg>';
-  }
-
-  function render(s){
-    const aldia = s.estado==="aldia";
+  function renderComercial(d){
+    d = d || SAMPLE_COMERCIAL;
+    const p = d.pipeline||{}, act = d.act||{}, res = d.res||{};
+    const seg = Array.isArray(d.seguimiento)?d.seguimiento:[];
+    const aldia = d.estado==="aldia";
     const est = aldia
-      ? {t:"Al día",col:"#16a34a",bg:"#f0f9f3",bd:"#cce9d6"}
-      : {t:"Requiere atención",col:"#e5484d",bg:"#fdf1f1",bd:"#f6d3d4"};
-    const limpio = s.sinPaso===0 && s.vencidas===0;
-    const coach = limpio
-      ? {bg:"#f3f9f5",bd:"#cce9d6",ink:"#157f3b",msg:"Sin pendientes críticos esta semana. Buen ritmo de seguimiento — mantén la disciplina del siguiente paso."}
-      : {bg:"#fdfbf4",bd:"#ece2c6",ink:"#9c7a22",msg:"Puntos a revisar en la sesión de retroalimentación. Prioriza agendar el siguiente paso de cada oportunidad abierta."};
-    const sinC = s.sinPaso>0?"#c9a14a":"#16a34a", venC = s.vencidas>0?"#e5484d":"#16a34a";
+      ? {t:"Al día", col:GREEN, bg:"#eef7f1", bd:"#cfe8d9"}
+      : {t:"Requiere atención", col:"#8a6a1f", dot:GOLD, bg:"#fdf4e3", bd:"#e7d5a6"};
 
-    const met = (m,cls)=>'<div class="met"><div class="ml">'+esc(m.label)+'</div><div class="mv">'+esc(m.value)+'</div><div class="ms">'+esc(m.sub)+'</div></div>';
+    const card=(inner)=>'<div style="border:1px solid '+LN+';border-radius:14px;padding:13px 16px;box-shadow:0 1px 2px rgba(27,33,56,.04)">'+inner+'</div>';
+    const kicker=(t)=>'<div style="font-family:'+MONO+';font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:'+MU+'">'+t+'</div>';
 
-    const rows = s.oportunidades.map(o=>{
-      const e = ETAPA[o.etapa]||{c:"#4a5267",b:"#eef0f4"};
-      const tienePaso = o.paso && o.paso.trim().length>0;
-      return '<tr><td class="cli">'+esc(o.cliente)+'</td>'+
-        '<td><span class="stg" style="color:'+e.c+';background:'+e.b+'">'+esc(o.etapa)+'</span></td>'+
-        '<td class="amt">'+esc(o.monto)+'</td>'+
-        '<td style="color:'+(tienePaso?"#4a5267":"#e5484d")+';line-height:1.25">'+esc(tienePaso?o.paso:"Sin siguiente paso")+'</td>'+
-        '<td class="dt">'+esc(o.fecha)+'</td></tr>';
+    /* --- 01 salud del pipeline --- */
+    let card3;
+    if(p.cobertura!=null && p.meta){
+      const pct = Math.min(100, Math.round(p.cobertura/3*100));
+      const covCol = p.cobertura>=3?GREEN:(p.cobertura>=2?GOLD:RED);
+      const faltan = p.meta*3 - (p.abierto||0);
+      card3 = card(
+        '<div style="display:flex;justify-content:space-between;align-items:baseline">'+kicker("Cobertura vs. meta")+
+          '<div style="font-family:'+ARCH+';font-weight:800;font-size:20px;color:'+covCol+'">'+p.cobertura+'x <span style="font-family:\'IBM Plex Sans\';font-weight:500;font-size:12px;color:'+MU+'">de 3x</span></div></div>'+
+        '<div style="height:10px;border-radius:6px;background:#eef0f4;margin-top:10px;position:relative;overflow:hidden"><div style="position:absolute;inset:0 '+(100-pct)+'% 0 0;background:'+covCol+';border-radius:6px"></div></div>'+
+        '<div style="display:flex;justify-content:space-between;font-family:'+MONO+';font-size:10px;color:'+MU+';margin-top:6px"><span>Actual</span><span style="color:'+SUB+'">Meta recomendada 3.0x &#9656;</span></div>'+
+        (p.cobertura<3
+          ?'<div style="font-size:11.5px;color:#8a6a1f;margin-top:8px">Va corto: faltan ~'+esc(fmtCompact(faltan))+' de pipeline para cubrir el 3x.</div>'
+          :'<div style="font-size:11.5px;color:'+GREEN+';margin-top:8px">Cobertura sana: el pipeline cubre la meta recomendada.</div>')
+      );
+    }else{
+      card3 = card(
+        kicker("Ganado esta semana")+
+        '<div style="font-family:'+ARCH+';font-weight:800;font-size:26px;color:'+GREEN+';margin-top:6px;line-height:1">'+esc(res.montoCerradoFmt||"$0")+'</div>'+
+        '<div style="font-size:12px;color:'+SUB+';margin-top:4px">'+(res.ganadas||0)+' oportunidad'+((res.ganadas||0)===1?'':'es')+' ganada'+((res.ganadas||0)===1?'':'s')+' · tasa de cierre '+(res.cierre||0)+'%</div>'
+      );
+    }
+
+    /* --- 02 requiere seguimiento --- */
+    let segHtml;
+    if(seg.length){
+      const rows = seg.map((o,i)=>{
+        const diasCol = o.dias>=7?RED:GOLD;
+        return '<div style="display:grid;grid-template-columns:2fr 1fr 1.4fr 1.2fr;gap:8px;align-items:center;padding:8px 0;'+(i<seg.length-1?'border-bottom:1px solid #f6d4d5;':'')+'">'+
+          '<span style="font-weight:600;color:'+INK+';font-size:13.5px">'+esc(o.cliente)+'</span>'+
+          '<span style="font-family:'+ARCH+';font-weight:700;color:'+INK+';font-size:13.5px">'+esc(o.montoFmt)+'</span>'+
+          '<span style="font-size:12px;color:'+SUB+'">'+esc(o.etapa)+'</span>'+
+          '<span style="text-align:right;font-family:'+ARCH+';font-weight:800;color:'+diasCol+';font-size:14px">'+o.dias+' d&iacute;as</span></div>';
+      }).join("");
+      segHtml =
+      '<div style="margin-top:14px;border:1.5px solid #f2c0c1;border-radius:14px;background:#fdf3f3;overflow:hidden">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 18px;background:'+RED+'">'+
+          '<div style="font-family:'+ARCH+';font-weight:800;font-size:15px;letter-spacing:.02em;color:#fff">&#9873; REQUIERE SEGUIMIENTO</div>'+
+          '<div style="font-family:'+MONO+';font-size:11px;color:#ffe0e0;letter-spacing:.08em">'+seg.length+' oportunidades · '+esc(d.riesgoTotalFmt||"")+' en riesgo</div>'+
+        '</div>'+
+        '<div style="padding:6px 18px 12px">'+
+          '<div style="display:grid;grid-template-columns:2fr 1fr 1.4fr 1.2fr;gap:8px;font-family:'+MONO+';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#a15458;padding:10px 0 8px;border-bottom:1px solid #f2c0c1"><span>Cliente</span><span>Monto</span><span>Etapa</span><span style="text-align:right">Sin seguimiento</span></div>'+
+          rows+
+        '</div></div>';
+    }else{
+      segHtml =
+      '<div style="margin-top:14px;border:1.5px solid #cfe8d9;border-radius:14px;background:#f2faf5;padding:14px 18px;display:flex;align-items:center;gap:10px">'+
+        '<span style="width:9px;height:9px;border-radius:50%;background:'+GREEN+';display:inline-block"></span>'+
+        '<span style="font-family:'+ARCH+';font-weight:700;font-size:14px;color:'+GREEN+'">Sin oportunidades en riesgo</span>'+
+        '<span style="font-size:12px;color:'+SUB+'">Todas las oportunidades abiertas tienen seguimiento reciente.</span></div>';
+    }
+
+    /* --- 03 dónde está parado --- */
+    const SALUD={sano:{c:GREEN,t:"sano"},vigilar:{c:GOLD,t:"vigilar"},atorado:{c:RED,t:"atorado"}};
+    const etapas=(d.etapas||[]).map(e=>{
+      const s=SALUD[e.salud]||SALUD.sano;
+      return card(
+        '<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'+ARCH+';font-weight:700;font-size:14px;color:'+INK+'">'+esc(e.nombre)+'</span><span style="font-family:'+MONO+';font-size:11px;color:'+MU+'">'+e.opps+' opps</span></div>'+
+        '<div style="font-family:'+ARCH+';font-weight:800;font-size:20px;color:'+NAVY+';margin-top:6px">'+esc(e.montoFmt)+'</div>'+
+        '<div style="height:7px;border-radius:5px;background:#eef0f4;margin-top:8px;overflow:hidden"><div style="width:'+(e.pct||0)+'%;height:100%;background:'+NAVY+';border-radius:5px"></div></div>'+
+        '<div style="font-family:'+MONO+';font-size:10.5px;color:'+s.c+';margin-top:7px">Antig&uuml;edad prom. '+e.edadProm+' d&iacute;as · '+s.t+'</div>'
+      );
     }).join("");
 
-    const total = s.trend.reduce((a,t)=>a+t.value,0);
-    const days = s.trend.map(t=>'<div class="day">'+esc(t.day)+'</div>').join("");
+    /* --- 05 coaching (generado a partir de datos) --- */
+    const alerts=[];
+    const rojos = seg.filter(o=>o.dias>=7).length;
+    if(rojos) alerts.push({c:RED, t:rojos+' trato'+(rojos>1?'s llevan':' lleva')+' 7+ d&iacute;as sin seguimiento — retomar contacto antes del mi&eacute;rcoles.'});
+    if(p.cobertura!=null && p.cobertura<3) alerts.push({c:GOLD, t:'Cobertura '+p.cobertura+'x bajo el 3x recomendado — prospectar cuentas nuevas esta semana.'});
+    if(d.sinPaso>0) alerts.push({c:GOLD, t:d.sinPaso+' oportunidad'+(d.sinPaso>1?'es':'')+' sin siguiente paso agendado — definir la pr&oacute;xima acci&oacute;n de cada una.'});
+    if(d.vencidas>0) alerts.push({c:RED, t:d.vencidas+' actividad'+(d.vencidas>1?'es':'')+' vencida'+(d.vencidas>1?'s':'')+' en el CRM — cerrarlas o reagendarlas.'});
+    const toques=(act.llamadas||0)+(act.reuniones||0);
+    alerts.push({c:GREEN, t:(alerts.length?'Ritmo de actividad: ':'Buen ritmo de actividad: ')+toques+' toques y '+(act.avances||0)+' avances registrados esta semana.'});
+    const coaching = alerts.slice(0,3).map((a,i)=>
+      '<div style="display:flex;gap:9px;align-items:flex-start;'+(i<2?'margin-bottom:6px;':'')+'">'+
+        '<span style="width:7px;height:7px;border-radius:50%;background:'+a.c+';margin-top:5px;flex-shrink:0"></span>'+
+        '<span style="font-size:12.5px;color:'+INK+';line-height:1.4">'+a.t+'</span></div>').join("");
 
     document.getElementById("sheet").innerHTML =
-    '<div class="hd"><div>'+
-      '<div class="wordmark"><div class="mk"></div><div class="nm">Hydra<span style="color:#263370">Tech</span></div></div>'+
-      '<div class="eyebrow">Reporte semanal · Seguimiento comercial</div>'+
-      '<div class="who">'+esc(s.vendedor)+'</div>'+
-      '<div class="sub">'+esc(s.equipo)+' · '+esc(s.rol)+'</div>'+
-    '</div><div class="right">'+
-      '<div><div class="wk">Semana '+esc(s.semana)+'</div><div class="rng">'+esc(s.rango)+'</div></div>'+
-      '<div class="pill" style="background:'+est.bg+';border:1px solid '+est.bd+'"><span class="d" style="background:'+est.col+'"></span><span class="t" style="color:'+est.col+'">'+est.t+'</span></div>'+
-    '</div></div>'+
-
-    '<div class="twocol">'+
-      '<div class="panel act"><div class="ph"><div class="k">Actividad</div><div class="d">Lo que hizo · indicadores adelantados</div></div><div class="mets">'+s.actividad.map(m=>met(m)).join("")+'</div></div>'+
-      '<div class="panel out"><div class="ph"><div class="k">Resultado</div><div class="d">Lo que pasó · indicadores de resultado</div></div><div class="mets">'+s.resultado.map(m=>met(m)).join("")+'</div></div>'+
-    '</div>'+
-
-    '<div class="coach" style="border-color:'+coach.bd+';background:'+coach.bg+'">'+
-      '<div class="msg"><div class="k" style="color:'+coach.ink+'">Alertas de coaching</div><div class="t">'+esc(coach.msg)+'</div></div>'+
-      '<div class="nums">'+
-        '<div class="num"><div class="v" style="color:'+sinC+'">'+s.sinPaso+'</div><div class="c">Oportunidades sin<br>siguiente paso</div></div>'+
-        '<div class="num bl" style="border-color:'+coach.bd+'"><div class="v" style="color:'+venC+'">'+s.vencidas+'</div><div class="c">Actividades<br>vencidas</div></div>'+
+    /* encabezado */
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:2px solid '+NAVY+'">'+
+      '<div>'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<div style="width:26px;height:26px;border-radius:7px;background:'+NAVY+';display:flex;align-items:center;justify-content:center;color:#fff;font-family:'+ARCH+';font-weight:800;font-size:15px">H</div>'+
+          '<div style="font-family:'+MONO+';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:'+MU+'">HydraTech Group · Reporte semanal comercial</div></div>'+
+        '<div style="font-family:'+ARCH+';font-weight:800;font-size:31px;line-height:1.05;margin-top:10px;color:'+INK+'">'+esc(d.vendedor)+'</div>'+
+        '<div style="font-family:'+MONO+';font-size:12px;letter-spacing:.08em;color:'+SUB+';margin-top:6px">Semana '+esc(d.semana)+' · '+esc(d.rango)+(d.equipo&&d.equipo!=="—"?' · '+esc(d.equipo):'')+'</div>'+
       '</div>'+
+      '<div style="text-align:right">'+
+        '<div style="font-family:'+MONO+';font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:'+MU+';margin-bottom:8px">Estado</div>'+
+        '<div style="display:inline-flex;align-items:center;gap:8px;background:'+est.bg+';border:1px solid '+est.bd+';color:'+est.col+';border-radius:999px;padding:8px 14px;font-family:'+ARCH+';font-weight:700;font-size:14px">'+
+          '<span style="width:9px;height:9px;border-radius:50%;background:'+(est.dot||est.col)+';display:inline-block"></span>'+est.t+'</div>'+
+      '</div></div>'+
+
+    /* 01 */
+    '<div style="margin-top:14px">'+
+      '<div style="font-family:'+MONO+';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:'+MU+';margin-bottom:9px">01 · Salud del pipeline</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:14px">'+
+        card(kicker("Pipeline abierto")+'<div style="font-family:'+ARCH+';font-weight:800;font-size:26px;color:'+NAVY+';margin-top:6px;line-height:1">'+esc(p.abiertoFmt||"$0")+'</div><div style="font-size:12px;color:'+SUB+';margin-top:4px">'+esc(p.abiertoExacto||"")+'</div>')+
+        card(kicker("Oportunidades activas")+'<div style="font-family:'+ARCH+';font-weight:800;font-size:26px;color:'+INK+';margin-top:6px;line-height:1">'+(p.opps||0)+'</div><div style="font-size:12px;color:'+SUB+';margin-top:4px">Monto prom. '+esc(p.promedioFmt||"$0")+'</div>')+
+        card3+
+      '</div></div>'+
+
+    /* 02 */
+    segHtml+
+
+    /* 03 */
+    '<div style="margin-top:14px">'+
+      '<div style="font-family:'+MONO+';font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:'+MU+';margin-bottom:9px">03 · D&oacute;nde est&aacute; parado el pipeline</div>'+
+      '<div style="display:grid;grid-template-columns:repeat('+Math.max(1,(d.etapas||[]).length)+',1fr);gap:14px">'+ (etapas||'<div style="font-size:12px;color:'+MU+'">Sin oportunidades abiertas.</div>') +'</div>'+
     '</div>'+
 
-    '<div class="lower">'+
-      '<div><div class="sectk">Oportunidades clave de la semana</div>'+
-        '<table><thead><tr><th>Cliente</th><th>Etapa</th><th class="r">Monto</th><th>Siguiente paso</th><th class="r">Fecha</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="trend"><div class="sectk" style="margin-bottom:2px">Actividad por día</div><div class="tt">'+total+' actividades · semana '+esc(s.semana)+'</div>'+
-        '<div style="flex:1;margin-top:12px">'+sparkline(s.trend)+'</div><div class="days">'+days+'</div></div>'+
+    /* 04 */
+    '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
+      '<div style="border:1px solid #d3dbf0;border-radius:14px;padding:13px 18px;background:#f6f8fd">'+
+        '<div style="font-family:'+MONO+';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:'+NAVY+';margin-bottom:9px">04a · Actividad</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px 10px">'+
+          '<div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+NAVY+'">'+(act.llamadas||0)+'</div><div style="font-size:11.5px;color:'+SUB+'">Llamadas</div></div>'+
+          '<div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+NAVY+'">'+(act.reuniones||0)+'</div><div style="font-size:11.5px;color:'+SUB+'">Reuniones</div></div>'+
+          '<div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+NAVY+'">'+(act.avances||0)+'</div><div style="font-size:11.5px;color:'+SUB+'">Avances registrados</div></div>'+
+          '<div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+NAVY+'">'+(act.nuevas||0)+'</div><div style="font-size:11.5px;color:'+SUB+'">Oportunidades nuevas</div></div>'+
+        '</div></div>'+
+      '<div style="border:1px solid #bfe4cd;border-radius:14px;padding:13px 18px;background:#f2faf5">'+
+        '<div style="font-family:'+MONO+';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:'+GREEN+';margin-bottom:9px">04b · Resultado</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px 10px">'+
+          '<div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+GREEN+'">'+(res.ganadas||0)+'</div><div style="font-size:11.5px;color:'+SUB+'">Oportunidades ganadas</div></div>'+
+          '<div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+GREEN+'">'+(res.cierre||0)+'%</div><div style="font-size:11.5px;color:'+SUB+'">Tasa de cierre</div></div>'+
+          '<div style="grid-column:1 / -1"><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+GREEN+'">'+esc(res.montoCerradoFmt||"$0")+'</div><div style="font-size:11.5px;color:'+SUB+'">Monto cerrado MXN</div></div>'+
+        '</div></div>'+
     '</div>'+
 
-    '<div class="notes"><div class="nh"><div class="sectk" style="margin-bottom:0">Notas de dirección / acuerdos</div><div style="font-size:10px;color:#717a90">Para retroalimentación y compromisos de la próxima semana</div></div>'+
-      '<div class="area"></div>'+
-      '<div class="sigs"><div class="sig">Firma del vendedor</div><div class="sig">Firma de dirección comercial</div></div></div>'+
+    /* 05 */
+    '<div style="margin-top:14px;display:grid;grid-template-columns:1.1fr 1fr;gap:14px">'+
+      '<div style="border:1px solid '+LN+';border-radius:14px;padding:12px 18px;box-shadow:0 1px 2px rgba(27,33,56,.04)">'+
+        '<div style="font-family:'+MONO+';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:'+MU+';margin-bottom:9px">05 · Alertas de coaching</div>'+coaching+'</div>'+
+      '<div style="border:1px solid '+LN+';border-radius:14px;padding:12px 18px;box-shadow:0 1px 2px rgba(27,33,56,.04);display:flex;flex-direction:column">'+
+        '<div style="font-family:'+MONO+';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:'+MU+';margin-bottom:12px">Notas de direcci&oacute;n</div>'+
+        '<div style="flex:1;border-bottom:1px solid '+LN+';margin-bottom:8px;min-height:24px"></div>'+
+        '<div style="display:flex;gap:24px">'+
+          '<div style="flex:1"><div style="border-top:1px solid '+SUB+';padding-top:5px;font-family:'+MONO+';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:'+MU+'">Vendedor</div></div>'+
+          '<div style="flex:1"><div style="border-top:1px solid '+SUB+';padding-top:5px;font-family:'+MONO+';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:'+MU+'">Gerente comercial</div></div>'+
+        '</div></div>'+
+    '</div>'+
 
-    '<div class="ft"><div>Generado por '+esc(s.generado)+'</div><div>Confidencial · uso interno</div></div>';
+    '<div style="margin-top:14px;padding-top:8px;border-top:1px solid '+LN+';display:flex;justify-content:space-between;font-family:'+MONO+';font-size:9.5px;letter-spacing:.08em;color:'+MU+'">'+
+      '<span>HydraTech Group · Confidencial — uso interno de direcci&oacute;n</span><span>Generado '+hoyFmt()+'</span></div>';
   }
 
-  /* ---------- vista PROSPECTOS: embudo de leads dentro de la misma hoja ---------- */
-  const EMBUDO_SAMPLE={
-    periodo:"Semana 26 · 22–28 jun 2026", corteLabel:"Semana en curso", enCurso:true,
-    vendedor:{nombre:"Juan Arjón", ini:"JA"}, totalEmbudo:14,
+  function fmtCompact(n){
+    n=Number(n)||0;
+    if(n>=1e6) return "$"+(n/1e6).toFixed(1).replace(/\.0$/,"")+"M";
+    if(n>=1e3) return "$"+Math.round(n/1e3)+"K";
+    return "$"+Math.round(n);
+  }
+
+  /* ============================================================
+     PLANTILLA 2 · Reporte de prospección (vista PROSPECTOS)
+     Fuente: /api/odoo-crm-embudo
+  ============================================================ */
+  const SAMPLE_EMBUDO = {
+    periodo:"Semana 27 · 29 jun–5 jul 2026", corteLabel:"Semana en curso", enCurso:true,
+    vendedor:{nombre:"Juan Arjón", ini:"JA"}, totalEmbudo:51, nuevosLeads:12, nuevosPrev:8,
     embudo:[
-      {etapa:"Por contactar",n:7,pct:50,atorados:1,convDesdeAnterior:null},
-      {etapa:"Cita agendada",n:4,pct:29,atorados:0,convDesdeAnterior:57},
-      {etapa:"Presentado",n:2,pct:14,atorados:1,convDesdeAnterior:50},
-      {etapa:"Alta en proceso",n:1,pct:7,atorados:0,convDesdeAnterior:50},
+      {etapa:"Por contactar", n:24, pct:47, atorados:1, convDesdeAnterior:null},
+      {etapa:"Cita agendada", n:15, pct:29, atorados:1, convDesdeAnterior:63},
+      {etapa:"Presentado", n:7, pct:14, atorados:1, convDesdeAnterior:47},
+      {etapa:"Alta en proceso", n:5, pct:10, atorados:2, convDesdeAnterior:71},
     ],
-    movimiento:{"Por contactar":5,"Cita agendada":3,"Presentado":2,"Alta en proceso":1}, nuevosLeads:5,
-    actividad:{avances:12,citas:3,visitas:2,llamadas:6},
+    movimiento:{"Por contactar":12,"Cita agendada":6,"Presentado":3,"Alta en proceso":2},
+    estancados:[
+      {empresa:"Fundidora Monterrey", etapa:"Alta en proceso", detalle:"esperando autorización del cliente", dias:22, critico:true},
+      {empresa:"Acería Santa Catarina", etapa:"Alta en proceso", detalle:"esperando autorización del cliente", dias:15, critico:true},
+      {empresa:"Metalúrgica Regia", etapa:"Presentado", detalle:"sin siguiente paso", dias:18, critico:false},
+      {empresa:"Aceros del Norte", etapa:"Cita agendada", detalle:"sin confirmar reunión", dias:11, critico:false},
+      {empresa:"Perfiles y Tubos MTY", etapa:"Por contactar", detalle:"sin primer intento", dias:9, critico:false},
+    ],
+    actividad:{avances:9, citas:6, visitas:9, llamadas:34, altas:4},
   };
-  function renderEmbudo(d){
-    const B="#263370",G="#16a34a",GD="#c9a14a",MU="#717a90",INK="#1b2138",LN="#e6e9f0",SF="#f7f9fc";
-    const a=d.actividad||{};
-    const maxN=Math.max(1,...(d.embudo||[]).map(e=>e.n));
-    const kpi=(n,t)=>'<div style="border:1px solid '+LN+';border-radius:12px;padding:12px 13px;background:#fff"><div style="font-family:Archivo,sans-serif;font-weight:800;font-size:23px;color:'+B+';line-height:1">'+n+'</div><div style="font-size:11px;color:'+MU+';margin-top:5px">'+t+'</div></div>';
+
+  function renderProspeccion(d){
+    d = d || SAMPLE_EMBUDO;
+    const a = d.actividad||{};
+    const emb = Array.isArray(d.embudo)?d.embudo:[];
+    const mov = d.movimiento||{};
+    const estL = Array.isArray(d.estancados)?d.estancados:[];
+    const maxN = Math.max(1, ...emb.map(e=>e.n||0));
+    // sombras de azul por etapa (de más oscuro a más claro)
+    const AZUL=["#263370","#2d3d80","#3a4a8c","#4a5aa0","#5a6ab0","#6a7ac0"];
+
+    const chipVerde=(n)=> n>0
+      ? '<div style="display:inline-flex;align-items:center;gap:5px;background:#eef7f1;border:1px solid #cfe8d9;color:'+GREEN+';font-family:'+MONO+';font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px">&#9650; '+n+'</div>'
+      : '<div style="display:inline-flex;align-items:center;gap:5px;background:#f4f6fb;border:1px solid '+LN+';color:'+MU+';font-family:'+MONO+';font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px">&#8212;</div>';
+
+    /* --- embudo por etapa con conversiones intermedias --- */
     let stages="";
-    (d.embudo||[]).forEach((e,i)=>{
-      if(i>0 && e.convDesdeAnterior!=null) stages+='<div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:'+MU+';margin:2px 0">&#8595; pasa el <b style="color:'+B+'">'+e.convDesdeAnterior+'%</b></div>';
-      const mov=(d.movimiento||{})[e.etapa]||0;
-      stages+='<div style="border:1px solid '+LN+';border-radius:14px;padding:14px 16px;background:#fff;margin-bottom:8px">'+
-        '<div style="display:flex;align-items:center;gap:12px">'+
-          '<div style="width:26px;height:26px;border-radius:8px;background:'+B+';color:#fff;display:grid;place-items:center;font-family:\'IBM Plex Mono\',monospace;font-size:12px">'+(i+1)+'</div>'+
-          '<div style="font-family:Archivo,sans-serif;font-weight:700;font-size:15px">'+esc(e.etapa)+'</div>'+
-          '<div style="margin-left:auto;font-family:Archivo,sans-serif;font-weight:800;font-size:24px;color:'+B+'">'+e.n+'<span style="font-size:12px;color:'+MU+';font-weight:500"> leads</span></div>'+
-        '</div>'+
-        '<div style="height:10px;background:'+SF+';border-radius:999px;overflow:hidden;margin-top:11px"><div style="height:100%;width:'+Math.round(e.n/maxN*100)+'%;background:'+B+';border-radius:999px"></div></div>'+
-        '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:12px;color:'+MU+'">'+
-          '<span><b style="color:'+INK+'">'+e.pct+'%</b> del embudo</span>'+
-          (mov>0?'<span style="color:'+G+'">+'+mov+' esta semana</span>':'')+
-          (e.atorados>0?'<span style="color:'+GD+'">'+e.atorados+' atorado'+(e.atorados>1?"s":"")+' (+7 d)</span>':'')+
-        '</div></div>';
+    emb.forEach((e,i)=>{
+      if(i>0){
+        const conv = e.convDesdeAnterior;
+        const cuello = conv!=null && conv<50;
+        if(cuello){
+          stages+='<div style="display:flex;align-items:center;gap:16px;margin:5px 0"><div style="width:150px;flex-shrink:0"></div>'+
+            '<div style="flex:1;display:flex;justify-content:center"><div style="display:inline-flex;align-items:center;gap:8px;background:#fbf3e2;border:1px solid #ecdcb4;padding:3px 12px;border-radius:999px;color:#8a6d2a">'+
+              '<span style="font-family:'+MONO+';font-size:10px;letter-spacing:1px;text-transform:uppercase">cuello · conversi&oacute;n</span>'+
+              '<span style="font-family:'+ARCH+';font-weight:800;font-size:13px;color:'+GOLD+'">'+(conv!=null?'solo pasa el '+conv+'%':'sin datos')+'</span>'+
+              '<span style="color:'+GOLD+'">&#9660;</span></div></div>'+
+            '<div style="width:96px;flex-shrink:0"></div></div>';
+        }else{
+          stages+='<div style="display:flex;align-items:center;gap:16px;margin:5px 0"><div style="width:150px;flex-shrink:0"></div>'+
+            '<div style="flex:1;display:flex;justify-content:center"><div style="display:inline-flex;align-items:center;gap:8px;color:'+MU+'">'+
+              '<span style="font-family:'+MONO+';font-size:10px;letter-spacing:1px;text-transform:uppercase">conversi&oacute;n</span>'+
+              '<span style="font-family:'+ARCH+';font-weight:700;font-size:13px;color:'+GREEN+'">'+(conv!=null?'pasa el '+conv+'%':'&#8212;')+'</span>'+
+              '<span style="color:#c3cbe8">&#9660;</span></div></div>'+
+            '<div style="width:96px;flex-shrink:0"></div></div>';
+        }
+      }
+      const w = Math.max(28, Math.round((e.n||0)/maxN*100));
+      stages+='<div style="display:flex;align-items:center;gap:16px">'+
+        '<div style="width:150px;flex-shrink:0">'+
+          '<div style="font-family:'+MONO+';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:'+MU+'">Etapa '+(i+1)+'</div>'+
+          '<div style="font-family:'+ARCH+';font-weight:700;font-size:14px;color:'+INK+'">'+esc(e.etapa)+'</div></div>'+
+        '<div style="flex:1;display:flex;justify-content:center">'+
+          '<div style="width:'+w+'%;height:52px;background:'+(AZUL[i]||AZUL[AZUL.length-1])+';border-radius:8px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;color:#fff">'+
+            '<div style="font-family:'+ARCH+';font-weight:800;font-size:26px">'+(e.n||0)+'</div>'+
+            '<div style="font-family:'+MONO+';font-size:11px;color:#aeb8de">'+(e.pct||0)+'%'+(i===0?' del embudo':'')+'</div></div></div>'+
+        '<div style="width:96px;flex-shrink:0;text-align:right">'+chipVerde(mov[e.etapa]||0)+'</div></div>';
     });
-    document.getElementById("sheet").innerHTML=
-      '<div class="eyebrow">Reporte semanal · Embudo de prospección</div>'+
-      '<div class="who">'+esc((d.vendedor&&d.vendedor.nombre)||"—")+'</div>'+
-      '<div class="rng" style="margin:2px 0 16px">'+esc(d.periodo||"")+' · '+esc(d.corteLabel||"")+'</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">'+
-        kpi(d.totalEmbudo||0,"leads en el embudo")+kpi(d.nuevosLeads||0,"prospectos nuevos (sem.)")+kpi(a.citas||0,"citas/reuniones (sem.)")+kpi(a.avances||0,"avances (semana)")+
+
+    /* --- estancados --- */
+    let estHtml;
+    const nCrit = estL.filter(x=>x.critico).length;
+    if(estL.length){
+      estHtml = estL.map((x,i)=>{
+        const last = i===estL.length-1;
+        if(x.critico){
+          return '<div style="display:flex;align-items:center;gap:12px;padding:11px 15px;border-left:4px solid '+RED+';background:#fdf6f6;'+(last?'':'border-bottom:1px solid #f0e4e4;')+'">'+
+            '<div style="flex:1"><div style="font-family:'+ARCH+';font-weight:700;font-size:14px;color:'+INK+'">'+esc(x.empresa)+'</div>'+
+            '<div style="font-family:'+MONO+';font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:'+RED+';margin-top:2px">'+esc(x.etapa)+' · '+esc(x.detalle)+'</div></div>'+
+            '<div style="text-align:right;flex-shrink:0"><div style="font-family:'+ARCH+';font-weight:800;font-size:20px;color:'+RED+';line-height:1">'+x.dias+' d&iacute;as</div>'+
+            '<div style="font-size:10px;color:#b06">esperando el alta</div></div></div>';
+        }
+        return '<div style="display:flex;align-items:center;gap:12px;padding:11px 15px;border-left:4px solid '+GOLD+';'+(last?'':'border-bottom:1px solid #eef0f5;')+'">'+
+          '<div style="flex:1"><div style="font-family:'+ARCH+';font-weight:700;font-size:14px;color:'+INK+'">'+esc(x.empresa)+'</div>'+
+          '<div style="font-family:'+MONO+';font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:#8a6d2a;margin-top:2px">'+esc(x.etapa)+' · '+esc(x.detalle)+'</div></div>'+
+          '<div style="text-align:right;flex-shrink:0"><div style="font-family:'+ARCH+';font-weight:800;font-size:20px;color:'+GOLD+';line-height:1">'+x.dias+' d&iacute;as</div>'+
+          '<div style="font-size:10px;color:'+MU+'">sin acci&oacute;n</div></div></div>';
+      }).join("");
+    }else{
+      estHtml='<div style="padding:16px;display:flex;align-items:center;gap:10px"><span style="width:9px;height:9px;border-radius:50%;background:'+GREEN+'"></span>'+
+        '<span style="font-size:13px;color:'+SUB+'">Sin leads estancados: todo el embudo tiene movimiento en los &uacute;ltimos 7 d&iacute;as.</span></div>';
+    }
+
+    /* --- KPI delta prospectos nuevos --- */
+    let delta="";
+    if(typeof d.nuevosPrev==="number"){
+      const up = (d.nuevosLeads||0) >= d.nuevosPrev;
+      delta='<div style="font-family:'+MONO+';font-size:11px;color:'+(up?'#7ee2a8':'#f2b8ba')+';font-weight:500">'+(up?'&#9650;':'&#9660;')+' vs '+d.nuevosPrev+' sem. previa</div>';
+    }
+
+    const kpiCard=(label,val,sub,color)=>'<div style="background:#fff;border:1px solid '+LN+';border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(27,33,56,.04)">'+
+      '<div style="font-family:'+MONO+';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:'+MU+'">'+label+'</div>'+
+      '<div style="font-family:'+ARCH+';font-weight:800;font-size:36px;line-height:1;color:'+(color||INK)+';margin-top:8px">'+val+'</div>'+
+      '<div style="font-size:11px;color:'+MU+';margin-top:5px">'+sub+'</div></div>';
+
+    const estadoPill = '<div style="display:inline-flex;align-items:center;gap:6px;background:#eef7f1;border:1px solid #cfe8d9;color:'+GREEN+';font-family:'+MONO+';font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;padding:5px 10px;border-radius:999px;font-weight:600">'+
+      '<span style="width:7px;height:7px;border-radius:50%;background:'+GREEN+';display:inline-block"></span><span>'+esc(d.corteLabel||"")+'</span></div>';
+
+    const per = String(d.periodo||"");
+    const perSemana = (per.split("·")[0]||per).trim();
+    const perRango = (per.split("·")[1]||"").trim();
+
+    document.getElementById("sheet").innerHTML =
+    /* encabezado */
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid '+NAVY+';padding-bottom:16px">'+
+      '<div>'+
+        '<div style="font-family:'+MONO+';font-size:10.5px;letter-spacing:2.2px;text-transform:uppercase;color:'+MU+'">HydraTech Group · Reporte semanal de prospecci&oacute;n</div>'+
+        '<div style="font-family:'+ARCH+';font-weight:800;font-size:34px;line-height:1.05;color:'+INK+';margin-top:9px">'+esc((d.vendedor&&d.vendedor.nombre)||"—")+'</div>'+
+        '<div style="font-family:'+MONO+';font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:'+MU+';margin-top:6px">Vendedor · Servicios de mangueras e hidr&aacute;ulica industrial</div>'+
       '</div>'+
-      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:'+MU+';margin-bottom:12px">Embudo por etapa &#183; foto actual</div>'+
-      stages;
+      '<div style="text-align:right;flex-shrink:0;padding-top:4px">'+estadoPill+
+        '<div style="font-family:'+ARCH+';font-weight:700;font-size:22px;color:'+NAVY+';margin-top:12px">'+esc(perSemana)+'</div>'+
+        '<div style="font-size:12.5px;color:'+MU+';margin-top:2px">'+esc(perRango)+'</div>'+
+      '</div></div>'+
+
+    /* 1 · KPIs */
+    '<div style="display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:12px;margin-top:20px">'+
+      '<div style="background:'+NAVY+';border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(27,33,56,.06)">'+
+        '<div style="font-family:'+MONO+';font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:#aeb8de">Prospectos nuevos · esta semana</div>'+
+        '<div style="display:flex;align-items:baseline;gap:9px;margin-top:8px">'+
+          '<div style="font-family:'+ARCH+';font-weight:800;font-size:46px;line-height:1;color:#fff">'+(d.nuevosLeads||0)+'</div>'+delta+'</div>'+
+        '<div style="font-size:11.5px;color:#c3cbe8;margin-top:4px">Empresas contactadas por primera vez</div></div>'+
+      kpiCard("Citas logradas", a.citas||0, "reuniones agendadas")+
+      kpiCard("Leads en embudo", d.totalEmbudo||0, "total activos")+
+      kpiCard("Avances registrados", a.avances||0, "movimientos esta semana", GREEN)+
+    '</div>'+
+
+    /* 2 · embudo */
+    '<div style="margin-top:24px">'+
+      '<div style="display:flex;align-items:baseline;justify-content:space-between">'+
+        '<div style="font-family:'+ARCH+';font-weight:700;font-size:16px;color:'+INK+'">El embudo · abrir la puerta</div>'+
+        '<div style="font-family:'+MONO+';font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:'+MU+'"><span style="color:'+GREEN+'">&#9650; verde</span> = entraron esta semana</div></div>'+
+      '<div style="border:1px solid '+LN+';border-radius:14px;padding:18px 22px 20px;margin-top:10px;box-shadow:0 1px 2px rgba(27,33,56,.04)">'+stages+'</div>'+
+    '</div>'+
+
+    /* 3 + 4 */
+    '<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-top:22px;align-items:start">'+
+      '<div>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="width:9px;height:9px;border-radius:50%;background:'+RED+';display:inline-block"></span>'+
+          '<div style="font-family:'+ARCH+';font-weight:700;font-size:16px;color:'+INK+'">Estancados / sin acci&oacute;n</div>'+
+          '<div style="font-family:'+MONO+';font-size:10px;background:#fdecec;color:'+RED+';padding:2px 8px;border-radius:999px;font-weight:600">'+estL.length+' leads</div></div>'+
+        '<div style="font-size:11.5px;color:'+MU+';margin-top:3px">'+(nCrit?'Requieren acci&oacute;n esta semana. Prioriza los que esperan autorizaci&oacute;n de alta.':'Leads con m&aacute;s de 7 d&iacute;as sin cambio de etapa.')+'</div>'+
+        '<div style="border:1px solid '+LN+';border-radius:14px;margin-top:10px;overflow:hidden;box-shadow:0 1px 2px rgba(27,33,56,.04)">'+estHtml+'</div>'+
+      '</div>'+
+      '<div>'+
+        '<div style="font-family:'+ARCH+';font-weight:700;font-size:16px;color:'+INK+'">Actividad de la semana</div>'+
+        '<div style="font-size:11.5px;color:'+MU+';margin-top:3px">Lo que hizo para empujar el embudo.</div>'+
+        '<div style="border:1px solid '+LN+';border-radius:14px;margin-top:10px;padding:6px 16px;box-shadow:0 1px 2px rgba(27,33,56,.04)">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef0f5"><div style="font-size:13px;color:'+SUB+'">Llamadas de prospecci&oacute;n</div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+INK+'">'+(a.llamadas||0)+'</div></div>'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef0f5"><div style="font-size:13px;color:'+SUB+'">Visitas a planta</div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+INK+'">'+(a.visitas||0)+'</div></div>'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #eef0f5"><div style="font-size:13px;color:'+SUB+'">Reuniones / presentaciones</div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+INK+'">'+(a.citas||0)+'</div></div>'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0"><div style="font-size:13px;color:'+SUB+'">Solicitudes de alta iniciadas</div><div style="font-family:'+ARCH+';font-weight:800;font-size:22px;color:'+NAVY+'">'+(a.altas||0)+'</div></div>'+
+        '</div></div>'+
+    '</div>'+
+
+    /* notas y firmas */
+    '<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-top:20px;align-items:end">'+
+      '<div><div style="font-family:'+MONO+';font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:'+MU+'">Notas de direcci&oacute;n</div>'+
+        '<div style="border:1px solid '+LN+';border-radius:12px;height:56px;margin-top:8px"></div></div>'+
+      '<div style="display:flex;gap:22px">'+
+        '<div style="flex:1"><div style="border-top:1.5px solid '+SUB+';padding-top:6px;font-family:'+MONO+';font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+MU+'">Vendedor</div></div>'+
+        '<div style="flex:1"><div style="border-top:1.5px solid '+SUB+';padding-top:6px;font-family:'+MONO+';font-size:9px;letter-spacing:1px;text-transform:uppercase;color:'+MU+'">Direcci&oacute;n</div></div>'+
+      '</div></div>'+
+
+    '<div style="display:flex;justify-content:space-between;margin-top:16px;font-family:'+MONO+';font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#a3abbd;border-top:1px solid '+LN+';padding-top:10px">'+
+      '<span>HydraTech Group · Herramienta interna de direcci&oacute;n</span><span>Generado '+hoyFmt()+'</span></div>';
   }
 
-  /* ---------- semana ISO para convertir número de semana en offset ---------- */
-  function isoWeek(d){ const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dn=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-dn); const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil((((t-ys)/86400000)+1)/7); }
-
+  /* ============================================================
+     carga de datos desde Odoo (con fallback a ejemplo)
+  ============================================================ */
   function cambiarVista(){ cargar(); }
 
-  /* ---------- carga de datos desde Odoo (con fallback) ---------- */
   async function cargar(){
     const vista = document.getElementById("sel-vista").value;
     const vs = document.getElementById("sel-vendedor");
     const nombreVend = vs.options[vs.selectedIndex] ? vs.options[vs.selectedIndex].textContent : "";
-    const w = document.getElementById("sel-semana").value || SAMPLE.semana;
+    const w = document.getElementById("sel-semana").value || String(isoWeek(new Date()));
 
     if(vista==="prospectos"){
       // el embudo usa OFFSET de semana (0 = en curso) y filtra por NOMBRE de vendedor
@@ -341,36 +502,37 @@
       try{
         const res = await fetch("/api/odoo-crm-embudo?"+params.toString());
         const d = await res.json();
-        if(d && d.ok){ renderEmbudo(d); return; }
-        renderEmbudo(EMBUDO_SAMPLE);
-      }catch(e){ renderEmbudo(EMBUDO_SAMPLE); }
+        if(d && d.ok){ renderProspeccion(d); return; }
+        renderProspeccion(SAMPLE_EMBUDO);
+      }catch(e){ renderProspeccion(SAMPLE_EMBUDO); }
       return;
     }
 
-    // vista comercial (la de siempre)
+    // vista comercial (oportunidades)
     const v = vs.value || "";
     try{
       const res = await fetch("/api/odoo-crm-reporte?vendedor="+encodeURIComponent(v)+"&semana="+encodeURIComponent(w));
       const d = await res.json();
-      if(d && d.ok && d.reporte) { render(d.reporte); return; }
-      render(SAMPLE);
+      if(d && d.ok && d.reporte){ renderComercial(d.reporte); return; }
+      renderComercial(SAMPLE_COMERCIAL);
     }catch(e){
-      render(SAMPLE);
+      renderComercial(SAMPLE_COMERCIAL);
     }
   }
 
   function initControls(){
-    // Semanas (ejemplo: últimas 8). En producción las puebla la función o las generas por fecha.
+    // Semanas: la actual y las 7 previas, calculadas por fecha.
     const ws = document.getElementById("sel-semana");
-    for(let n=26;n>=19;n--){const o=document.createElement("option");o.value=n;o.textContent="Semana "+n;ws.appendChild(o);}
+    const cur = isoWeek(new Date());
+    for(let n=cur;n>=Math.max(1,cur-7);n--){const o=document.createElement("option");o.value=n;o.textContent="Semana "+n+(n===cur?" (en curso)":"");ws.appendChild(o);}
     // Vendedores desde Odoo (misma función que el cotizador). Fallback a ejemplo.
     const vs = document.getElementById("sel-vendedor");
     fetch("/api/odoo-empleados").then(r=>r.json()).then(d=>{
       if(d&&d.ok&&Array.isArray(d.empleados)&&d.empleados.length){
         d.empleados.forEach(e=>{const o=document.createElement("option");o.value=e.id;o.textContent=e.name;vs.appendChild(o);});
-      }else{const o=document.createElement("option");o.value="";o.textContent=SAMPLE.vendedor;vs.appendChild(o);}
+      }else{const o=document.createElement("option");o.value="";o.textContent=SAMPLE_COMERCIAL.vendedor;vs.appendChild(o);}
       cargar();
-    }).catch(()=>{const o=document.createElement("option");o.value="";o.textContent=SAMPLE.vendedor;vs.appendChild(o);cargar();});
+    }).catch(()=>{const o=document.createElement("option");o.value="";o.textContent=SAMPLE_COMERCIAL.vendedor;vs.appendChild(o);cargar();});
   }
 
   initControls();
