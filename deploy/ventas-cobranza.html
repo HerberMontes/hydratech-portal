@@ -235,7 +235,8 @@
     let chips="";
     chips += v.reporteAprobado ? '<span class="chip ok">Reporte &#10003;</span>'
            : v.evidenciaAdjunta ? '<span class="chip ok">Remisión &#10003;</span>'
-           : '<span class="chip bad">Falta evidencia</span>';
+           : (v.paso>0 ? '<span class="chip">Entrega histórica</span>'
+                       : '<span class="chip bad">Falta evidencia</span>');
     chips += v.solped ? '<span class="chip ok">SOLPED '+esc(v.solped)+'</span>' : '<span class="chip warn">Falta SOLPED</span>';
     if(v.oc) chips += '<span class="chip ok">OC '+esc(v.oc)+'</span>';
     if(v.acuse) chips += '<span class="chip ok">Acuse &#10003;</span>';
