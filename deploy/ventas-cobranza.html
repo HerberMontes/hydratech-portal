@@ -139,6 +139,17 @@
 
   <div class="kpis" id="kpis"></div>
   <div class="filters" id="filters"></div>
+  <div class="fila-controles" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:-4px 0 14px">
+    <select id="f-cliente" style="font:inherit;font-size:13px;background:#fff;border:1.5px solid var(--line2);border-radius:9px;padding:8px 11px;color:var(--ink);max-width:280px">
+      <option value="">Todos los clientes</option>
+    </select>
+    <input id="f-buscar" type="text" placeholder="Buscar folio, cliente, SOLPED, OC…" style="flex:1;min-width:200px;max-width:340px;font:inherit;font-size:13px;background:#fff;border:1.5px solid var(--line2);border-radius:9px;padding:8px 11px;color:var(--ink)">
+    <select id="f-orden" style="font:inherit;font-size:13px;background:#fff;border:1.5px solid var(--line2);border-radius:9px;padding:8px 11px;color:var(--ink)">
+      <option value="urgencia">Ordenar: urgencia</option>
+      <option value="monto">Ordenar: monto mayor</option>
+      <option value="dias">Ordenar: más días atorada</option>
+    </select>
+  </div>
   <div id="list"></div>
 
   <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -208,14 +219,31 @@
   const findV=folio=>VENTAS.find(v=>v.folio===folio);
 
   let filtro="todos";
-  function pasa(v){
+  // Vence en ≤7 días (o ya vencida): acuse subido, crédito de Odoo corriendo, sin pago
+  function venceSemana(v){
+    return STEPS[v.paso].key==="acuse" && v.acuse && !v.pago && v.diasParaPago!=null && v.diasParaPago<=7;
+  }
+  const norm=(x)=>String(x==null?"":x).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  function pasaEstado(v){
     if(filtro==="archivadas") return v.archivada;
     if(v.archivada) return false;
     if(filtro==="todos") return true;
     if(filtro==="foco") return focoRojo(v);
     if(filtro==="oc") return STEPS[v.paso].key==="oc";
     if(filtro==="pagar") return STEPS[v.paso].key==="acuse" && !v.pago;
+    if(filtro==="vence") return venceSemana(v);
     if(filtro==="abiertos") return !STEPS[v.paso].done;
+    return true;
+  }
+  function pasa(v){
+    if(!pasaEstado(v)) return false;
+    const cli=(document.getElementById("f-cliente")||{}).value||"";
+    if(cli && v.cliente!==cli) return false;
+    const q=norm((document.getElementById("f-buscar")||{}).value||"").trim();
+    if(q){
+      const blob=norm(v.folio+" "+v.cliente+" "+(v.solped||"")+" "+(v.oc||""));
+      if(blob.indexOf(q)<0) return false;
+    }
     return true;
   }
 
@@ -310,7 +338,7 @@
     const montoPagar=porPagar.reduce((a,v)=>a+v.monto,0);
     const promOC = espOC.length? Math.round(espOC.reduce((a,v)=>a+v.dias,0)/espOC.length):0;
     // La tarjeta grande refleja EL FILTRO SELECCIONADO (sumatoria de lo que se ve)
-    const NOMBRE_FILTRO={todos:"pendiente de cobrar",foco:"en foco rojo",oc:"esperando OC",pagar:"por pagar",abiertos:"en proceso",archivadas:"archivadas"};
+    const NOMBRE_FILTRO={todos:"pendiente de cobrar",foco:"en foco rojo",oc:"esperando OC",pagar:"por pagar",vence:"vencen esta semana",abiertos:"en proceso",archivadas:"archivadas"};
     const sumaSel=(rowsSel||[]).reduce((a,v)=>a+(v.monto||0),0);
     const nSel=(rowsSel||[]).length;
     const grandeCls = (filtro==="foco"&&nSel) ? "red" : "blue";
@@ -336,6 +364,7 @@
       ["foco","Foco rojo",VENTAS.filter(focoRojo).length],
       ["oc","Esperando OC",VENTAS.filter(v=>nA(v)&&STEPS[v.paso].key==="oc").length],
       ["pagar","Por pagar",VENTAS.filter(v=>nA(v)&&STEPS[v.paso].key==="acuse"&&!v.pago).length],
+      ["vence","Vence esta semana",VENTAS.filter(v=>nA(v)&&venceSemana(v)).length],
       ["abiertos","En proceso",VENTAS.filter(v=>nA(v)&&!STEPS[v.paso].done).length],
       ["archivadas","Archivadas",VENTAS.filter(v=>v.archivada).length],
     ];
@@ -344,7 +373,10 @@
 
   function render(){
     // orden: foco rojo primero, luego por días atorado desc
+    const modoOrden=(document.getElementById("f-orden")||{}).value||"urgencia";
     const rows=VENTAS.filter(pasa).sort((a,b)=>{
+      if(modoOrden==="monto") return (b.monto||0)-(a.monto||0);
+      if(modoOrden==="dias") return (b.dias||0)-(a.dias||0);
       const fa=focoRojo(a)?1:0, fb=focoRojo(b)?1:0;
       if(fb-fa) return fb-fa;
       return b.dias-a.dias;
@@ -445,9 +477,23 @@
   function cargar(){
     fetch("/api/cobranza-listar")
       .then(r=>{ if(!r.ok) throw 0; return r.json(); })
-      .then(j=>{ if(!j||!j.ok) throw 0; usandoDemo=false; VENTAS=j.ventas||[]; setBadge(); render(); })
-      .catch(()=>{ usandoDemo=true; VENTAS=SAMPLE.slice(); setBadge(); render(); });
+      .then(j=>{ if(!j||!j.ok) throw 0; usandoDemo=false; VENTAS=j.ventas||[]; poblarClientes(); setBadge(); render(); })
+      .catch(()=>{ usandoDemo=true; VENTAS=SAMPLE.slice(); poblarClientes(); setBadge(); render(); });
   }
+
+  function poblarClientes(){
+    const sel=document.getElementById("f-cliente"); if(!sel) return;
+    const previa=sel.value;
+    const cuenta={};
+    VENTAS.filter(v=>!v.archivada).forEach(v=>{ cuenta[v.cliente]=(cuenta[v.cliente]||0)+1; });
+    const nombres=Object.keys(cuenta).sort((a,b)=>a.localeCompare(b,"es"));
+    sel.innerHTML='<option value="">Todos los clientes ('+nombres.length+')</option>'+
+      nombres.map(n=>'<option value="'+esc(n)+'">'+esc(n)+' ('+cuenta[n]+')</option>').join("");
+    if(previa && cuenta[previa]!=null) sel.value=previa;
+  }
+  document.getElementById("f-cliente").addEventListener("change",render);
+  document.getElementById("f-orden").addEventListener("change",render);
+  let tBuscar; document.getElementById("f-buscar").addEventListener("input",()=>{ clearTimeout(tBuscar); tBuscar=setTimeout(render,200); });
 
   window.onAuthReady=function(){ cargar(); };
   if(!window.REQUIRE_ROLE){ document.addEventListener("DOMContentLoaded", cargar); }
