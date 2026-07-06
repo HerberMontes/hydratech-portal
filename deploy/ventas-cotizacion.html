@@ -139,6 +139,13 @@
       </div>
     </section>
 
+    <!-- 1a. LEVANTAMIENTOS del configurador pendientes de cotizar -->
+    <section class="card" id="lev-card" style="display:none;border:1.5px solid #c9a14a;background:#fffdf6">
+      <div class="card-title">Levantamientos por cotizar <span class="opt" id="lev-n"></span></div>
+      <div id="lev-lista" style="font-size:13px;color:#4a5267"></div>
+      <p class="help" style="margin-top:10px">Los vendedores técnicos los capturan en el Configurador de mangueras; al usarlos aquí, el formulario se llena solo y tú completas términos, tiempo de entrega y vendedor.</p>
+    </section>
+
     <!-- 1b. Al elegir ORDEN CONFIRMADA: dos caminos -->
     <section class="card" id="orden-opciones" style="display:none">
       <div class="card-title">¿Cómo quieres crear la orden?</div>
@@ -280,12 +287,13 @@
     /* ================= TIPO (cotización / orden) ================= */
     const seg=$("tipo-doc"), ayuda=$("ayuda-tipo"), btnG=$("btn-guardar");
     // Secciones del formulario (todas las tarjetas excepto opciones/lista) + barra sticky
-    const FORM_SECS=[...document.querySelectorAll("main section.card")].filter(x=>x.id!=="orden-opciones"&&x.id!=="cots-card");
+    const FORM_SECS=[...document.querySelectorAll("main section.card")].filter(x=>x.id!=="orden-opciones"&&x.id!=="cots-card"&&x.id!=="lev-card");
     FORM_SECS.push(document.querySelector(".acciones"));
     let modoOrden="nueva", cotsCargadas=false;
     function aplicarVista(){
       const enExistente = (tipo==="orden" && modoOrden==="existente");
       $("orden-opciones").style.display = tipo==="orden" ? "block" : "none";
+      $("lev-card").style.display = (tipo==="cotizacion" && LEVS.length) ? "block" : "none";
       $("cots-card").style.display = enExistente ? "block" : "none";
       FORM_SECS.forEach(x=>{ if(x) x.style.display = enExistente ? "none" : ""; });
       if(enExistente && !cotsCargadas){ cotsCargadas=true; cargarCots(); }
@@ -440,6 +448,11 @@
         if(d&&d.ok){
           mostrar('<span class="chk">✓</span> '+(d.confirmada?"Orden CONFIRMADA":"Cotización guardada")+' en Odoo · <span class="folio">Folio '+d.folio+'</span>'+(d.link?' · <a href="'+d.link+'" target="_blank">ver en Odoo</a>':"")+(d.avisoConfirmacion?('<br><span style="color:#8a6a1f">'+d.avisoConfirmacion+"</span>"):""),true);
           if(cotsCargadas) cargarCots(); // si la lista ya se abrió, se actualiza
+          if(levAttId){ // el levantamiento usado queda marcado y ligado al folio
+            fetch("/api/levantamientos",{method:"POST",headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({action:"cotizado",attId:levAttId,folio:d.folio})}).catch(()=>{});
+            levAttId=0; cargarLevs();
+          }
         } else mostrar("⚠ NO se guardó: "+((d&&d.error)||"error del servidor"),false);
       }catch(e){ mostrar("⚠ Sin conexión — NO se guardó. Intenta de nuevo.",false); }
       btnG.disabled=false; btnG.textContent=txt;
@@ -453,7 +466,57 @@
       const tr=cuerpo.querySelector("tr.linea");
       tr.querySelector(".l-desc").value=""; tr.querySelector(".l-cant").value=""; tr.querySelector(".l-precio").value=""; tr.dataset.productId="";
       $("det-tiempo").value=""; $("det-notas").value=""; $("det-entrega").value="";
+      levAttId=0;
       res.style.display="none"; recalc();
+    });
+
+    /* ============ LEVANTAMIENTOS del configurador (puente técnico→asistente) ============ */
+    let levAttId=0, LEVS=[];
+    async function cargarLevs(){
+      try{
+        const d=await (await fetch("/api/levantamientos")).json();
+        LEVS=(d&&d.ok&&d.levantamientos)||[];
+      }catch(e){ LEVS=[]; }
+      $("lev-card").style.display=LEVS.length?"block":"none";
+      $("lev-n").textContent=LEVS.length?("· "+LEVS.length+" pendiente"+(LEVS.length===1?"":"s")):"";
+      $("lev-lista").innerHTML=LEVS.map(l=>'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 4px;border-bottom:1px solid #f3ecd8">'
+        +'<span style="flex:1;min-width:180px"><b style="color:#1b2138">'+l.cliente+'</b> · '+ (l.nombre||"Levantamiento") +'</span>'
+        +'<span style="color:#717a90;font-size:12px">'+(l.autor||"")+' · '+(l.fecha||"")+' · '+l.lineas.length+' línea'+(l.lineas.length===1?"":"s")+'</span>'
+        +'<span style="font-family:\'IBM Plex Mono\',monospace;font-weight:600">'+money(l.total||0)+'</span>'
+        +'<button type="button" class="lev-usar" data-att="'+l.attId+'" style="font:600 12px \'IBM Plex Sans\',sans-serif;background:#8a6a1f;color:#fff;border:0;border-radius:7px;padding:7px 13px;cursor:pointer">Cotizar este levantamiento</button>'
+        +'</div>').join("");
+    }
+    async function seleccionarCliente(id, nombre){
+      partnerId=Number(id); buscar.value=nombre; lista.style.display="none"; errCli.style.display="none";
+      $("cli-terminos").innerHTML='<option value="">Cargando…</option>';
+      try{
+        const d=await (await fetch("/api/odoo-venta-crear?cliente="+partnerId)).json();
+        if(d&&d.ok){
+          $("cli-rfc").textContent=d.rfc||"—";
+          $("cli-terminos").innerHTML=(d.terminos||[]).map(t=>'<option value="'+t.id+'"'+(t.id===d.terminoDefault?" selected":"")+">"+t.name+"</option>").join("")||'<option value="">(sin términos en Odoo)</option>';
+        }
+      }catch(e){ $("cli-terminos").innerHTML='<option value="">Sin conexión</option>'; }
+    }
+    $("lev-lista").addEventListener("click",async(e)=>{
+      const b=e.target.closest(".lev-usar"); if(!b) return;
+      const l=LEVS.find(x=>x.attId===Number(b.dataset.att)); if(!l) return;
+      levAttId=l.attId;
+      await seleccionarCliente(l.partnerId, l.cliente);
+      // llenar las líneas (descripción libre con el precio del configurador)
+      cuerpo.querySelectorAll("tr.linea").forEach((tr,i)=>{ if(i) tr.remove(); });
+      l.lineas.forEach((li,i)=>{
+        let tr;
+        if(i===0){ tr=cuerpo.querySelector("tr.linea"); }
+        else { tr=PLANTILLA_FILA.cloneNode(true); cuerpo.appendChild(tr); prepararFila(tr); }
+        tr.dataset.productId="";
+        tr.querySelector(".l-desc").value=li.desc;
+        tr.querySelector(".l-cant").value=li.qty;
+        tr.querySelector(".l-precio").value=money(li.precio);
+      });
+      $("det-notas").value=("Levantamiento: "+(l.nombre||"")+(l.autor?(" · por "+l.autor):"")).trim();
+      recalc();
+      mostrar("Levantamiento de <b>"+l.cliente+"</b> cargado. Completa términos, TIEMPO DE ENTREGA y vendedor, y guarda la cotización.", true);
+      window.scrollTo({top:0,behavior:"smooth"});
     });
 
     /* ================= COTIZACIONES ABIERTAS (de Odoo) ================= */
@@ -490,7 +553,7 @@
     });
     $("cots-refrescar").addEventListener("click",cargarCots);
 
-    recalc(); res.style.display="none"; aplicarVista();
+    recalc(); res.style.display="none"; aplicarVista(); cargarLevs();
   })();
   </script>
 
