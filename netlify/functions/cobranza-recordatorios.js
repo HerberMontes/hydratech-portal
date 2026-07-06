@@ -25,6 +25,8 @@ import { executeKw, checkToken, json } from "./lib/odoo.js";
 const DESDE = process.env.REPORTES_DESDE || "";
 const EXTRA = (process.env.COBRANZA_EXTRA || "").split(",").map((s) => s.trim()).filter(Boolean);
 const CORREO_PRUEBA = (process.env.COBRANZA_CORREO_PRUEBA || "").trim();
+// Días de crédito por defecto cuando la orden no tiene Términos de pago en Odoo
+const CREDITO_DEFAULT = parseInt(process.env.COBRANZA_CREDITO_DIAS || "30", 10) || 30;
 const CC = (process.env.COBRANZA_CC || "").trim();
 // Datos del bloque "Datos para pago" y contacto de la firma (Netlify → env vars)
 const BANCO = (process.env.COBRANZA_BANCO || "").trim();
@@ -346,9 +348,14 @@ export default async (req) => {
     const termIds = [...new Set(orders.map((o) => Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null).filter(Boolean))];
     const daysByTerm = {};
     if (termIds.length) {
-      const lines = await executeKw("account.payment.term.line", "search_read",
-        [[["payment_id", "in", termIds]]], { fields: ["payment_id", "nb_days", "days"], limit: 500 }).catch(() => []);
-      for (const l of lines) {
+      // El campo cambió de nombre entre versiones de Odoo (nb_days en 17+,
+      // days en 16-). Pedir ambos a la vez truena la consulta completa, así
+      // que se intenta uno y luego el otro.
+      let lines = await executeKw("account.payment.term.line", "search_read",
+        [[["payment_id", "in", termIds]]], { fields: ["payment_id", "nb_days"], limit: 500 }).catch(() => null);
+      if (!lines) lines = await executeKw("account.payment.term.line", "search_read",
+        [[["payment_id", "in", termIds]]], { fields: ["payment_id", "days"], limit: 500 }).catch(() => null);
+      for (const l of (lines || [])) {
         const tid = Array.isArray(l.payment_id) ? l.payment_id[0] : l.payment_id;
         const d = Number(l.nb_days != null ? l.nb_days : l.days) || 0;
         daysByTerm[tid] = Math.max(daysByTerm[tid] || 0, d);
@@ -372,18 +379,23 @@ export default async (req) => {
 
     /* 5) Órdenes POR PAGAR con acuse y su vencimiento */
     const porCliente = {}; // partnerId -> { nombre, ordenes:[] }
+    const diag = { ordenesEnUniverso: orders.length, sinAcuse: 0, yaPagadas: 0, sinFechaAcuse: 0, consideradas: 0 };
     for (const o of orders) {
       const cob = cobByOrder[o.id] || {};
       const pagado = !!(cob.pago && cob.pago.complemento) || !!cob.pago; // con pago registrado ya no se recuerda
       const tieneAcuse = !!acuseByOrder[o.id] || !!cob.acuseFecha;
-      if (!tieneAcuse || pagado || cob.archivada) continue;
+      if (!tieneAcuse) { diag.sinAcuse++; continue; }
+      if (pagado) { diag.yaPagadas++; continue; }
+      if (cob.archivada) continue;
       const termId = Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null;
-      const plazo = termId != null && daysByTerm[termId] != null ? daysByTerm[termId] : null;
-      if (!cob.acuseFecha || plazo == null) continue; // sin fecha de acuse o sin términos no hay vencimiento calculable
+      // Sin términos de pago en la orden: crédito por defecto (COBRANZA_CREDITO_DIAS, 30 si no se define)
+      const plazo = termId != null && daysByTerm[termId] != null ? daysByTerm[termId] : CREDITO_DEFAULT;
+      if (!cob.acuseFecha) { diag.sinFechaAcuse++; continue; }
       const fechaPago = addDays(cob.acuseFecha, plazo);
       const fp = parseDate(fechaPago);
       const diasParaPago = fp != null ? Math.round((fp - now) / DAY) : null;
       if (diasParaPago == null) continue;
+      diag.consideradas++;
       const pid = Array.isArray(o.partner_id) ? o.partner_id[0] : 0;
       const pname = Array.isArray(o.partner_id) ? o.partner_id[1] : "—";
       (porCliente[pid] = porCliente[pid] || { partnerId: pid, cliente: pname, ordenes: [] }).ordenes.push({
@@ -500,6 +512,15 @@ export default async (req) => {
         + '<body style="margin:0;padding:0 0 60px;background:#dfe3ec">'
         + '<div style="max-width:680px;margin:0 auto;padding:22px 16px 4px;font:800 20px Arial;color:#141829">Vista previa de recordatorios · ' + aEnviar.length + ' correo(s) por enviar</div>'
         + '<div style="max-width:680px;margin:0 auto;padding:0 16px;font:400 13px Arial;color:#4a5267">Esto es EXACTAMENTE lo que recibirá cada cliente. Para enviarlos: misma dirección con <b>?enviar=1</b>. Nada se ha enviado todavía.</div>'
+        + (clientes.length ? "" :
+          '<div style="max-width:680px;margin:26px auto;padding:16px 20px;background:#fff;border:1.5px solid #e7d5a6;border-radius:10px;font:400 13px Arial;color:#1b2138">'
+          + '<b>No hay clientes con órdenes por pagar calculables.</b> Diagnóstico: '
+          + diag.ordenesEnUniverso + ' órdenes en cobranza · '
+          + diag.sinAcuse + ' sin acuse (aún no llegan al paso de pago) · '
+          + diag.yaPagadas + ' ya con pago registrado · '
+          + diag.sinFechaAcuse + ' con acuse pero SIN FECHA de acuse (edítala desde la pantalla de cobranza) · '
+          + diag.consideradas + ' consideradas.'
+          + '</div>')
         + bloques
         + scriptEnviar
         + '</body></html>';

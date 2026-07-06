@@ -95,11 +95,15 @@ export default async (req) => {
     const termIds = [...new Set(orders.map((o) => Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null).filter(Boolean))];
     const daysByTerm = {};
     if (termIds.length) {
-      const lines = await executeKw("account.payment.term.line", "search_read",
-        [[["payment_id", "in", termIds]]], { fields: ["payment_id", "nb_days", "days"] }).catch(() => []);
-      for (const l of lines) {
+      // nb_days (Odoo 17+) o days (Odoo 16-): pedir ambos a la vez truena la
+      // consulta completa; se intenta uno y luego el otro.
+      let lines = await executeKw("account.payment.term.line", "search_read",
+        [[["payment_id", "in", termIds]]], { fields: ["payment_id", "nb_days"], limit: 500 }).catch(() => null);
+      if (!lines) lines = await executeKw("account.payment.term.line", "search_read",
+        [[["payment_id", "in", termIds]]], { fields: ["payment_id", "days"], limit: 500 }).catch(() => null);
+      for (const l of (lines || [])) {
         const tid = Array.isArray(l.payment_id) ? l.payment_id[0] : l.payment_id;
-        const d = Number(l.nb_days != null ? l.nb_days : (l.days != null ? l.days : 0)) || 0;
+        const d = Number(l.nb_days != null ? l.nb_days : l.days) || 0;
         daysByTerm[tid] = Math.max(daysByTerm[tid] || 0, d);
       }
     }
@@ -143,7 +147,9 @@ export default async (req) => {
       else paso = 0;
 
       const termId = Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null;
-      const plazoDias = termId != null && daysByTerm[termId] != null ? daysByTerm[termId] : null;
+      // Sin términos de pago en la orden: crédito por defecto (COBRANZA_CREDITO_DIAS, 30)
+      const plazoDias = termId != null && daysByTerm[termId] != null ? daysByTerm[termId]
+        : (parseInt(process.env.COBRANZA_CREDITO_DIAS || "30", 10) || 30);
       let dias = 0, fechaPago = "", diasParaPago = null, focoRojo = false;
 
       if (paso === 0) {
