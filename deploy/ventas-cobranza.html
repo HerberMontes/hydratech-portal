@@ -235,8 +235,8 @@
     if(filtro==="abiertos") return !STEPS[v.paso].done;
     return true;
   }
-  function pasa(v){
-    if(!pasaEstado(v)) return false;
+  // Refinamientos (cliente + búsqueda): recortan TODO — tarjetas, chips y lista
+  function refinado(v){
     const cli=(document.getElementById("f-cliente")||{}).value||"";
     if(cli && v.cliente!==cli) return false;
     const q=norm((document.getElementById("f-buscar")||{}).value||"").trim();
@@ -246,6 +246,7 @@
     }
     return true;
   }
+  function pasa(v){ return refinado(v) && pasaEstado(v); }
 
   function stepper(v){
     return '<div class="steps">'+STEPS.map((s,i)=>{
@@ -329,10 +330,11 @@
   }
 
   function kpis(rowsSel){
-    const abiertas=VENTAS.filter(v=>!v.archivada && !STEPS[v.paso].done);
-    const foco=VENTAS.filter(focoRojo);
-    const espOC=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="oc");
-    const porPagar=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="acuse" && !v.pago);
+    const BASE=VENTAS.filter(refinado); // obedece cliente + búsqueda
+    const abiertas=BASE.filter(v=>!v.archivada && !STEPS[v.paso].done);
+    const foco=BASE.filter(focoRojo);
+    const espOC=BASE.filter(v=>!v.archivada && STEPS[v.paso].key==="oc");
+    const porPagar=BASE.filter(v=>!v.archivada && STEPS[v.paso].key==="acuse" && !v.pago);
     const montoPend=abiertas.reduce((a,v)=>a+(v.monto||0),0);   // TODO lo pendiente de cobrar
     const montoFoco=foco.reduce((a,v)=>a+(v.monto||0),0);
     const montoPagar=porPagar.reduce((a,v)=>a+v.monto,0);
@@ -342,8 +344,11 @@
     const sumaSel=(rowsSel||[]).reduce((a,v)=>a+(v.monto||0),0);
     const nSel=(rowsSel||[]).length;
     const grandeCls = (filtro==="foco"&&nSel) ? "red" : "blue";
+    const cliSel=(document.getElementById("f-cliente")||{}).value||"";
+    const qSel=((document.getElementById("f-buscar")||{}).value||"").trim();
+    const sufijo=(cliSel?" · "+esc(cliSel):"")+(qSel?" · “"+esc(qSel)+"”":"");
     const grande = kpi(grandeCls, money(filtro==="todos"?montoPend:sumaSel),
-      (NOMBRE_FILTRO[filtro]||filtro)+" · "+(filtro==="todos"?abiertas.length+" ventas":nSel+(nSel===1?" orden":" órdenes")), "todos");
+      (NOMBRE_FILTRO[filtro]||filtro)+" · "+(filtro==="todos"?abiertas.length+" ventas":nSel+(nSel===1?" orden":" órdenes"))+sufijo, "todos");
     const montoOC = espOC.reduce((a,v)=>a+(v.monto||0),0);
     return grande+
       kpi(foco.length?"red":"blue",money(montoFoco),foco.length+" en foco rojo (OC o pago vencidos)","foco")+
@@ -358,15 +363,16 @@
   }
 
   function filtros(){
+    const BASE=VENTAS.filter(refinado); // obedece cliente + búsqueda
     const nA=v=>!v.archivada;
     const f=[
-      ["todos","Todas",VENTAS.filter(nA).length],
-      ["foco","Foco rojo",VENTAS.filter(focoRojo).length],
-      ["oc","Esperando OC",VENTAS.filter(v=>nA(v)&&STEPS[v.paso].key==="oc").length],
-      ["pagar","Por pagar",VENTAS.filter(v=>nA(v)&&STEPS[v.paso].key==="acuse"&&!v.pago).length],
-      ["vence","Vence esta semana",VENTAS.filter(v=>nA(v)&&venceSemana(v)).length],
-      ["abiertos","En proceso",VENTAS.filter(v=>nA(v)&&!STEPS[v.paso].done).length],
-      ["archivadas","Archivadas",VENTAS.filter(v=>v.archivada).length],
+      ["todos","Todas",BASE.filter(nA).length],
+      ["foco","Foco rojo",BASE.filter(focoRojo).length],
+      ["oc","Esperando OC",BASE.filter(v=>nA(v)&&STEPS[v.paso].key==="oc").length],
+      ["pagar","Por pagar",BASE.filter(v=>nA(v)&&STEPS[v.paso].key==="acuse"&&!v.pago).length],
+      ["vence","Vence esta semana",BASE.filter(v=>nA(v)&&venceSemana(v)).length],
+      ["abiertos","En proceso",BASE.filter(v=>nA(v)&&!STEPS[v.paso].done).length],
+      ["archivadas","Archivadas",BASE.filter(v=>v.archivada).length],
     ];
     return f.map(([k,l,n])=>'<button class="'+(filtro===k?"on":"")+'" data-f="'+k+'">'+l+' <span class="count">'+n+'</span></button>').join("");
   }
