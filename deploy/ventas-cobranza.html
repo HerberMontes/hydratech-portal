@@ -139,7 +139,7 @@
 
   <div class="kpis" id="kpis"></div>
   <div style="display:flex;justify-content:flex-end;margin:14px 0 -6px">
-    <a href="/api/cobranza-recordatorios?ver=1" target="_blank" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:600 13px 'IBM Plex Sans',sans-serif;color:#263370;border:1.5px solid #d8deea;background:#fff;border-radius:9px;padding:9px 15px">
+    <a href="/api/cobranza-recordatorios?ver=1" target="_blank" onclick="var c=(document.getElementById('f-cliente')||{}).value||'';this.href='/api/cobranza-recordatorios?ver=1'+(c?'&cliente='+encodeURIComponent(c):'')" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:600 13px 'IBM Plex Sans',sans-serif;color:#263370;border:1.5px solid #d8deea;background:#fff;border-radius:9px;padding:9px 15px">
       &#9993; Ver recordatorios de pago (antes de enviar)
     </a>
   </div>
