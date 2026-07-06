@@ -110,12 +110,16 @@ export default async (req) => {
 
       // paso actual (flujo de 5 pasos, sin OC en proceso)
       // 0 Evidencia · 1 SOLPED · 2 Esperando OC · 3 Acuse subido · 4 Pagado
+      // El paso se toma del dato MÁS AVANZADO que exista: si ya hay SOLPED, OC
+      // o pago, la evidencia quedó atrás por lógica (no hay OC sin haber
+      // entregado). Esto aplica sobre todo a las órdenes atrasadas migradas,
+      // que traen solped/OC pero no tienen reporte/remisión en el portal.
       let paso;
-      if (!tieneEvidencia) paso = 0;
-      else if (!solped) paso = 1;
-      else if (!oc) paso = 2;
-      else if (!pagado) paso = 3;
-      else paso = 4;
+      if (pagado) paso = 4;
+      else if (oc) paso = 3;
+      else if (solped) paso = 2;
+      else if (tieneEvidencia) paso = 1;
+      else paso = 0;
 
       const termId = Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null;
       const plazoDias = termId != null && daysByTerm[termId] != null ? daysByTerm[termId] : null;
