@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear cotización / orden · HydraTech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef0f4; font-family: 'IBM Plex Sans', sans-serif; color: #1b2138; padding-bottom: 88px; }
+  input, select, textarea, button { font-family: inherit; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #263370; outline-offset: 0; border-color: #263370; }
+  #cli-lista .cli-opt:hover { background: #f4f6fb; }
+  tr.linea:hover .del-btn { opacity: 1; }
+
+  header.topbar { background: #141829; color: #fff; height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 24px; }
+  header.topbar .brand { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -.01em; }
+  header.topbar .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .16em; color: #8a93ad; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px; }
+
+  .encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; margin-bottom: 24px; }
+  .encabezado h1 { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; margin: 0 0 6px; letter-spacing: -.02em; color: #141829; }
+  .encabezado p.sub { margin: 0; color: #4a5267; font-size: 14px; }
+
+  .seg { display: inline-flex; background: #fff; border: 1px solid #e6e9f0; border-radius: 12px; padding: 4px; gap: 4px; }
+  .seg button { height: 38px; padding: 0 18px; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; color: #4a5267; }
+  .seg button.active { background: #263370; color: #fff; }
+  .ayuda-tipo { margin: 8px 2px 0; font-size: 12.5px; color: #717a90; max-width: 340px; text-align: right; line-height: 1.4; }
+
+  .card { background: #fff; border: 1px solid #e6e9f0; border-radius: 14px; padding: 20px; margin-bottom: 18px; }
+  .card-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #717a90; margin-bottom: 14px; }
+  .card-title .opt { text-transform: none; letter-spacing: 0; color: #a3aabb; }
+
+  label.field { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  label.field.sm { font-size: 12px; color: #4a5267; margin-bottom: 5px; }
+  .help { margin: 5px 2px 0; font-size: 11.5px; color: #717a90; line-height: 1.35; }
+
+  .cli-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; }
+  .buscar-wrap { position: relative; }
+  .buscar-wrap .lupa { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #717a90; font-size: 16px; }
+  #cli-buscar { width: 100%; height: 44px; padding: 0 12px 0 34px; font-size: 15px; border: 1px solid #d5dae6; border-radius: 10px; background: #fff; }
+  #cli-error { margin: 7px 2px 0; font-size: 12.5px; color: #b0272b; display: flex; align-items: center; gap: 5px; }
+  #cli-error b { font-weight: 700; }
+  #cli-lista { margin-top: 10px; border: 1px solid #e6e9f0; border-radius: 10px; overflow: hidden; }
+  #cli-lista .cli-opt { padding: 11px 14px; font-size: 14px; cursor: pointer; }
+  #cli-lista .cli-opt + .cli-opt { border-top: 1px solid #eef0f4; }
+  #cli-lista .cli-opt.sel { background: #f0f3fa; }
+  #cli-lista .cli-opt.sel strong { font-weight: 600; }
+  #cli-lista .cli-opt.sel span { display: block; font-size: 12px; color: #717a90; }
+
+  #cli-datos { background: #f7f8fc; border: 1px solid #eef0f4; border-radius: 10px; padding: 14px; }
+  .rfc-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .rfc-row .k { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .08em; color: #717a90; }
+  .rfc-row .v { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; }
+  #cli-terminos { width: 100%; height: 38px; padding: 0 10px; font-size: 14px; border: 1px solid #d5dae6; border-radius: 8px; background: #fff; margin-bottom: 12px; }
+  #cli-oc { width: 100%; height: 38px; padding: 0 10px; font-size: 14px; border: 1px solid #d5dae6; border-radius: 8px; background: #fff; }
+
+  table.prod { width: 100%; border-collapse: collapse; }
+  table.prod th { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: #717a90; font-weight: 500; padding: 0 8px 8px 0; text-align: left; }
+  table.prod th.c { text-align: center; padding: 0 8px 8px; }
+  table.prod th.r { text-align: right; padding: 0 8px 8px; }
+  tr.linea { border-top: 1px solid #eef0f4; }
+  tr.linea td { padding: 10px 8px; }
+  tr.linea td.desc { padding-left: 0; }
+  .l-desc, .l-cant, .l-precio { height: 40px; padding: 0 10px; font-size: 14px; border: 1px solid #e6e9f0; border-radius: 8px; background: #fff; }
+  .l-desc { width: 100%; }
+  .l-cant { width: 100%; text-align: center; }
+  .l-precio { width: 100%; text-align: right; font-family: 'IBM Plex Mono', monospace; }
+  td.importe { text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 500; white-space: nowrap; }
+  td.del { text-align: center; padding: 10px 0; }
+  .del-btn { opacity: .35; border: none; background: none; color: #b0272b; font-size: 15px; cursor: pointer; transition: opacity .15s; }
+
+  .prod-foot { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+  #btn-agregar-linea { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; background: #eef1f8; color: #263370; border: 1px dashed #b7c0dc; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .totales { width: 280px; max-width: 100%; }
+  .tot-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: #4a5267; }
+  .tot-row.b { border-bottom: 1px solid #eef0f4; }
+  .tot-row .num { font-family: 'IBM Plex Mono', monospace; font-weight: 500; color: #1b2138; }
+  .tot-total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0 0; }
+  .tot-total .lbl { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 15px; }
+  #tot-total { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 26px; color: #263370; letter-spacing: -.01em; }
+  #tot-total .mxn { font-size: 13px; color: #717a90; font-weight: 600; }
+
+  .det-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  #det-vigencia, #det-entrega, #det-vendedor { width: 100%; height: 40px; padding: 0 10px; font-size: 14px; border: 1px solid #d5dae6; border-radius: 8px; background: #fff; }
+  #det-notas { width: 100%; padding: 10px; font-size: 14px; border: 1px solid #d5dae6; border-radius: 8px; background: #fff; resize: vertical; line-height: 1.4; margin-top: 0; }
+
+  .acciones { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,.94); backdrop-filter: blur(8px); border-top: 1px solid #e6e9f0; z-index: 20; }
+  .acciones .inner { max-width: 980px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  #btn-guardar { height: 46px; padding: 0 24px; background: #263370; color: #fff; border: none; border-radius: 11px; font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 2px 6px rgba(38,51,112,.28); }
+  #btn-limpiar { height: 46px; padding: 0 18px; background: #fff; color: #4a5267; border: 1px solid #d5dae6; border-radius: 11px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  #resultado { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #157f3b; font-weight: 600; }
+  #resultado .chk { width: 20px; height: 20px; border-radius: 50%; background: #157f3b; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+  #resultado .folio { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #141829; }
+  #resultado a { color: #263370; text-decoration: underline; }
+
+  @media (max-width: 720px) {
+    .cli-grid, .det-grid { grid-template-columns: 1fr; }
+    table.prod thead { display: none; }
+    table.prod, table.prod tbody, table.prod tr, table.prod td { display: block; width: 100%; }
+    tr.linea { border: 1px solid #e6e9f0; border-radius: 10px; padding: 10px; margin-bottom: 10px; background: #fff; }
+    tr.linea td { padding: 4px 0; border: none; }
+    tr.linea td::before { content: attr(data-label); display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #717a90; margin-bottom: 2px; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <span class="brand">HydraTech</span>
+    <span class="kicker">VENTAS · COTIZADOR</span>
+  </header>
+
+  <main>
+
+    <!-- 1. Encabezado -->
+    <section class="encabezado">
+      <div style="flex: 1 1 320px;">
+        <h1>Crear cotización / orden</h1>
+        <p class="sub">Captura una venta y guárdala directo en Odoo.</p>
+      </div>
+      <div style="flex: 0 0 auto;">
+        <div id="tipo-doc" class="seg" role="tablist">
+          <button type="button" data-tipo="cotizacion" class="active">Cotización</button>
+          <button type="button" data-tipo="orden">Orden confirmada</button>
+        </div>
+        <p class="ayuda-tipo" id="ayuda-tipo">Se guarda como borrador en Odoo, editable.</p>
+      </div>
+    </section>
+
+    <!-- 1b. COTIZACIONES ABIERTAS (borradores reales de Odoo) -->
+    <section class="card" id="cots-card">
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span>Cotizaciones abiertas <span class="opt" id="cots-n"></span></span>
+        <button type="button" id="cots-refrescar" style="font:600 12px 'IBM Plex Sans',sans-serif;color:#263370;background:#fff;border:1.5px solid #d8deea;border-radius:8px;padding:6px 12px;cursor:pointer">↻ Actualizar</button>
+      </div>
+      <div id="cots-lista" style="font-size:13px;color:#4a5267">Cargando cotizaciones desde Odoo…</div>
+      <p class="help" style="margin-top:10px">Los borradores viven en Odoo; desde aquí puedes convertir cualquiera en <b>orden de venta</b>, o crear una nueva desde cero con el formulario de abajo.</p>
+    </section>
+
+    <!-- 2. CLIENTE -->
+    <section class="card">
+      <div class="card-title">Cliente</div>
+      <div class="cli-grid">
+        <div>
+          <label class="field">Cliente <span style="color:#b0272b">*</span></label>
+          <div class="buscar-wrap">
+            <span class="lupa">⌕</span>
+            <input id="cli-buscar" type="text" placeholder="Escribe el nombre del cliente…">
+          </div>
+          <p id="cli-error"><b>!</b> Selecciona un cliente antes de guardar</p>
+          <div id="cli-lista" style="display:none"></div>
+            <div class="cli-opt">Melter — Componentes Formados</div>
+            <div class="cli-opt">Cartolito</div>
+          </div>
+        </div>
+        <div id="cli-datos">
+          <div class="rfc-row">
+            <span class="k">RFC</span>
+            <span class="v" id="cli-rfc">—</span>
+          </div>
+          <label class="field sm">Términos de pago <span style="color:#b0272b">*</span></label>
+          <select id="cli-terminos"><option value="">Selecciona un cliente primero…</option></select>
+          <label class="field sm">Referencia / OC del cliente <span class="opt" style="font-size:10px">· opcional</span></label>
+          <input id="cli-oc" type="text" placeholder="OC-00000 (si ya se tiene)">
+          <p class="help">La orden de compra del cliente; se usa en cobranza.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PRODUCTOS -->
+    <section class="card">
+      <div class="card-title">Productos</div>
+      <table class="prod">
+        <thead>
+          <tr>
+            <th>Producto / Descripción</th>
+            <th class="c" style="width: 80px;">Cant.</th>
+            <th class="r" style="width: 120px;">P. unitario</th>
+            <th class="r" style="width: 120px;">Importe</th>
+            <th style="width: 36px;"></th>
+          </tr>
+        </thead>
+        <tbody id="lineas-cuerpo">
+          <tr class="linea">
+            <td class="desc" data-label="Producto / Descripción"><input class="l-desc" type="text" value="" placeholder="Busca en el catálogo o escribe la descripción…"></td>
+            <td data-label="Cantidad"><input class="l-cant" type="text" value=""></td>
+            <td data-label="P. unitario"><input class="l-precio" type="text" value=""></td>
+            <td class="importe" data-label="Importe">$0.00</td>
+            <td class="del"><button class="del-btn" type="button" title="Eliminar">✕</button></td>
+          </tr>
+          
+          
+        </tbody>
+      </table>
+
+      <div class="prod-foot">
+        <button id="btn-agregar-linea" type="button">+ Agregar línea</button>
+        <div class="totales">
+          <div class="tot-row"><span>Subtotal</span><span id="tot-subtotal" class="num">$0.00</span></div>
+          <div class="tot-row b"><span>IVA 16%</span><span id="tot-iva" class="num">$0.00</span></div>
+          <div class="tot-total"><span class="lbl">TOTAL</span><span id="tot-total">$0.00 <span class="mxn">MXN</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. DETALLES -->
+    <section class="card">
+      <div class="card-title">Detalles</div>
+      <div class="det-grid">
+        <div>
+          <label class="field sm">Vigencia de la cotización</label>
+          <input id="det-vigencia" type="date" >
+        </div>
+        <div>
+          <label class="field sm">Fecha compromiso de entrega</label>
+          <input id="det-entrega" type="date" >
+        </div>
+        <div>
+          <label class="field sm">Tiempo de entrega <span style="color:#b0272b">*</span></label>
+          <input id="det-tiempo" type="text" placeholder="ej. 5 días hábiles">
+          <p class="help">Obligatorio: sin tiempo de entrega no se guarda.</p>
+        </div>
+        <div>
+          <label class="field sm">Vendedor <span style="color:#b0272b">*</span></label>
+          <select id="det-vendedor"><option value="">Cargando vendedores…</option></select>
+          <p class="help">Amarra la venta al vendedor para reportes y comisiones.</p>
+        </div>
+      </div>
+      <div style="margin-top: 14px;">
+        <label class="field sm">Notas / condiciones</label>
+        <textarea id="det-notas" rows="2" placeholder="Condiciones, LAB, garantías… (opcional)"></textarea>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 5. Barra de acciones sticky -->
+  <div class="acciones">
+    <div class="inner">
+      <button id="btn-guardar" type="button">Guardar cotización en Odoo</button>
+      <button id="btn-limpiar" type="button">Limpiar</button>
+      <div id="resultado"></div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const $=(i)=>document.getElementById(i);
+    const money=(n)=>"$"+(Number(n)||0).toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
+    const num=(s)=>{const v=parseFloat(String(s==null?"":s).replace(/[$,\s]/g,""));return isNaN(v)?0:v;};
+
+    /* ================= ESTADO ================= */
+    let tipo="cotizacion";
+    let partnerId=0;
+    let CLIENTES=null;           // catálogo de clientes de Odoo (se carga una vez)
+    const PLANTILLA_FILA = $("lineas-cuerpo").querySelector("tr.linea").cloneNode(true);
+
+    /* ================= TIPO (cotización / orden) ================= */
+    const seg=$("tipo-doc"), ayuda=$("ayuda-tipo"), btnG=$("btn-guardar");
+    seg.addEventListener("click",(e)=>{
+      const b=e.target.closest("button[data-tipo]"); if(!b) return;
+      seg.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active"); tipo=b.dataset.tipo;
+      if(tipo==="cotizacion"){ ayuda.textContent="Se guarda como borrador en Odoo, editable."; btnG.textContent="Guardar cotización en Odoo"; }
+      else { ayuda.textContent="Se guarda ya confirmada: genera folio definitivo y entra al flujo de entrega y cobranza."; btnG.textContent="Confirmar orden en Odoo"; }
+    });
+
+    /* ================= CLIENTE (catálogo real de Odoo) ================= */
+    const buscar=$("cli-buscar"), lista=$("cli-lista"), errCli=$("cli-error");
+    errCli.style.display="none";
+    async function cargarClientes(){
+      if(CLIENTES) return CLIENTES;
+      try{ const d=await (await fetch("/api/odoo-clientes")).json();
+        CLIENTES=(d&&d.ok&&d.clientes)||[]; }catch(e){ CLIENTES=[]; }
+      return CLIENTES;
+    }
+    function pintarLista(q){
+      const t=String(q||"").toLowerCase();
+      const hits=(CLIENTES||[]).filter(c=>c.name.toLowerCase().includes(t)).slice(0,8);
+      lista.innerHTML=hits.length?hits.map(c=>'<div class="cli-opt" data-id="'+c.id+'"><strong>'+c.name+"</strong></div>").join("")
+        :'<div class="cli-opt" style="color:#717a90">Sin coincidencias en Odoo…</div>';
+      lista.style.display="block";
+    }
+    let tCli; buscar.addEventListener("input",()=>{ partnerId=0; $("cli-rfc").textContent="—";
+      clearTimeout(tCli); tCli=setTimeout(async()=>{ await cargarClientes(); pintarLista(buscar.value); },180); });
+    buscar.addEventListener("focus",async()=>{ if(buscar.value){ await cargarClientes(); pintarLista(buscar.value); } });
+    lista.addEventListener("click",async(e)=>{
+      const o=e.target.closest(".cli-opt[data-id]"); if(!o) return;
+      partnerId=Number(o.dataset.id); buscar.value=o.textContent; lista.style.display="none"; errCli.style.display="none";
+      $("cli-terminos").innerHTML='<option value="">Cargando…</option>';
+      try{
+        const d=await (await fetch("/api/odoo-venta-crear?cliente="+partnerId)).json();
+        if(d&&d.ok){
+          $("cli-rfc").textContent=d.rfc||"—";
+          $("cli-terminos").innerHTML=(d.terminos||[]).map(t=>'<option value="'+t.id+'"'+(t.id===d.terminoDefault?" selected":"")+">"+t.name+"</option>").join("")||'<option value="">(sin términos en Odoo)</option>';
+        }else{ $("cli-terminos").innerHTML='<option value="">Error al leer el cliente</option>'; }
+      }catch(e){ $("cli-terminos").innerHTML='<option value="">Sin conexión</option>'; }
+    });
+    document.addEventListener("click",(e)=>{ if(!e.target.closest("#cli-lista")&&e.target!==buscar) lista.style.display="none"; });
+
+    /* ================= LÍNEAS DE PRODUCTO (catálogo real de Odoo) ================= */
+    const cuerpo=$("lineas-cuerpo");
+    function recalc(){
+      let sub=0;
+      cuerpo.querySelectorAll("tr.linea").forEach(tr=>{
+        const imp=num(tr.querySelector(".l-cant").value)*num(tr.querySelector(".l-precio").value);
+        tr.querySelector(".importe").textContent=money(imp); sub+=imp;
+      });
+      $("tot-subtotal").textContent=money(sub);
+      $("tot-iva").textContent=money(sub*0.16);
+      $("tot-total").innerHTML=money(sub*1.16)+' <span class="mxn">MXN</span>';
+    }
+    function prepararFila(tr){
+      const desc=tr.querySelector(".l-desc");
+      const dd=document.createElement("div");
+      dd.style.cssText="position:absolute;z-index:30;background:#fff;border:1.5px solid #d8deea;border-radius:9px;box-shadow:0 14px 32px -14px rgba(27,33,56,.3);max-height:220px;overflow:auto;display:none;min-width:280px";
+      desc.parentElement.style.position="relative"; desc.parentElement.appendChild(dd);
+      let tP;
+      desc.addEventListener("input",()=>{ tr.dataset.productId=""; clearTimeout(tP);
+        const q=desc.value.trim(); if(q.length<2){ dd.style.display="none"; return; }
+        tP=setTimeout(async()=>{
+          try{
+            const d=await (await fetch("/api/odoo-products?q="+encodeURIComponent(q)+"&limit=8")).json();
+            const ps=(d&&d.ok&&(d.products||d.productos))||[];
+            dd.innerHTML=ps.length?ps.map(p=>'<div class="p-opt" data-id="'+p.id+'" data-precio="'+(p.list_price||0)+'" data-nombre="'+String((p.default_code?("["+p.default_code+"] "):"")+p.name).replace(/"/g,"&quot;")+'" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f2f7"><b>'+(p.default_code?("["+p.default_code+"] "):"")+p.name+"</b><span style=\"float:right;color:#263370;font-weight:600\">"+money(p.list_price||0)+"</span></div>").join("")
+              +'<div style="padding:7px 12px;font-size:11px;color:#717a90">…o sigue escribiendo para una descripción libre</div>'
+              :'<div style="padding:8px 12px;font-size:12px;color:#717a90">Sin coincidencias — quedará como descripción libre</div>';
+            dd.style.display="block";
+          }catch(e){ dd.style.display="none"; }
+        },220);
+      });
+      dd.addEventListener("mousedown",(e)=>{
+        const o=e.target.closest(".p-opt"); if(!o) return;
+        desc.value=o.dataset.nombre; tr.dataset.productId=o.dataset.id;
+        const pr=tr.querySelector(".l-precio"); if(!num(pr.value)) pr.value=money(Number(o.dataset.precio));
+        dd.style.display="none"; recalc();
+      });
+      desc.addEventListener("blur",()=>setTimeout(()=>dd.style.display="none",180));
+      tr.querySelector(".l-cant").addEventListener("input",recalc);
+      tr.querySelector(".l-precio").addEventListener("input",recalc);
+      tr.querySelector(".l-precio").addEventListener("blur",(e)=>{ if(num(e.target.value)) e.target.value=money(num(e.target.value)); });
+      tr.querySelector(".del-btn").addEventListener("click",()=>{
+        if(cuerpo.querySelectorAll("tr.linea").length>1){ tr.remove(); recalc(); }
+        else { tr.querySelector(".l-desc").value=""; tr.querySelector(".l-cant").value=""; tr.querySelector(".l-precio").value=""; tr.dataset.productId=""; recalc(); }
+      });
+    }
+    cuerpo.querySelectorAll("tr.linea").forEach(prepararFila);
+    $("btn-agregar-linea").addEventListener("click",()=>{
+      const tr=PLANTILLA_FILA.cloneNode(true);
+      tr.querySelector(".l-desc").value=""; tr.querySelector(".l-cant").value=""; tr.querySelector(".l-precio").value="";
+      tr.querySelector(".importe").textContent="$0.00"; tr.dataset.productId="";
+      cuerpo.appendChild(tr); prepararFila(tr); tr.querySelector(".l-desc").focus();
+    });
+
+    /* ================= VENDEDORES (etiquetas reales del CRM) ================= */
+    fetch("/api/odoo-crm-reporte?vendedores=1").then(r=>r.json()).then(d=>{
+      const vs=(d&&d.ok&&d.vendedores)||[];
+      $("det-vendedor").innerHTML='<option value="">Selecciona…</option>'+vs.map(n=>'<option value="'+n+'">'+n+"</option>").join("");
+    }).catch(()=>{ $("det-vendedor").innerHTML='<option value="">Sin conexión</option>'; });
+
+    (function(){ const d=new Date(Date.now()+15*86400000); $("det-vigencia").value=d.toISOString().slice(0,10); })();
+
+    /* ================= GUARDAR (validación dura) ================= */
+    const res=$("resultado");
+    function mostrar(html,ok){ res.innerHTML=html; res.style.color=ok?"#157f3b":"#b0272b"; res.style.display="block"; }
+    function lineasCapturadas(){
+      const out=[];
+      cuerpo.querySelectorAll("tr.linea").forEach(tr=>{
+        const desc=tr.querySelector(".l-desc").value.trim();
+        const qty=num(tr.querySelector(".l-cant").value);
+        const precio=num(tr.querySelector(".l-precio").value);
+        if(desc||qty||precio) out.push({ productId:Number(tr.dataset.productId)||0, desc, qty, precio });
+      });
+      return out;
+    }
+    $("btn-guardar").addEventListener("click",async()=>{
+      // Todo lo elemental es OBLIGATORIO; la OC es opcional a propósito.
+      const faltan=[];
+      if(!partnerId){ faltan.push("cliente"); errCli.style.display="block"; }
+      if(!$("cli-terminos").value) faltan.push("términos de pago");
+      const lin=lineasCapturadas();
+      if(!lin.length) faltan.push("al menos una línea");
+      else if(lin.some(l=>!l.desc||!(l.qty>0)||isNaN(l.precio))) faltan.push("líneas completas (descripción, cantidad y precio)");
+      if(!$("det-tiempo").value.trim()) faltan.push("TIEMPO DE ENTREGA");
+      if(!$("det-vendedor").value) faltan.push("vendedor");
+      if(faltan.length){ mostrar("⚠ Falta: "+faltan.join(", ")+".",false); return; }
+
+      btnG.disabled=true; const txt=btnG.textContent; btnG.textContent="Guardando en Odoo…";
+      try{
+        const r=await fetch("/api/odoo-venta-crear",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({ tipo, partnerId, terminoId:Number($("cli-terminos").value),
+            tiempoEntrega:$("det-tiempo").value.trim(), vendedor:$("det-vendedor").value,
+            oc:$("cli-oc").value.trim(), vigencia:$("det-vigencia").value, entregaFecha:$("det-entrega").value,
+            notas:$("det-notas").value.trim(), lineas:lin })});
+        const d=await r.json();
+        if(d&&d.ok){
+          mostrar('<span class="chk">✓</span> '+(d.confirmada?"Orden CONFIRMADA":"Cotización guardada")+' en Odoo · <span class="folio">Folio '+d.folio+'</span>'+(d.link?' · <a href="'+d.link+'" target="_blank">ver en Odoo</a>':"")+(d.avisoConfirmacion?('<br><span style="color:#8a6a1f">'+d.avisoConfirmacion+"</span>"):""),true);
+          cargarCots(); // la nueva aparece de inmediato en Cotizaciones abiertas
+        } else mostrar("⚠ NO se guardó: "+((d&&d.error)||"error del servidor"),false);
+      }catch(e){ mostrar("⚠ Sin conexión — NO se guardó. Intenta de nuevo.",false); }
+      btnG.disabled=false; btnG.textContent=txt;
+    });
+
+    /* ================= LIMPIAR ================= */
+    $("btn-limpiar").addEventListener("click",()=>{
+      partnerId=0; buscar.value=""; $("cli-rfc").textContent="—"; $("cli-oc").value="";
+      $("cli-terminos").innerHTML='<option value="">Selecciona un cliente primero…</option>';
+      cuerpo.querySelectorAll("tr.linea").forEach((tr,i)=>{ if(i) tr.remove(); });
+      const tr=cuerpo.querySelector("tr.linea");
+      tr.querySelector(".l-desc").value=""; tr.querySelector(".l-cant").value=""; tr.querySelector(".l-precio").value=""; tr.dataset.productId="";
+      $("det-tiempo").value=""; $("det-notas").value=""; $("det-entrega").value="";
+      res.style.display="none"; recalc();
+    });
+
+    /* ================= COTIZACIONES ABIERTAS (de Odoo) ================= */
+    async function cargarCots(){
+      const box=$("cots-lista");
+      box.textContent="Cargando cotizaciones desde Odoo…";
+      try{
+        const d=await (await fetch("/api/odoo-venta-crear?cotizaciones=1")).json();
+        const cs=(d&&d.ok&&d.cotizaciones)||[];
+        $("cots-n").textContent="· "+cs.length+" en borrador";
+        if(!cs.length){ box.innerHTML='<span style="color:#717a90">No hay cotizaciones en borrador. Crea una nueva abajo.</span>'; return; }
+        box.innerHTML=cs.map(c=>'<div class="cot-row" data-id="'+c.id+'" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 4px;border-bottom:1px solid #f0f2f7">'
+          +'<span style="font-family:\'IBM Plex Mono\',monospace;font-weight:600;color:#263370">'+c.folio+'</span>'
+          +'<span style="flex:1;min-width:160px;font-weight:600;color:#1b2138">'+c.cliente+'</span>'
+          +'<span style="color:#717a90;font-size:12px">'+c.fecha+' · '+c.estado+'</span>'
+          +'<span style="font-family:\'IBM Plex Mono\',monospace;font-weight:600">'+money(c.total)+'</span>'
+          +'<button type="button" class="cot-conf" data-id="'+c.id+'" data-folio="'+c.folio+'" style="font:600 12px \'IBM Plex Sans\',sans-serif;background:#263370;color:#fff;border:0;border-radius:7px;padding:7px 13px;cursor:pointer">Confirmar como orden</button>'
+          +(c.link?'<a href="'+c.link+'" target="_blank" style="font-size:12px;color:#263370">ver en Odoo</a>':"")
+          +'</div>').join("");
+      }catch(e){ box.innerHTML='<span style="color:#b0272b">Sin conexión con Odoo. Usa ↻ Actualizar.</span>'; }
+    }
+    $("cots-lista").addEventListener("click",async(e)=>{
+      const b=e.target.closest(".cot-conf"); if(!b) return;
+      if(!confirm("¿Convertir la cotización "+b.dataset.folio+" en ORDEN DE VENTA confirmada? Entrará al flujo de entrega y cobranza.")) return;
+      b.disabled=true; b.textContent="Confirmando…";
+      try{
+        const r=await fetch("/api/odoo-venta-crear",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"confirmar",orderId:Number(b.dataset.id)})});
+        const d=await r.json();
+        if(d&&d.ok){ b.textContent="✓ Orden confirmada"; b.style.background="#0f5132";
+          setTimeout(cargarCots, 1200); }
+        else{ alert("No se pudo confirmar: "+((d&&d.error)||"error")); b.disabled=false; b.textContent="Confirmar como orden"; }
+      }catch(err){ alert("Sin conexión: "+err); b.disabled=false; b.textContent="Confirmar como orden"; }
+    });
+    $("cots-refrescar").addEventListener("click",cargarCots);
+    cargarCots();
+
+    recalc(); res.style.display="none";
+  })();
+  </script>
+
+
+</body>
+</html>
