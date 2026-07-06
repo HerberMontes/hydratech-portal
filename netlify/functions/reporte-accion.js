@@ -34,7 +34,51 @@ export default async (req) => {
     rep.approvedAt = new Date().toISOString();
     const datas = Buffer.from(JSON.stringify(rep), "utf8").toString("base64");
     await executeKw("ir.attachment", "write", [[found[0].id], { datas }]);
-    return json({ ok: true, action, status: "approved" });
+
+    /* ============ PUENTE A FIELD SERVICE (misma telaraña de Odoo) ============
+       Si la orden tiene tarea de servicio ligada (Field Service / Proyecto):
+       1) el reporte aprobado se archiva TAMBIÉN en la tarea,
+       2) se deja constancia en su historial,
+       3) la tarea se mueve a su etapa "Hecho".
+       Todo tolerante: si no hay tarea o el módulo no está, la aprobación
+       funciona exactamente igual que siempre. */
+    const fieldService = { tarea: null, archivado: false, marcadaHecha: false };
+    try {
+      const tareas = await executeKw("project.task", "search_read",
+        [[["sale_order_id", "=", id]]],
+        { fields: ["id", "name", "project_id", "stage_id"], limit: 1 });
+      if (tareas && tareas.length) {
+        const t = tareas[0];
+        fieldService.tarea = t.name;
+        // 1) copia del reporte aprobado archivada en la tarea
+        const attId = await executeKw("ir.attachment", "create", [{
+          name: "portal_reporte_aprobado.json",
+          res_model: "project.task", res_id: t.id,
+          type: "binary", mimetype: "application/json", datas,
+        }]).catch(() => 0);
+        fieldService.archivado = !!attId;
+        // 2) constancia en el historial de la tarea
+        await executeKw("project.task", "message_post", [[t.id]], {
+          body: "Reporte de servicio APROBADO en el portal HydraTech (" +
+            new Date().toISOString().slice(0, 10) + "). El reporte quedó archivado en la orden y en esta tarea.",
+          ...(attId ? { attachment_ids: [attId] } : {}),
+        }).catch(() => {});
+        // 3) mover la tarea a su etapa "Hecho" (la etapa cerrada del proyecto)
+        try {
+          const pid = Array.isArray(t.project_id) ? t.project_id[0] : t.project_id;
+          const etapas = await executeKw("project.task.type", "search_read",
+            [[["project_ids", "in", [pid]]]], { fields: ["id", "name", "fold"], limit: 50 });
+          const hecha = (etapas || []).find((e) => /hecho|done|terminad|finaliz|complet/i.test(e.name || ""))
+            || (etapas || []).find((e) => e.fold);
+          if (hecha) {
+            await executeKw("project.task", "write", [[t.id], { stage_id: hecha.id }]);
+            fieldService.marcadaHecha = true;
+          }
+        } catch (e) {}
+      }
+    } catch (e) { /* Field Service no instalado o sin permisos: la aprobación no se afecta */ }
+
+    return json({ ok: true, action, status: "approved", fieldService });
   } catch (e) {
     return json({ ok: false, error: String(e.message || e) }, 500);
   }
