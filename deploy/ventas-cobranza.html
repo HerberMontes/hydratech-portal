@@ -288,7 +288,7 @@
     }
 
     return '<div class="card '+st+(v.archivada?' archived':'')+'"><div class="bar"></div><div class="card-in">'+
-      '<div class="crow"><span class="cliente">'+esc(v.cliente)+'</span><span class="folio">'+esc(v.folio)+'</span><span class="monto">'+money(v.monto)+'</span></div>'+
+      '<div class="crow"><span class="cliente">'+esc(v.cliente)+'</span><span class="folio">'+esc(v.folio)+'</span><span class="monto">'+money(v.monto)+(v.montoDeFactura?' <span style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#157f3b;font-weight:500"> facturado</span>':'')+'</span></div>'+
       '<div class="chips">'+chips+'</div>'+
       stepper(v)+
       '<div class="statusbar">'+statusHtml+'</div>'+
