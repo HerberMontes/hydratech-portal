@@ -131,14 +131,24 @@
       </div>
     </section>
 
-    <!-- 1b. COTIZACIONES ABIERTAS (borradores reales de Odoo) -->
-    <section class="card" id="cots-card">
+    <!-- 1b. Al elegir ORDEN CONFIRMADA: dos caminos -->
+    <section class="card" id="orden-opciones" style="display:none">
+      <div class="card-title">¿Cómo quieres crear la orden?</div>
+      <div id="orden-modo" class="seg" style="display:inline-flex">
+        <button type="button" data-modo="nueva" class="active">Crear desde cero</button>
+        <button type="button" data-modo="existente">Confirmar una cotización existente</button>
+      </div>
+      <p class="help" id="orden-modo-ayuda" style="margin-top:8px">Captura la orden con el formulario de abajo; se confirma al guardar.</p>
+    </section>
+
+    <!-- 1c. COTIZACIONES ABIERTAS (borradores reales de Odoo, desde el corte) -->
+    <section class="card" id="cots-card" style="display:none">
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <span>Cotizaciones abiertas <span class="opt" id="cots-n"></span></span>
+        <span>Selecciona la cotización a confirmar <span class="opt" id="cots-n"></span></span>
         <button type="button" id="cots-refrescar" style="font:600 12px 'IBM Plex Sans',sans-serif;color:#263370;background:#fff;border:1.5px solid #d8deea;border-radius:8px;padding:6px 12px;cursor:pointer">↻ Actualizar</button>
       </div>
       <div id="cots-lista" style="font-size:13px;color:#4a5267">Cargando cotizaciones desde Odoo…</div>
-      <p class="help" style="margin-top:10px">Los borradores viven en Odoo; desde aquí puedes convertir cualquiera en <b>orden de venta</b>, o crear una nueva desde cero con el formulario de abajo.</p>
+      <p class="help" style="margin-top:10px">Cotizaciones en borrador desde el corte configurado. Al confirmar una, se vuelve <b>orden de venta</b> y entra al flujo de entrega y cobranza.</p>
     </section>
 
     <!-- 2. CLIENTE -->
@@ -261,12 +271,34 @@
 
     /* ================= TIPO (cotización / orden) ================= */
     const seg=$("tipo-doc"), ayuda=$("ayuda-tipo"), btnG=$("btn-guardar");
+    // Secciones del formulario (todas las tarjetas excepto opciones/lista) + barra sticky
+    const FORM_SECS=[...document.querySelectorAll("main section.card")].filter(x=>x.id!=="orden-opciones"&&x.id!=="cots-card");
+    FORM_SECS.push(document.querySelector(".acciones"));
+    let modoOrden="nueva", cotsCargadas=false;
+    function aplicarVista(){
+      const enExistente = (tipo==="orden" && modoOrden==="existente");
+      $("orden-opciones").style.display = tipo==="orden" ? "block" : "none";
+      $("cots-card").style.display = enExistente ? "block" : "none";
+      FORM_SECS.forEach(x=>{ if(x) x.style.display = enExistente ? "none" : ""; });
+      if(enExistente && !cotsCargadas){ cotsCargadas=true; cargarCots(); }
+    }
     seg.addEventListener("click",(e)=>{
       const b=e.target.closest("button[data-tipo]"); if(!b) return;
       seg.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
       b.classList.add("active"); tipo=b.dataset.tipo;
-      if(tipo==="cotizacion"){ ayuda.textContent="Se guarda como borrador en Odoo, editable."; btnG.textContent="Guardar cotización en Odoo"; }
+      if(tipo==="cotizacion"){ ayuda.textContent="Se guarda como borrador en Odoo, editable."; btnG.textContent="Guardar cotización en Odoo"; modoOrden="nueva";
+        const om=$("orden-modo"); om.querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.modo==="nueva")); }
       else { ayuda.textContent="Se guarda ya confirmada: genera folio definitivo y entra al flujo de entrega y cobranza."; btnG.textContent="Confirmar orden en Odoo"; }
+      aplicarVista();
+    });
+    $("orden-modo").addEventListener("click",(e)=>{
+      const b=e.target.closest("button[data-modo]"); if(!b) return;
+      $("orden-modo").querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active"); modoOrden=b.dataset.modo;
+      $("orden-modo-ayuda").textContent = modoOrden==="nueva"
+        ? "Captura la orden con el formulario de abajo; se confirma al guardar."
+        : "Elige una cotización de la lista y confírmala; no necesitas volver a capturarla.";
+      aplicarVista();
     });
 
     /* ================= CLIENTE (catálogo real de Odoo) ================= */
@@ -399,7 +431,7 @@
         const d=await r.json();
         if(d&&d.ok){
           mostrar('<span class="chk">✓</span> '+(d.confirmada?"Orden CONFIRMADA":"Cotización guardada")+' en Odoo · <span class="folio">Folio '+d.folio+'</span>'+(d.link?' · <a href="'+d.link+'" target="_blank">ver en Odoo</a>':"")+(d.avisoConfirmacion?('<br><span style="color:#8a6a1f">'+d.avisoConfirmacion+"</span>"):""),true);
-          cargarCots(); // la nueva aparece de inmediato en Cotizaciones abiertas
+          if(cotsCargadas) cargarCots(); // si la lista ya se abrió, se actualiza
         } else mostrar("⚠ NO se guardó: "+((d&&d.error)||"error del servidor"),false);
       }catch(e){ mostrar("⚠ Sin conexión — NO se guardó. Intenta de nuevo.",false); }
       btnG.disabled=false; btnG.textContent=txt;
@@ -449,9 +481,8 @@
       }catch(err){ alert("Sin conexión: "+err); b.disabled=false; b.textContent="Confirmar como orden"; }
     });
     $("cots-refrescar").addEventListener("click",cargarCots);
-    cargarCots();
 
-    recalc(); res.style.display="none";
+    recalc(); res.style.display="none"; aplicarVista();
   })();
   </script>
 
