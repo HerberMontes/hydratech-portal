@@ -480,8 +480,10 @@ export default async (req) => {
        enviarían, cliente por cliente, con sus datos reales — para revisar y
        autorizar antes de enviar. No envía nada. */
     if (url.searchParams.get("ver") === "1") {
+      const clienteParam = (url.searchParams.get("cliente") || "").trim();
       const bloques = clientes.map((c) => {
         const pid = c._c.partnerId;
+        const visible = !clienteParam || c._c.cliente === clienteParam;
         const estado = c.seEnvia
           ? '<div style="max-width:680px;margin:26px auto 0;padding:10px 16px;background:#0f5132;color:#fff;border-radius:8px 8px 0 0;font:600 13px Arial">Envío automático: SÍ · <b>' + esc(c._c.cliente) + '</b>' + (CORREO_PRUEBA ? ' <span style="opacity:.8">(modo prueba activo: irá a ' + esc(CORREO_PRUEBA) + ')</span>' : '') + '</div>'
           : '<div style="max-width:680px;margin:26px auto 0;padding:10px 16px;background:#8a6a1f;color:#fff;border-radius:8px 8px 0 0;font:600 13px Arial">Envío automático: NO · <b>' + esc(c._c.cliente) + '</b> — ' + esc(c.omitido || "") + '</div>';
@@ -492,8 +494,19 @@ export default async (req) => {
           + '<button onclick="enviarManual(' + pid + ')" id="btn-' + pid + '" style="font:600 13px Arial;background:#263370;color:#fff;border:0;border-radius:7px;padding:8px 16px;cursor:pointer">Enviar a este correo</button>'
           + '</div>';
         const correoHTML = armarHTML(c._c.cliente, c._c.ordenes, c._totV, c._totP);
-        return estado + editor + correoHTML;
+        return '<div class="cli-bloque" data-cliente="' + esc(c._c.cliente) + '" style="display:' + (visible ? "block" : "none") + '">'
+          + estado + editor + correoHTML + '</div>';
       }).join("");
+      // Selector para ver UN cliente a la vez (preseleccionado si viene del filtro de la pantalla)
+      const opciones = clientes.map((c) =>
+        '<option value="' + esc(c._c.cliente) + '"' + (c._c.cliente === clienteParam ? " selected" : "") + '>' + esc(c._c.cliente) + '</option>').join("");
+      const selector = '<div style="max-width:680px;margin:14px auto 0;padding:0 16px">'
+        + '<select id="sel-cliente" onchange="filtrarCliente()" style="font:600 14px Arial;color:#1b2138;background:#fff;border:1.5px solid #c8cfdd;border-radius:8px;padding:9px 12px;max-width:100%">'
+        + '<option value=""' + (clienteParam ? "" : " selected") + '>Todos los clientes (' + clientes.length + ')</option>'
+        + opciones + '</select></div>'
+        + '<scr' + 'ipt>function filtrarCliente(){var v=document.getElementById("sel-cliente").value;'
+        + 'document.querySelectorAll(".cli-bloque").forEach(function(b){b.style.display=(!v||b.getAttribute("data-cliente")===v)?"block":"none";});}'
+        + '</scr' + 'ipt>';
       const scriptEnviar = '<scr' + 'ipt>async function enviarManual(pid){'
         + 'var i=document.getElementById("correo-"+pid), b=document.getElementById("btn-"+pid);'
         + 'var correo=(i.value||"").trim();'
@@ -512,6 +525,7 @@ export default async (req) => {
         + '<body style="margin:0;padding:0 0 60px;background:#dfe3ec">'
         + '<div style="max-width:680px;margin:0 auto;padding:22px 16px 4px;font:800 20px Arial;color:#141829">Vista previa de recordatorios · ' + aEnviar.length + ' correo(s) por enviar</div>'
         + '<div style="max-width:680px;margin:0 auto;padding:0 16px;font:400 13px Arial;color:#4a5267">Esto es EXACTAMENTE lo que recibirá cada cliente. Para enviarlos: misma dirección con <b>?enviar=1</b>. Nada se ha enviado todavía.</div>'
+        + selector
         + (clientes.length ? "" :
           '<div style="max-width:680px;margin:26px auto;padding:16px 20px;background:#fff;border:1.5px solid #e7d5a6;border-radius:10px;font:400 13px Arial;color:#1b2138">'
           + '<b>No hay clientes con órdenes por pagar calculables.</b> Diagnóstico: '
