@@ -36,6 +36,10 @@
   .kpi .n{font-family:'Archivo',sans-serif;font-weight:800;font-size:27px;line-height:1}
   .kpi .t{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.3}
   .kpi.red .n{color:var(--red)} .kpi.gold .n{color:var(--gold)} .kpi.blue .n{color:var(--blue)}
+  .kpi[data-f]{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .kpi[data-f]:hover{border-color:var(--blue);box-shadow:0 4px 14px rgba(38,51,112,.12)}
+  .kpi.on{border:2px solid var(--blue)}
+  .kpi .hint{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:#a3abbd;margin-top:6px}
 
   /* filtros */
   .filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 14px}
@@ -311,13 +315,19 @@
     const nSel=(rowsSel||[]).length;
     const grandeCls = (filtro==="foco"&&nSel) ? "red" : "blue";
     const grande = kpi(grandeCls, money(filtro==="todos"?montoPend:sumaSel),
-      (NOMBRE_FILTRO[filtro]||filtro)+" · "+(filtro==="todos"?abiertas.length+" ventas":nSel+(nSel===1?" orden":" órdenes")));
+      (NOMBRE_FILTRO[filtro]||filtro)+" · "+(filtro==="todos"?abiertas.length+" ventas":nSel+(nSel===1?" orden":" órdenes")), "todos");
+    const montoOC = espOC.reduce((a,v)=>a+(v.monto||0),0);
     return grande+
-      kpi(foco.length?"red":"blue",money(montoFoco),foco.length+" en foco rojo (OC o pago vencidos)")+
-      kpi("gold",espOC.length,"esperando OC · "+promOC+" d promedio")+
-      kpi("blue",money(montoPagar),porPagar.length+" por pagar (acuse subido)");
+      kpi(foco.length?"red":"blue",money(montoFoco),foco.length+" en foco rojo (OC o pago vencidos)","foco")+
+      kpi("gold",money(montoOC),espOC.length+" esperando OC · "+promOC+" d promedio","oc")+
+      kpi("blue",money(montoPagar),porPagar.length+" por pagar (acuse subido)","pagar");
   }
-  function kpi(cls,n,t){ return '<div class="kpi '+cls+'"><div class="n">'+n+'</div><div class="t">'+t+'</div></div>'; }
+  function kpi(cls,n,t,f){
+    const activa = f && filtro===f;
+    return '<div class="kpi '+cls+(activa?" on":"")+'"'+(f?' data-f="'+f+'" title="Clic para filtrar"':'')+'>'+
+      '<div class="n">'+n+'</div><div class="t">'+t+'</div>'+
+      (f?'<div class="hint">'+(activa?'&#9679; filtro activo':'clic para filtrar')+'</div>':'')+'</div>';
+  }
 
   function filtros(){
     const nA=v=>!v.archivada;
