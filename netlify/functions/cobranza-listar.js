@@ -52,10 +52,31 @@ export default async (req) => {
     if (q) subs.push(["|", ["name", "ilike", q], ["partner_id", "ilike", q]]);
 
     const orders = await executeKw("sale.order", "search_read", [AND(subs)],
-      { fields: ["id", "name", "partner_id", "date_order", "amount_total", "state", "payment_term_id"], limit: 300, order: "date_order desc" });
+      { fields: ["id", "name", "partner_id", "date_order", "amount_total", "state", "payment_term_id", "invoice_ids"], limit: 300, order: "date_order desc" });
     if (!orders.length) return json({ ok: true, desde: DESDE || null, ventas: [] });
 
     const ids = orders.map((o) => o.id);
+
+    // MONTO REAL: cobranza cobra FACTURAS, no cotizaciones. Si la orden ya
+    // tiene factura(s) timbradas, el monto que se muestra y se suma es el
+    // facturado (con notas de crédito restadas). Si no hay factura, se usa el
+    // total de la orden. Esto corrige órdenes viejas cuyo total se movió
+    // (p. ej. S01526/S01527) sin afectar el flujo de las nuevas.
+    const facturaIds = [...new Set(orders.flatMap((o) => Array.isArray(o.invoice_ids) ? o.invoice_ids : []))];
+    const facturadoPorOrden = {};
+    if (facturaIds.length) {
+      const moves = await executeKw("account.move", "search_read",
+        [[["id", "in", facturaIds], ["state", "=", "posted"],
+          ["move_type", "in", ["out_invoice", "out_refund"]]]],
+        { fields: ["id", "amount_total", "move_type"], limit: 1000 }).catch(() => []);
+      const montoMove = {};
+      moves.forEach((m) => { montoMove[m.id] = (m.move_type === "out_refund" ? -1 : 1) * (m.amount_total || 0); });
+      orders.forEach((o) => {
+        const tot = (Array.isArray(o.invoice_ids) ? o.invoice_ids : [])
+          .reduce((a, mid) => a + (montoMove[mid] || 0), 0);
+        if (tot > 0) facturadoPorOrden[o.id] = tot;
+      });
+    }
 
     // 2) Adjuntos de todas las órdenes en una sola consulta
     const atts = await executeKw("ir.attachment", "search_read",
@@ -156,7 +177,9 @@ export default async (req) => {
         id: o.id,
         folio: o.name,
         cliente: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
-        monto: o.amount_total || 0,
+        monto: facturadoPorOrden[o.id] != null ? facturadoPorOrden[o.id] : (o.amount_total || 0),
+        montoDeFactura: facturadoPorOrden[o.id] != null,
+        montoOrden: o.amount_total || 0,
         solped, oc,
         evidencia: tieneEvidencia,
         reporteAprobado, evidenciaAdjunta,
