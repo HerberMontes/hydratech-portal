@@ -79,36 +79,43 @@
         <span class="go">Abrir cotizador <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
-      <a class="card" href="reportes-ventas.html" data-role="ventas">
+      <a class="card" href="ventas-cotizacion.html" data-role="cotizaciones,ventas">
         <span class="num">03</span><span class="tag">Comercial</span>
-        <div class="ct">Reportes de ventas <span class="soon">Por configurar</span></div>
-        <p class="cd">Resumen de ventas desde Odoo: órdenes, importes y seguimiento por periodo, cliente o vendedor. En construcción.</p>
+        <div class="ct">Crear cotización / orden <span class="new">Nuevo</span></div>
+        <p class="cd">Captura cotizaciones y órdenes de venta directo en Odoo: cliente, catálogo de productos, términos de pago y tiempo de entrega.</p>
+        <span class="go">Abrir <span style="font-size:16px;">&#8594;</span></span>
+      </a>
+
+      <a class="card" href="reportes-ventas.html" data-role="ventas">
+        <span class="num">04</span><span class="tag">Comercial</span>
+        <div class="ct">Reportes de ventas</div>
+        <p class="cd">Seguimiento de cobranza (de la entrega al pago con foco rojo) y acceso a las herramientas comerciales del área.</p>
         <span class="go">Abrir reportes <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
       <a class="card" href="crm.html" data-role="crm">
-        <span class="num">04</span><span class="tag">Comercial</span>
+        <span class="num">05</span><span class="tag">Comercial</span>
         <div class="ct">CRM · Captura <span class="new">Nuevo</span></div>
         <p class="cd">Registra prospectos como lead o como oportunidad con calificación BANT, vinculados a contactos de Odoo, y aliméntalos al pipeline.</p>
         <span class="go">Abrir CRM <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
       <a class="card" href="crm-reporte.html" data-role="crm-gerencia">
-        <span class="num">05</span><span class="tag">Dirección</span>
+        <span class="num">06</span><span class="tag">Dirección</span>
         <div class="ct">CRM · Reporte gerencial <span class="new">Nuevo</span></div>
         <p class="cd">Reporte semanal por vendedor para retroalimentación: actividad vs. resultado, alertas de coaching y oportunidades clave. Listo para PDF.</p>
         <span class="go">Abrir reporte <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
       <a class="card" href="admin.html" data-role="admin" style="display:none;">
-        <span class="num">06</span><span class="tag">Administración</span>
+        <span class="num">07</span><span class="tag">Administración</span>
         <div class="ct">Usuarios y permisos</div>
         <p class="cd">Da de alta personas, invítalas por correo y marca qué herramientas puede ver cada una. Solo administradores.</p>
         <span class="go">Administrar <span style="font-size:16px;">&#8594;</span></span>
       </a>
 
       <a class="card" href="reportes-admin.html" data-role="admin" style="display:none;">
-        <span class="num">07</span><span class="tag">Revisión</span>
+        <span class="num">08</span><span class="tag">Revisión</span>
         <div class="ct">Aprobación de reportes</div>
         <p class="cd">Revisa los reportes que envían los técnicos: ábrelos, edítalos, apruébalos para archivarlos en Odoo, o cancélalos para que se rehagan. Solo administradores.</p>
         <span class="go">Revisar reportes <span style="font-size:16px;">&#8594;</span></span>
@@ -124,8 +131,9 @@
       var admin = !!window.HT_IS_ADMIN;
       var visibles = 0;
       document.querySelectorAll(".card[data-role]").forEach(function (c) {
-        var need = c.getAttribute("data-role");
-        var ok = admin || roles.indexOf(need) >= 0;
+        var need = String(c.getAttribute("data-role") || "").split(",");
+        var ok = admin;
+        for (var i = 0; i < need.length && !ok; i++) { if (roles.indexOf(need[i].trim()) >= 0) ok = true; }
         c.style.display = ok ? "" : "none";
         if (ok) visibles++;
       });

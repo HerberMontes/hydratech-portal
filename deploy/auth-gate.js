@@ -45,7 +45,13 @@
   function proceed(user) {
     var roles = (user.app_metadata && user.app_metadata.roles) || [];
     window.HT_USER = user; window.HT_ROLES = roles; window.HT_IS_ADMIN = roles.indexOf("admin") >= 0;
-    if (REQ && !(window.HT_IS_ADMIN || roles.indexOf(REQ) >= 0)) { denyUI(); return; }
+    // REQUIRE_ROLE acepta uno o varios roles separados por coma ("ventas,cotizaciones")
+    if (REQ) {
+      var reqs = String(REQ).split(",");
+      var tiene = window.HT_IS_ADMIN;
+      for (var i = 0; i < reqs.length && !tiene; i++) { if (roles.indexOf(reqs[i].trim()) >= 0) tiene = true; }
+      if (!tiene) { denyUI(); return; }
+    }
     ov.remove();
     if (typeof window.onAuthReady === "function") { try { window.onAuthReady(user); } catch (e) {} }
   }
