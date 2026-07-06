@@ -135,7 +135,6 @@
 
   <div class="kpis" id="kpis"></div>
   <div class="filters" id="filters"></div>
-  <div id="filtro-suma" style="display:flex;align-items:baseline;gap:10px;margin:-4px 0 14px;font-size:13px;color:#4a5267"></div>
   <div id="list"></div>
 
   <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -297,7 +296,7 @@
     '</div></div>';
   }
 
-  function kpis(){
+  function kpis(rowsSel){
     const abiertas=VENTAS.filter(v=>!v.archivada && !STEPS[v.paso].done);
     const foco=VENTAS.filter(focoRojo);
     const espOC=VENTAS.filter(v=>!v.archivada && STEPS[v.paso].key==="oc");
@@ -306,7 +305,14 @@
     const montoFoco=foco.reduce((a,v)=>a+(v.monto||0),0);
     const montoPagar=porPagar.reduce((a,v)=>a+v.monto,0);
     const promOC = espOC.length? Math.round(espOC.reduce((a,v)=>a+v.dias,0)/espOC.length):0;
-    return kpi("blue",money(montoPend),"pendiente de cobrar · "+abiertas.length+" ventas")+
+    // La tarjeta grande refleja EL FILTRO SELECCIONADO (sumatoria de lo que se ve)
+    const NOMBRE_FILTRO={todos:"pendiente de cobrar",foco:"en foco rojo",oc:"esperando OC",pagar:"por pagar",abiertos:"en proceso",archivadas:"archivadas"};
+    const sumaSel=(rowsSel||[]).reduce((a,v)=>a+(v.monto||0),0);
+    const nSel=(rowsSel||[]).length;
+    const grandeCls = (filtro==="foco"&&nSel) ? "red" : "blue";
+    const grande = kpi(grandeCls, money(filtro==="todos"?montoPend:sumaSel),
+      (NOMBRE_FILTRO[filtro]||filtro)+" · "+(filtro==="todos"?abiertas.length+" ventas":nSel+(nSel===1?" orden":" órdenes")));
+    return grande+
       kpi(foco.length?"red":"blue",money(montoFoco),foco.length+" en foco rojo (OC o pago vencidos)")+
       kpi("gold",espOC.length,"esperando OC · "+promOC+" d promedio")+
       kpi("blue",money(montoPagar),porPagar.length+" por pagar (acuse subido)");
@@ -327,23 +333,15 @@
   }
 
   function render(){
-    document.getElementById("kpis").innerHTML=kpis();
-    document.getElementById("filters").innerHTML=filtros();
     // orden: foco rojo primero, luego por días atorado desc
     const rows=VENTAS.filter(pasa).sort((a,b)=>{
       const fa=focoRojo(a)?1:0, fb=focoRojo(b)?1:0;
       if(fb-fa) return fb-fa;
       return b.dias-a.dias;
     });
-    // Sumatoria de lo que se está viendo (cambia con el filtro seleccionado)
-    const NOMBRE_FILTRO={todos:"Todas",foco:"Foco rojo",oc:"Esperando OC",pagar:"Por pagar",abiertos:"En proceso",archivadas:"Archivadas"};
-    const sumaMonto=rows.reduce((a,v)=>a+(v.monto||0),0);
-    document.getElementById("filtro-suma").innerHTML = rows.length
-      ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#717a90">'+(NOMBRE_FILTRO[filtro]||"Filtro")+'</span>'+
-        '<span style="font-family:Archivo,sans-serif;font-weight:800;font-size:20px;color:#263370">'+money(sumaMonto)+'</span>'+
-        '<span>en '+rows.length+' orden'+(rows.length===1?'':'es')+'</span>'
-      : '<span style="color:#717a90">Sin órdenes en este filtro.</span>';
-
+    document.getElementById("kpis").innerHTML=kpis(rows);
+    document.getElementById("filters").innerHTML=filtros();
+    
     document.getElementById("list").innerHTML = rows.length? rows.map(card).join("")
       : '<div style="text-align:center;color:var(--muted);padding:40px 0;">Nada en este filtro.</div>';
     document.querySelectorAll("[data-f]").forEach(b=>b.addEventListener("click",()=>{ filtro=b.getAttribute("data-f"); render(); }));
