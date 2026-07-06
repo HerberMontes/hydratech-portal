@@ -17,6 +17,7 @@
 import { executeKw, checkToken, json } from "./lib/odoo.js";
 
 const GENERIC_REF = process.env.VENTA_PRODUCTO_GENERICO || "MANG-ARMADA"; // para líneas de descripción libre
+const DESDE = process.env.REPORTES_DESDE || ""; // corte: solo cotizaciones de esta fecha en adelante
 const vendTag = (n) => "Vendedor · " + String(n || "").trim();
 
 export default async (req) => {
@@ -26,8 +27,13 @@ export default async (req) => {
   /* ---------- GET ?cotizaciones=1: borradores abiertos en Odoo ---------- */
   if (req.method === "GET" && url.searchParams.get("cotizaciones") === "1") {
     try {
+      // Solo cotizaciones del corte en adelante (REPORTES_DESDE en Netlify);
+      // lo anterior a esa fecha es historia y no debe reactivarse desde aquí.
+      const dominio = DESDE
+        ? [["state", "in", ["draft", "sent"]], ["date_order", ">=", DESDE + " 00:00:00"]]
+        : [["state", "in", ["draft", "sent"]]];
       const rows = await executeKw("sale.order", "search_read",
-        [[["state", "in", ["draft", "sent"]]]],
+        [dominio],
         { fields: ["id", "name", "partner_id", "date_order", "amount_total", "state", "validity_date"],
           order: "date_order desc", limit: 40 });
       const base = (process.env.ODOO_URL || "").replace(/\/+$/, "");
