@@ -64,8 +64,11 @@ function waDeVendedor(v) {
 }
 const firmaToken = (id) => crypto.createHmac("sha256", SECRET).update(String(id)).digest("hex").slice(0, 24);
 
-/* ============ Estado de conversación (Netlify Blobs) ============ */
-const store = () => getStore("wa-estado");
+/* ============ Estado de conversación (Netlify Blobs) ============
+   consistency:"strong" es OBLIGATORIO: con la consistencia por defecto
+   (eventual), una invocación puede leer el estado viejo y el bot "olvida"
+   en qué paso iba, regresando al menú a mitad del flujo. */
+const store = () => getStore({ name: "wa-estado", consistency: "strong" });
 const leerEstado = async (tel) => { try { return JSON.parse(await store().get(tel) || "null") || { paso: "MENU" }; } catch (e) { return { paso: "MENU" }; } };
 const guardarEstado = (tel, st) => store().set(tel, JSON.stringify(st));
 const borrarEstado = (tel) => store().delete(tel).catch(() => {});
