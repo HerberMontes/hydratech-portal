@@ -128,9 +128,9 @@ async function leerReporte(orderId) {
 /* ============ Textos del bot ============ */
 const T = {
   menu: "¡Hola{n}! Soy el asistente de HydraTech. ¿Qué quieres hacer?",
-  s1: "📋 *Paso 2 — CÓMO SE ENCONTRÓ (hallazgos)*\n\nMándame una *nota de voz* contando cómo encontraste el equipo: fallas, diagnóstico, lo que detectaste.\n\nTambién puedes mandar *fotos* de esta sección.\nCuando termines, escribe *LISTO*.",
-  s2: "🔧 *Paso 3 — QUÉ SE HIZO (actividades)*\n\nAhora una *nota de voz* con el trabajo que realizaste: reparaciones, ajustes, cambios.\n\nPuedes mandar fotos. Escribe *LISTO* para continuar.",
-  s3: "📈 *Paso 4 — PLAN DE ACCIÓN*\n\nÚltima *nota de voz*: recomendaciones, pendientes, refacciones a cambiar y lo que el cliente pidió.\n\nPuedes mandar fotos. Escribe *LISTO* para generar el reporte.",
+  s1: "📋 *Paso 2 — CÓMO SE ENCONTRÓ (hallazgos)*\n\nMándame una *nota de voz* contando cómo encontraste el equipo: fallas, diagnóstico, lo que detectaste.\n\n📌 En esta sección son *obligatorias*: 1 nota de voz (o texto) y al menos 1 *foto*.\nCuando tengas ambas, escribe *LISTO*.",
+  s2: "🔧 *Paso 3 — QUÉ SE HIZO (actividades)*\n\nAhora una *nota de voz* con el trabajo que realizaste: reparaciones, ajustes, cambios.\n\n📌 En esta sección son *obligatorias*: 1 nota de voz (o texto) y al menos 1 *foto* de la reparación.\nCuando tengas ambas, escribe *LISTO*.",
+  s3: "📈 *Paso 4 — PLAN DE ACCIÓN*\n\nÚltima *nota de voz*: recomendaciones, pendientes, refacciones a cambiar y lo que el cliente pidió.\n\n📌 Obligatoria la nota de voz (o texto); las fotos aquí son *opcionales*.\nEscribe *LISTO* para generar el reporte.",
   voz: "🗣 *Voz del cliente*\n\n¿De qué *cliente* se trata? Escríbeme el nombre (o parte) y lo busco en el sistema.",
   vozAudio: "🎤 Ahora mándame la *nota de voz* con todo: lo que el cliente dijo, pidió o se quejó, y lo que tú viste o detectaste.\n\nPuedes mandar varias notas y *fotos*. Escribe *LISTO* cuando termines.",
 };
@@ -298,7 +298,22 @@ async function atender(msg) {
       return;
     }
     if (cmd === "listo" || cmd === "siguiente") {
-      if (!st.notas[campo] && st.paso !== "S3") await enviarTexto(tel, "⚠️ Esta sección quedó sin notas, la dejo vacía.");
+      // Requisitos: HALLAZGOS y ACTIVIDADES llevan OBLIGATORIAMENTE nota (voz o texto) + al menos 1 foto.
+      // PLAN DE ACCIÓN lleva nota obligatoria; las fotos ahí son opcionales.
+      const fotosSec = (st.fotos || []).filter((f) => f.sec === sec).length;
+      if (st.paso === "S1" || st.paso === "S2") {
+        const faltan = [];
+        if (!st.notas[campo]) faltan.push("una *nota de voz* (o texto)");
+        if (!fotosSec) faltan.push("al menos una *foto*");
+        if (faltan.length) {
+          await enviarTexto(tel, `⚠️ Para cerrar *${sec.toUpperCase()}* falta: ${faltan.join(" y ")}.\nEs obligatorio en esta sección — mándalo y luego escribe *LISTO*.`);
+          return;
+        }
+      }
+      if (st.paso === "S3" && !st.notas[campo]) {
+        await enviarTexto(tel, "⚠️ Falta la *nota de voz* (o texto) del *PLAN DE ACCIÓN* antes de generar el reporte. Las fotos aquí son opcionales.");
+        return;
+      }
       if (st.paso === "S1") { st.paso = "S2"; await guardarEstado(tel, st); await enviarTexto(tel, T.s2); return; }
       if (st.paso === "S2") { st.paso = "S3"; await guardarEstado(tel, st); await enviarTexto(tel, T.s3); return; }
       // S3 -> generar
