@@ -153,7 +153,7 @@
   .dw-f .prim{background:var(--blue);border-color:var(--blue);color:#fff}
   .dw-f .ok{flex:1 1 100%;background:var(--green);border-color:var(--green);color:#fff}
 
-  .modal-wrap{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:18px}
+  .modal-wrap{position:fixed;inset:0;z-index:97;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(27,33,56,.45)}
   .modal-wrap.show{display:flex}
   .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(27,33,56,.25);width:470px;max-width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;animation:fadeUp .25s ease}
   .m-h{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
@@ -226,6 +226,8 @@
     <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1.5" y="2.5" width="15" height="13.5" rx="2.5"/><line x1="1.5" y1="6.8" x2="16.5" y2="6.8"/></svg><span>SEMANA</span></button>
   <button id="nav-pipeline" onclick="go('pipeline')" title="Pipeline">
     <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="1.5" y="2" width="4" height="14" rx="1.4"/><rect x="7" y="2" width="4" height="10" rx="1.4"/><rect x="12.5" y="2" width="4" height="6.5" rx="1.4"/></svg><span>PIPELINE</span></button>
+  <button id="nav-material" onclick="go('material')" title="Plantillas y material">
+    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 2.5h8l4 4V15.5a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 2 15.5v-11A1.5 1.5 0 0 1 3.5 2.5z"/><path d="M11 2.5v4h4"/><line x1="5.5" y1="10" x2="12.5" y2="10"/><line x1="5.5" y1="13" x2="10.5" y2="13"/></svg><span>MATERIAL</span></button>
   <button style="margin-top:auto" onclick="location.href='crm-guia.html'" title="Guía del vendedor">
     <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="7.2"/><path d="M6.8 7a2.2 2.2 0 1 1 3.1 2c-.7.4-.9.8-.9 1.6"/><line x1="9" y1="13" x2="9" y2="13.2"/></svg><span>GUÍA</span></button>
 </nav>
@@ -234,6 +236,7 @@
   <div id="v-dia" class="view"></div>
   <div id="v-semana" class="view" style="display:none"></div>
   <div id="v-pipeline" class="view wide" style="display:none"></div>
+  <div id="v-material" class="view" style="display:none"></div>
 </div>
 
 <button class="fab" onclick="abrirNuevo()" title="Crear nuevo">+</button>
@@ -329,6 +332,39 @@
   </div>
 </div>
 
+<!-- ===== MODAL PLANTILLA ===== -->
+<div class="modal-wrap" id="m-tpl">
+  <div class="modal">
+    <div class="m-h"><div><h2 id="tpl-title">Enviar plantilla</h2><div class="s" id="tpl-sub">—</div></div><button class="dw-x" onclick="cerrarModal('m-tpl')">✕</button></div>
+    <div class="m-b">
+      <div><div class="lbl" style="margin-bottom:8px">Canal</div>
+        <div class="pills" id="tpl-canal">
+          <button data-v="wa">💬 WhatsApp</button><button data-v="mail">✉️ Correo</button>
+        </div></div>
+      <div><div class="lbl" style="margin-bottom:8px">Situación</div>
+        <div class="pills" id="tpl-sit"></div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="fld" style="flex:1;min-width:140px"><span class="lbl">Nombre (Ing. …)</span><input id="tpl-nombre" placeholder="Rodolfo" oninput="tplRender()"></div>
+        <div class="fld" style="flex:1;min-width:140px"><span class="lbl">Empresa</span><input id="tpl-empresa" placeholder="Aceros del Norte" oninput="tplRender()"></div>
+      </div>
+      <div class="fld" id="tpl-dest-wa"><span class="lbl">Teléfono (WhatsApp)</span><input id="tpl-tel" placeholder="+52 81 …"></div>
+      <div class="fld" id="tpl-dest-mail" style="display:none"><span class="lbl">Correo del cliente</span><input id="tpl-correo" placeholder="correo@empresa.mx"></div>
+      <div style="font-size:12px;color:var(--gold-d);font-weight:600" id="tpl-hint"></div>
+      <div class="fld"><span class="lbl">Mensaje — revísalo y ajústalo <span style="text-transform:none;letter-spacing:0">(lo entre [CORCHETES] se cambia a mano)</span></span>
+        <textarea id="tpl-body" rows="7" oninput="tplManual=true" style="font-size:13px;line-height:1.5"></textarea></div>
+      <div style="display:flex;gap:8px" id="tpl-actions">
+        <button class="btn-save" style="flex:1" id="tpl-send" onclick="tplEnviar()">Abrir en WhatsApp</button>
+        <button class="btn-save" style="flex:0 0 auto;background:#fff;color:var(--blue);border:1.5px solid var(--line)" onclick="tplCopiar()">Copiar</button>
+      </div>
+      <div style="display:none;gap:8px;align-items:center;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:12px;padding:12px 14px" id="tpl-confirm">
+        <span style="flex:1;font-size:13px;font-weight:600;color:var(--gold-d)">¿Lo enviaste?</span>
+        <button class="btn-save" style="background:var(--green)" onclick="tplRegistrarEnvio()">✔ Sí — registrar en bitácora</button>
+        <button class="btn-save" style="background:#fff;color:var(--muted);border:1.5px solid var(--line)" onclick="tplConfirmUI(false)">Aún no</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODO ENFOQUE ===== -->
 <div id="focus"><div class="fx-in">
   <div class="fx-top"><span class="prog" id="fx-prog">—</span><button onclick="cerrarFocus()">Salir</button></div>
@@ -356,10 +392,72 @@ const SUGERENCIA={
 };
 const T_ICON={call:"📞",whatsapp:"💬",email:"✉️",meeting:"👥",visit:"🚗",todo:"✔"};
 
-/* plantillas de envío (Kit del Vendedor · Tube-Mac) */
-const TPL_WA=(n)=>`Ing. ${n||""}, gusto en saludarle 👋 Le comparto lo prometido: en Tube-Mac reparamos e instalamos líneas hidráulicas SIN soldadura (Tube-Mac®/Pyplok®): en frío, en minutos, sin permiso de fuego y sin fugas. Info: tube-mac.com — ¿le busco un espacio de 15 min esta semana para mostrárselo en vivo?`;
-const TPL_MAIL_SUB=(e)=>`Tubería hidráulica sin soldadura — información para ${e||"su empresa"}`;
-const TPL_MAIL=(n)=>`Ing. ${n||""}:\n\nGracias por su tiempo. En Tube-Mac instalamos y reparamos líneas hidráulicas de alta presión SIN soldadura (Tube-Mac® y Pyplok®):\n\n· Reparaciones en frío, en minutos — sin permiso de trabajo en caliente ni radiografía.\n· Uniones libres de fugas, a prueba de vibración, hasta 9,300 psi.\n· Sistema limpio: sin escoria ni lavado ácido.\n· Aprobado por DNV, ABS y NAVSEA; especificado por Shell, ExxonMobil y Petrobras.\n\nMás información: tube-mac.com y pyplok.com\n\nMe gustaría mostrarle el sistema funcionando en 15 minutos. ¿Le viene bien esta semana o la próxima?`;
+/* ================= BIBLIOTECA DE PLANTILLAS · Tube-Mac =================
+   FUENTE EDITABLE: deploy/plantillas.json — ahí se corrigen textos, se dan de
+   alta documentos y se cambia el enlace {link} SIN tocar este código.
+   Lo de abajo es solo el RESPALDO si el JSON no carga (o en modo ejemplo).
+   Placeholders: {nombre} {empresa} {vendedor} {link} · [CORCHETES]=a mano  */
+const FIRMA=()=> (DIA&&DIA.vendedor&&DIA.vendedor!=="—"?DIA.vendedor:"[TU NOMBRE]")+" · Tube-Mac México";
+const DEFAULT_TPL={
+ link_info:"tube-mac.com",
+ plantillas:[
+  {id:"info", titulo:"Primer contacto / «Mándame información»", desc:"Después de la primera llamada o cuando piden info de la marca.",
+   etapas:["Por contactar","Nuevo"],
+   wa:"Ing. {nombre}, gusto en saludarle 👋 Le comparto lo prometido: en Tube-Mac reparamos e instalamos líneas hidráulicas SIN soldadura (Tube-Mac®/Pyplok®): en frío, en minutos, sin permiso de fuego y sin fugas. Info: {link} — ¿le busco un espacio de 15 min esta semana para mostrárselo en vivo?",
+   sub:"Tubería hidráulica sin soldadura — información para {empresa}",
+   mail:"Ing. {nombre}:\n\nGracias por su tiempo. En Tube-Mac instalamos y reparamos líneas hidráulicas de alta presión SIN soldadura, con las tecnologías Tube-Mac® y Pyplok®:\n\n· Reparaciones en frío, en minutos — sin permiso de trabajo en caliente ni radiografía.\n· Uniones libres de fugas, a prueba de vibración, hasta 9,300 psi.\n· Sistema limpio: sin escoria ni lavado ácido — sus bombas y válvulas duran más.\n· Aprobado por DNV, ABS y NAVSEA; especificado por Shell, ExxonMobil y Petrobras. Instalado en las esclusas del Canal de Panamá.\n\nMás información: {link}\n\nMe gustaría mostrarle el sistema funcionando en 15 minutos, en su planta. ¿Le viene bien esta semana o la próxima?\n\n{vendedor}"},
+  {id:"cita", titulo:"Confirmar cita / visita", desc:"Un día antes de la reunión o al agendarla.",
+   etapas:["Cita agendada"],
+   wa:"Ing. {nombre}, le confirmo nuestra visita el [FECHA] a las [HORA]. Llevo la herramienta y muestras del fitting Pyplok para que lo vea funcionando. Cualquier cambio, me dice por aquí. ¡Saludos!",
+   sub:"Confirmación de visita — Tube-Mac · [FECHA]",
+   mail:"Ing. {nombre}:\n\nLe confirmo nuestra visita el [FECHA] a las [HORA] en {empresa}.\n\nLlevaré la herramienta de prensado y muestras físicas del fitting para hacer una demostración en vivo (15-20 minutos). Si le es posible, ayudaría tener a la mano un tramo de la línea o los diámetros que manejan.\n\nCualquier cambio de horario, con confianza.\n\n{vendedor}"},
+  {id:"cot", titulo:"Envío de cotización", desc:"Al mandar la propuesta formal.",
+   etapas:["Por cotizar"],
+   wa:"Ing. {nombre}, le acabo de enviar la cotización a su correo 📩 Dos puntos al revisarla: el comparativo es contra el costo INSTALADO de soldar (soldador + permiso de fuego + radiografía + paro), y la instalación toma una fracción del tiempo. ¿Le llamo el [DÍA] para revisar alcances?",
+   sub:"Propuesta {empresa} — solución no soldada [REFERENCIA]",
+   mail:"Ing. {nombre}:\n\nAdjunto la propuesta que le comenté. Dos puntos que vale la pena tener a la vista al revisarla:\n\n1. El comparativo es contra el costo INSTALADO de un sistema soldado (soldador certificado + permiso de fuego + radiografía + lavado + horas de paro), no solo contra el material.\n2. La instalación toma una fracción del tiempo — menos horas de equipo detenido.\n\nLe llamo el [FECHA] para revisar alcances y resolver cualquier duda técnica.\n\n{vendedor}"},
+  {id:"seg", titulo:"Seguimiento de cotización", desc:"3+ días después de enviar la propuesta, sin respuesta.",
+   etapas:["Cotización enviada","Negociación"],
+   wa:"Ing. {nombre}, ¿cómo va todo? Quería saber si tuvo oportunidad de revisar la propuesta y si el alcance técnico (diámetros/presiones) quedó correcto. Si hay algo que ajustar, lo corrijo hoy mismo. 👍",
+   sub:"Propuesta {empresa} — ¿alcances correctos?",
+   mail:"Ing. {nombre}:\n\nLe envié la propuesta el [DÍA]. Más que preguntarle \"¿qué le pareció?\", quiero asegurarme de que los alcances estén bien: ¿el diámetro y la presión que consideré son los correctos? ¿Hay algo que ajustar para que le haga sentido?\n\nQuedo atento.\n\n{vendedor}"},
+  {id:"pend", titulo:"Pendiente de ellos", desc:"Cuando quedaron de mandarte algo o dar respuesta.",
+   etapas:["Presentado","Alta en proceso"],
+   wa:"Ing. {nombre}, sin prisa — solo me reporto para saber si ya hubo respuesta de [LO PENDIENTE]. Quedo atento para el siguiente paso. Saludos.",
+   sub:"Seguimiento — [LO PENDIENTE]",
+   mail:"Ing. {nombre}:\n\nMe reporto para dar seguimiento a [LO PENDIENTE] que quedamos. En cuanto lo tenga, avanzamos con el siguiente paso.\n\nQuedo atento y a sus órdenes.\n\n{vendedor}"},
+  {id:"react", titulo:"Reactivación (se enfrió)", desc:"Semanas sin respuesta — reabrir la conversación sin presionar.",
+   etapas:[],
+   wa:"Ing. {nombre}, hace unas semanas platicamos sobre resolver [SU APLICACIÓN] sin soldadura. Entiendo que las prioridades cambian — ¿sigue vigente el tema o lo retomamos más adelante? Cualquier ajuste a la propuesta, dígamelo con confianza.",
+   sub:"{empresa} — ¿sigue en pie el tema de las líneas hidráulicas?",
+   mail:"Ing. {nombre}:\n\nHace unas semanas platicamos sobre resolver [SU APLICACIÓN] sin soldadura. Entiendo que las prioridades cambian — le escribo solo para saber si el tema sigue vigente o si conviene retomarlo más adelante.\n\nSi hubo algo de la propuesta que no hizo sentido (alcance, tiempos, presupuesto), dígamelo con confianza: prefiero ajustarla a dejarla en el aire.\n\n{vendedor}"},
+ ],
+ docs:[
+  {t:"Tube-Mac — sitio oficial", d:"Tecnologías no soldadas, industrias y casos.", u:"https://tube-mac.com", i:"🌐"},
+  {t:"Pyplok — sitio oficial", d:"El fitting de prensado en frío: especificaciones y aprobaciones.", u:"https://pyplok.com", i:"🌐"},
+  {t:"Pyplok — producto", d:"Página técnica del sistema Pyplok en Tube-Mac.", u:"https://tube-mac.com/products/pyplok/", i:"🔧"},
+ ]
+};
+let TPLDATA=DEFAULT_TPL;
+fetch("plantillas.json").then(r=>r.ok?r.json():null).then(d=>{
+  if(d&&Array.isArray(d.plantillas)&&d.plantillas.length){TPLDATA=d;if(vista==="material")renderMaterial();}
+}).catch(()=>{});
+function fill(s,n,e){
+  return String(s||"")
+    .replace(/\{nombre\}/g, n||"[NOMBRE]")
+    .replace(/\{empresa\}/g, e||"[EMPRESA]")
+    .replace(/\{vendedor\}/g, FIRMA())
+    .replace(/\{link\}/g, TPLDATA.link_info||"tube-mac.com");
+}
+/* sugerencia de plantilla según dónde está el lead */
+function tplSugerida(lead){
+  if(!lead)return{id:"info",motivo:""};
+  if(lead.diasSinContacto!=null&&lead.diasSinContacto>=14)return{id:"react",motivo:lead.diasSinContacto+" días sin contacto"};
+  const et=String(lead.etapa||"").toLowerCase();
+  const hit=(TPLDATA.plantillas||[]).find(p=>(p.etapas||[]).some(x=>x.toLowerCase()===et));
+  if(hit)return{id:hit.id,motivo:"etapa «"+lead.etapa+"»"};
+  return{id:"info",motivo:""};
+}
 
 /* ================= util ================= */
 const esc=(s)=>String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
@@ -371,9 +469,9 @@ async function post(b){try{const r=await fetch(API,{method:"POST",headers:{"Cont
 function marcar(id,val,attr){attr=attr||"data-v";document.querySelectorAll("#"+id+" button").forEach(b=>b.setAttribute("aria-pressed",String(b.getAttribute(attr)===String(val))));}
 
 /* ================= navegación ================= */
-function go(v){vista=v;["dia","semana","pipeline"].forEach(x=>{document.getElementById("v-"+x).style.display=x===v?"":"none";document.getElementById("nav-"+x).classList.toggle("on",x===v);});renderVista();}
-function renderVista(){if(!DIA)return;if(vista==="dia")renderDia();else if(vista==="semana")renderSemana();else renderPipeline();}
-function cerrarTodo(){document.getElementById("ovl").classList.remove("show");document.getElementById("drawer").classList.remove("show");["m-nuevo","m-toque","m-conv"].forEach(id=>document.getElementById(id).classList.remove("show"));}
+function go(v){vista=v;["dia","semana","pipeline","material"].forEach(x=>{document.getElementById("v-"+x).style.display=x===v?"":"none";document.getElementById("nav-"+x).classList.toggle("on",x===v);});renderVista();}
+function renderVista(){if(vista==="material"){renderMaterial();return;}if(!DIA)return;if(vista==="dia")renderDia();else if(vista==="semana")renderSemana();else renderPipeline();}
+function cerrarTodo(){document.getElementById("ovl").classList.remove("show");document.getElementById("drawer").classList.remove("show");["m-nuevo","m-toque","m-conv","m-tpl"].forEach(id=>document.getElementById(id).classList.remove("show"));}
 function cerrarModal(id){document.getElementById(id).classList.remove("show");if(!document.getElementById("drawer").classList.contains("show"))document.getElementById("ovl").classList.remove("show");}
 
 /* ================= MI DÍA ================= */
@@ -544,17 +642,113 @@ async function abrirFicha(leadId){
     +'<button onclick="enviarInfo()">Enviar info</button>'
     +(f.puedeConvertir?'<button class="ok" onclick="abrirConv('+f.leadId+',\''+esc(f.nombre).replace(/'/g,"")+'\')">✓ Cliente aprobado</button>':'');
 }
+/* ================= MATERIAL (plantillas + documentación) ================= */
+function renderMaterial(){
+  const v=document.getElementById("v-material");
+  let html='<div class="head"><div><h1 style="font-size:26px">Material de venta</h1><div class="sub">Plantillas listas para enviar y documentación de la marca. Elige la situación, ponle el nombre y mándala.</div></div></div>';
+  html+='<div class="sech">Plantillas por situación</div>';
+  (TPLDATA.plantillas||[]).forEach(p=>{
+    html+='<div class="q" style="cursor:default"><div style="flex:1;min-width:220px">'
+      +'<div class="q-name">'+esc(p.titulo)+'</div><div class="q-co">'+esc(p.desc)+'</div></div>'
+      +'<div class="q-btns">'
+      +'<button onclick="abrirTpl(\''+p.id+'\',\'wa\',null)">💬 WhatsApp</button>'
+      +'<button onclick="abrirTpl(\''+p.id+'\',\'mail\',null)">✉️ Correo</button>'
+      +'</div></div>';
+  });
+  html+='<div class="sech" style="margin-top:26px">Documentación digital</div>';
+  (TPLDATA.docs||[]).forEach(d=>{
+    html+='<a class="q" style="text-decoration:none" href="'+esc(d.u)+'" target="_blank" rel="noopener">'
+      +'<div style="font-size:22px;flex:none">'+esc(d.i||"📄")+'</div>'
+      +'<div style="flex:1"><div class="q-name">'+esc(d.t)+'</div><div class="q-co">'+esc(d.d)+'</div></div>'
+      +'<div style="color:var(--blue);font-weight:600;font-size:13px;flex:none">Abrir →</div></a>';
+  });
+  html+='<div style="font-size:12px;color:var(--muted);margin-top:14px">Los textos, documentos y el enlace de las plantillas se editan en <span class="mono">deploy/plantillas.json</span> — sin tocar código. Los PDFs se suben a <span class="mono">deploy/docs/</span>.</div>';
+  v.innerHTML=html;
+}
+
+/* ================= SELECTOR DE PLANTILLA ================= */
+let tplCanal="wa", tplSit="info", tplManual=false, tplLead=null, tplEnviado=false;
+function abrirTpl(sitId,canal,lead){
+  tplLead=lead||null; tplManual=false; tplEnviado=false;
+  // CORRECCIÓN 1: si viene de un lead, el sistema elige la plantilla por su etapa.
+  let motivo="";
+  if(lead&&!sitId){const s=tplSugerida(lead);sitId=s.id;motivo=s.motivo;}
+  tplSit=sitId||"info"; tplCanal=canal||"wa";
+  document.getElementById("tpl-sit").innerHTML=(TPLDATA.plantillas||[]).map(p=>
+    '<button data-v="'+p.id+'">'+esc(p.titulo.split("/")[0].trim())+'</button>').join("");
+  marcar("tpl-sit",tplSit);marcar("tpl-canal",tplCanal);
+  const nombre=lead?String(lead.contacto||lead.cliente||"").replace(/^(ing\.?|lic\.?|sr\.?|sra\.?)\s*/i,"").split(" ")[0]:"";
+  document.getElementById("tpl-nombre").value=nombre;
+  document.getElementById("tpl-empresa").value=lead?(lead.cliente||""):"";
+  document.getElementById("tpl-tel").value=lead?(lead.telefono||""):"";
+  document.getElementById("tpl-correo").value=lead?(lead.correo||""):"";
+  document.getElementById("tpl-sub").textContent=lead?("Para: "+(lead.nombre||lead.cliente||"")):"Biblioteca de plantillas Tube-Mac";
+  document.getElementById("tpl-hint").textContent=motivo?("✦ Sugerida por "+motivo+" — cámbiala si aplica otra."):"";
+  tplConfirmUI(false);
+  tplRender(true);
+  document.getElementById("ovl").classList.add("show");
+  document.getElementById("m-tpl").classList.add("show");
+}
+document.getElementById("tpl-canal").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tplCanal=b.dataset.v;marcar("tpl-canal",tplCanal);tplManual=false;tplRender(true);});
+document.getElementById("tpl-sit").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tplSit=b.dataset.v;marcar("tpl-sit",tplSit);tplManual=false;document.getElementById("tpl-hint").textContent="";tplRender(true);});
+function tplActual(){return (TPLDATA.plantillas||[]).find(x=>x.id===tplSit)||(TPLDATA.plantillas||[])[0];}
+function tplRender(force){
+  document.getElementById("tpl-dest-wa").style.display=tplCanal==="wa"?"":"none";
+  document.getElementById("tpl-dest-mail").style.display=tplCanal==="mail"?"":"none";
+  document.getElementById("tpl-send").textContent=tplCanal==="wa"?"Abrir en WhatsApp":"Abrir en correo";
+  if(tplManual&&!force)return;
+  const p=tplActual();if(!p)return;
+  const n=document.getElementById("tpl-nombre").value.trim();
+  const em=document.getElementById("tpl-empresa").value.trim();
+  document.getElementById("tpl-body").value=fill(tplCanal==="wa"?p.wa:p.mail,n,em);
+  if(force)tplManual=false;
+}
+function tplEnviar(){
+  const body=document.getElementById("tpl-body").value;
+  if(/\[[A-ZÁÉÍÓÚÑ ]+\]/.test(body)&&!confirm("El mensaje aún tiene [CORCHETES] por llenar. ¿Enviar así?"))return;
+  if(tplCanal==="wa"){
+    const tel=String(document.getElementById("tpl-tel").value).replace(/[^\d]/g,"");
+    if(!tel){toast("Falta el teléfono con WhatsApp.");return;}
+    window.open("https://wa.me/"+(tel.length===10?"52"+tel:tel)+"?text="+encodeURIComponent(body),"_blank");
+  }else{
+    const correo=document.getElementById("tpl-correo").value.trim();
+    if(!correo){toast("Falta el correo del cliente.");return;}
+    const p=tplActual();
+    window.open("mailto:"+correo+"?subject="+encodeURIComponent(fill(p.sub,document.getElementById("tpl-nombre").value.trim(),document.getElementById("tpl-empresa").value.trim()))+"&body="+encodeURIComponent(body),"_blank");
+  }
+  // CORRECCIÓN 2: si viene de un lead, ofrecer registrar el envío EN UN TOQUE.
+  if(tplLead&&!MODO_EJEMPLO)tplConfirmUI(true);
+  else toast((tplCanal==="wa"?"WhatsApp":"Correo")+" abierto ✔");
+}
+function tplConfirmUI(on){
+  document.getElementById("tpl-actions").style.display=on?"none":"flex";
+  document.getElementById("tpl-confirm").style.display=on?"flex":"none";
+}
+async function tplRegistrarEnvio(){
+  const p=tplActual();
+  const btns=document.getElementById("tpl-confirm").querySelectorAll("button");btns.forEach(b=>b.disabled=true);
+  // Bitácora automática. Si el lead NO tiene siguiente paso, se agenda uno solo
+  // (+3 días) para no romper la regla de oro; si ya tiene, no se duplica.
+  const sinPaso=!(fichaActual&&fichaActual.leadId===tplLead.leadId&&fichaActual.sig)&&!(tplLead.sig);
+  const r=await post({action:"resultado",leadId:tplLead.leadId,activityId:null,
+    tipo:tplCanal==="wa"?"whatsapp":"email",resultado:"",
+    nota:"Plantilla enviada: "+(p?p.titulo:tplSit),
+    sig: sinPaso?{tipo:"call",fecha:isoMas(3),nota:"Dar seguimiento a la información enviada"}:null,
+    email:repEmail});
+  btns.forEach(b=>b.disabled=false);
+  if(!r||!r.ok){toast("⚠ No se pudo registrar: "+((r&&r.error)||"sin conexión"));tplConfirmUI(false);return;}
+  cerrarModal("m-tpl");
+  toast(sinPaso?"Registrado en bitácora ✔ · seguimiento agendado en 3 días":"Registrado en bitácora ✔");
+  if(fichaActual&&fichaActual.leadId===tplLead.leadId)abrirFicha(tplLead.leadId);
+  cargarSilencioso();
+}
+async function tplCopiar(){
+  try{await navigator.clipboard.writeText(document.getElementById("tpl-body").value);toast("Mensaje copiado ✔");}
+  catch(e){toast("No se pudo copiar — selecciónalo manualmente.");}
+}
 function enviarInfo(){
   const f=fichaActual;if(!f)return;
-  const nombre=(f.contacto||f.cliente||"").split(" ")[0];
-  if(f.telefono){
-    const tel=String(f.telefono).replace(/[^\d]/g,"");
-    window.open("https://wa.me/"+(tel.length===10?"52"+tel:tel)+"?text="+encodeURIComponent(TPL_WA(nombre)),"_blank");
-    toast("WhatsApp abierto — al enviarlo, registra el toque ✔");
-  }else if(f.correo){
-    window.open("mailto:"+f.correo+"?subject="+encodeURIComponent(TPL_MAIL_SUB(f.cliente))+"&body="+encodeURIComponent(TPL_MAIL(nombre)),"_blank");
-    toast("Correo abierto — al enviarlo, registra el toque ✔");
-  }else toast("Este lead no tiene teléfono ni correo registrados.");
+  abrirTpl(null, f.telefono?"wa":"mail", f);
 }
 
 /* ================= TOQUE ================= */
@@ -617,7 +811,15 @@ async function guardarConv(){
     sig:{tipo:"call",fecha:document.getElementById("c-fecha").value,nota:document.getElementById("c-nota").value||"Primer paso comercial"}});
   if(r&&r.demo){toast("⚠ Sin conexión — NO se guardó");btn.disabled=false;return;}
   if(!r||!r.ok){toast("⚠ No se pudo convertir: "+((r&&r.error)||"error"));btn.disabled=false;return;}
-  cerrarTodo();toast("🎉 Cliente creado — ya es oportunidad en etapa Nuevo");cargar();
+  toast("🎉 Cliente creado — ya es oportunidad en etapa Nuevo");
+  const enFocus=document.getElementById("focus").classList.contains("show");
+  if(enFocus){
+    cerrarModal("m-conv");
+    const i=COLA.findIndex(x=>x.leadId===convCtx.leadId);
+    if(i>=0)COLA.splice(i,1);
+    if(fxIdx>=COLA.length)fxIdx=COLA.length;
+    renderFocus();cargarSilencioso();
+  }else{cerrarTodo();cargar();}
 }
 
 /* ================= NUEVO (FAB) ================= */

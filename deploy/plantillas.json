@@ -1,0 +1,65 @@
+{
+  "_ayuda": "EDITA ESTE ARCHIVO PARA CAMBIAR PLANTILLAS Y DOCUMENTOS sin tocar código. Placeholders disponibles: {nombre} {empresa} {vendedor} {link}. Lo que va entre [CORCHETES] el vendedor lo llena a mano. 'etapas' indica en qué etapa del CRM se sugiere sola cada plantilla. En 'docs', para agregar un PDF: súbelo a deploy/docs/ y agrega una línea con u:\"docs/tu-archivo.pdf\". 'link_info' es el enlace que aparece en las plantillas donde dice {link} — cámbialo por tu folleto principal cuando lo subas.",
+  "link_info": "tube-mac.com",
+  "plantillas": [
+    {
+      "id": "info",
+      "titulo": "Primer contacto / «Mándame información»",
+      "desc": "Después de la primera llamada o cuando piden info de la marca.",
+      "etapas": ["Por contactar", "Nuevo"],
+      "wa": "Ing. {nombre}, gusto en saludarle 👋 Le comparto lo prometido: en Tube-Mac reparamos e instalamos líneas hidráulicas SIN soldadura (Tube-Mac®/Pyplok®): en frío, en minutos, sin permiso de fuego y sin fugas. Info: {link} — ¿le busco un espacio de 15 min esta semana para mostrárselo en vivo?",
+      "sub": "Tubería hidráulica sin soldadura — información para {empresa}",
+      "mail": "Ing. {nombre}:\n\nGracias por su tiempo. En Tube-Mac instalamos y reparamos líneas hidráulicas de alta presión SIN soldadura, con las tecnologías Tube-Mac® y Pyplok®:\n\n· Reparaciones en frío, en minutos — sin permiso de trabajo en caliente ni radiografía.\n· Uniones libres de fugas, a prueba de vibración, hasta 9,300 psi.\n· Sistema limpio: sin escoria ni lavado ácido — sus bombas y válvulas duran más.\n· Aprobado por DNV, ABS y NAVSEA; especificado por Shell, ExxonMobil y Petrobras. Instalado en las esclusas del Canal de Panamá.\n\nMás información: {link}\n\nMe gustaría mostrarle el sistema funcionando en 15 minutos, en su planta. ¿Le viene bien esta semana o la próxima?\n\n{vendedor}"
+    },
+    {
+      "id": "cita",
+      "titulo": "Confirmar cita / visita",
+      "desc": "Un día antes de la reunión o al agendarla.",
+      "etapas": ["Cita agendada"],
+      "wa": "Ing. {nombre}, le confirmo nuestra visita el [FECHA] a las [HORA]. Llevo la herramienta y muestras del fitting Pyplok para que lo vea funcionando. Cualquier cambio, me dice por aquí. ¡Saludos!",
+      "sub": "Confirmación de visita — Tube-Mac · [FECHA]",
+      "mail": "Ing. {nombre}:\n\nLe confirmo nuestra visita el [FECHA] a las [HORA] en {empresa}.\n\nLlevaré la herramienta de prensado y muestras físicas del fitting para hacer una demostración en vivo (15-20 minutos). Si le es posible, ayudaría tener a la mano un tramo de la línea o los diámetros que manejan.\n\nCualquier cambio de horario, con confianza.\n\n{vendedor}"
+    },
+    {
+      "id": "cot",
+      "titulo": "Envío de cotización",
+      "desc": "Al mandar la propuesta formal.",
+      "etapas": ["Por cotizar"],
+      "wa": "Ing. {nombre}, le acabo de enviar la cotización a su correo 📩 Dos puntos al revisarla: el comparativo es contra el costo INSTALADO de soldar (soldador + permiso de fuego + radiografía + paro), y la instalación toma una fracción del tiempo. ¿Le llamo el [DÍA] para revisar alcances?",
+      "sub": "Propuesta {empresa} — solución no soldada [REFERENCIA]",
+      "mail": "Ing. {nombre}:\n\nAdjunto la propuesta que le comenté. Dos puntos que vale la pena tener a la vista al revisarla:\n\n1. El comparativo es contra el costo INSTALADO de un sistema soldado (soldador certificado + permiso de fuego + radiografía + lavado + horas de paro), no solo contra el material.\n2. La instalación toma una fracción del tiempo — menos horas de equipo detenido.\n\nLe llamo el [FECHA] para revisar alcances y resolver cualquier duda técnica.\n\n{vendedor}"
+    },
+    {
+      "id": "seg",
+      "titulo": "Seguimiento de cotización",
+      "desc": "3+ días después de enviar la propuesta, sin respuesta.",
+      "etapas": ["Cotización enviada", "Negociación"],
+      "wa": "Ing. {nombre}, ¿cómo va todo? Quería saber si tuvo oportunidad de revisar la propuesta y si el alcance técnico (diámetros/presiones) quedó correcto. Si hay algo que ajustar, lo corrijo hoy mismo. 👍",
+      "sub": "Propuesta {empresa} — ¿alcances correctos?",
+      "mail": "Ing. {nombre}:\n\nLe envié la propuesta el [DÍA]. Más que preguntarle \"¿qué le pareció?\", quiero asegurarme de que los alcances estén bien: ¿el diámetro y la presión que consideré son los correctos? ¿Hay algo que ajustar para que le haga sentido?\n\nQuedo atento.\n\n{vendedor}"
+    },
+    {
+      "id": "pend",
+      "titulo": "Pendiente de ellos",
+      "desc": "Cuando quedaron de mandarte algo o dar respuesta.",
+      "etapas": ["Presentado", "Alta en proceso"],
+      "wa": "Ing. {nombre}, sin prisa — solo me reporto para saber si ya hubo respuesta de [LO PENDIENTE]. Quedo atento para el siguiente paso. Saludos.",
+      "sub": "Seguimiento — [LO PENDIENTE]",
+      "mail": "Ing. {nombre}:\n\nMe reporto para dar seguimiento a [LO PENDIENTE] que quedamos. En cuanto lo tenga, avanzamos con el siguiente paso.\n\nQuedo atento y a sus órdenes.\n\n{vendedor}"
+    },
+    {
+      "id": "react",
+      "titulo": "Reactivación (se enfrió)",
+      "desc": "Semanas sin respuesta — reabrir la conversación sin presionar.",
+      "etapas": [],
+      "wa": "Ing. {nombre}, hace unas semanas platicamos sobre resolver [SU APLICACIÓN] sin soldadura. Entiendo que las prioridades cambian — ¿sigue vigente el tema o lo retomamos más adelante? Cualquier ajuste a la propuesta, dígamelo con confianza.",
+      "sub": "{empresa} — ¿sigue en pie el tema de las líneas hidráulicas?",
+      "mail": "Ing. {nombre}:\n\nHace unas semanas platicamos sobre resolver [SU APLICACIÓN] sin soldadura. Entiendo que las prioridades cambian — le escribo solo para saber si el tema sigue vigente o si conviene retomarlo más adelante.\n\nSi hubo algo de la propuesta que no hizo sentido (alcance, tiempos, presupuesto), dígamelo con confianza: prefiero ajustarla a dejarla en el aire.\n\n{vendedor}"
+    }
+  ],
+  "docs": [
+    { "t": "Tube-Mac — sitio oficial", "d": "Tecnologías no soldadas, industrias y casos.", "u": "https://tube-mac.com", "i": "🌐" },
+    { "t": "Pyplok — sitio oficial", "d": "El fitting de prensado en frío: especificaciones y aprobaciones.", "u": "https://pyplok.com", "i": "🌐" },
+    { "t": "Pyplok — producto", "d": "Página técnica del sistema Pyplok en Tube-Mac.", "u": "https://tube-mac.com/products/pyplok/", "i": "🔧" }
+  ]
+}
