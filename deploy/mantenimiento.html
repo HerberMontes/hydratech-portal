@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan de mantenimiento de mangueras · HydraTech Group</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<meta name="theme-color" content="#141829">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>html,body{margin:0;background:#f1f5f9;}</style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "htm": "https://esm.sh/htm@3.1.1"
+  }
+}
+</script>
+  <script>window.REQUIRE_ROLE="cotizador";</script>
+  <script defer src="auth-gate.js"></script>
+</head>
+<body>
+  <div style="background:#141829; border-bottom:3px solid #263370; font-family:'IBM Plex Sans',system-ui,sans-serif;">
+    <div style="max-width:1280px; margin:0 auto; padding:10px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px;">
+      <a href="acceso.html" style="display:inline-flex; align-items:center; gap:9px; text-decoration:none;">
+        <span style="color:#aeb6d4; font-size:18px; line-height:1;">&#8592;</span>
+        <img src="assets/hydratech-wordmark-white.png" alt="HydraTech Group" style="height:18px; display:block;">
+      </a>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#5b6390;">Plan de mantenimiento de mangueras</span>
+    </div>
+  </div>
+
+  <div id="root"></div>
+  <noscript style="display:block; padding:40px; text-align:center; font-family:sans-serif;">Esta herramienta necesita JavaScript activado.</noscript>
+
+<script type="module">
+import React, { useState, useEffect, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
+import htm from 'htm';
+import { DASH, FAM_LABEL, estFor, medFor, angFor } from './configurador.app.js';
+
+const html = htm.bind(React.createElement);
+const hoy = () => new Date();
+const selCls = "rounded border border-slate-300 bg-white px-1.5 py-1.5 text-[13px] text-slate-800 focus:border-blue-500 focus:outline-none";
+
+function sideLabel(s) {
+  const est = estFor(s.g).find((e) => e.sk === s.sk);
+  const med = medFor(s.g, s.sk).find((x) => x.th === s.th);
+  const ang = angFor(s.g, s.sk, s.th).find((a) => a[0] === s.ak);
+  const p = [FAM_LABEL[s.g] || s.g, est?.sl || s.sk, med?.ml || s.th];
+  if (s.ak !== "R") p.push(ang ? ang[1] : s.ak);
+  return p.join(" ");
+}
+function orientTxt(m) {
+  const p = [];
+  const n = (x) => ((Math.round(x || 0) % 360) + 360) % 360;
+  if (m.A.ak !== "R") p.push(`A ${n(m.A.or)}°`);
+  if (m.B.ak !== "R") p.push(`B ${n(m.B.or)}°`);
+  return p.length ? p.join(" · ") : "—";
+}
+// Fecha del próximo cambio = fecha de venta/instalación + vida útil (meses)
+function proxCambio(m) {
+  if (!m.fecha) return null;
+  const d = new Date(m.fecha + "T00:00:00");
+  d.setMonth(d.getMonth() + (Number(m.vidaMeses) > 0 ? Number(m.vidaMeses) : 12));
+  return d;
+}
+function estadoDe(m) {
+  const d = proxCambio(m);
+  if (!d) return { t: "sin fecha", cls: "bg-slate-100 text-slate-500" };
+  const dias = Math.floor((d - hoy()) / 864e5);
+  if (dias < 0) return { t: `vencida hace ${-dias} d`, cls: "bg-rose-100 text-rose-700" };
+  if (dias <= 30) return { t: `cambiar en ${dias} d`, cls: "bg-amber-100 text-amber-800" };
+  return { t: `al día (${dias} d)`, cls: "bg-emerald-100 text-emerald-700" };
+}
+const fmt = (d) => d ? d.toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "numeric" }) : "—";
+
+function App() {
+  const [clientes, setClientes] = useState([]);
+  const [clienteId, setClienteId] = useState("");
+  const [doc, setDoc] = useState({ rev: 0, areas: [] });
+  const [loading, setLoading] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [filtro, setFiltro] = useState("todas"); // todas | vencidas | proximas
+
+  useEffect(() => {
+    fetch("/api/odoo-clientes").then((r) => r.json()).then((d) => {
+      if (d.ok && Array.isArray(d.clientes)) setClientes(d.clientes);
+    }).catch(() => {});
+  }, []);
+
+  const load = async (pid) => {
+    setClienteId(pid); setMsg(null); setDirty(false);
+    if (!pid) { setDoc({ rev: 0, areas: [] }); return; }
+    setLoading(true);
+    try {
+      const d = await (await fetch("/api/mangueras-listar?partnerId=" + pid)).json();
+      if (d.ok) setDoc(d.doc || { rev: 0, areas: [] });
+      else setMsg({ err: d.error });
+    } catch (e) { setMsg({ err: String(e.message || e) }); }
+    finally { setLoading(false); }
+  };
+
+  const save = async () => {
+    setSaving(true); setMsg(null);
+    try {
+      const r = await fetch("/api/mangueras-guardar", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partnerId: Number(clienteId), rev: doc.rev || 0, doc }),
+      });
+      const d = await r.json();
+      if (d.ok) { setDoc({ ...doc, rev: d.rev }); setDirty(false); setMsg({ ok: "Plan guardado." }); }
+      else setMsg({ err: d.error || "No se pudo guardar." });
+    } catch (e) { setMsg({ err: String(e.message || e) }); }
+    finally { setSaving(false); }
+  };
+
+  // Todas las mangueras del cliente, aplanadas con su ubicación.
+  const filas = useMemo(() => {
+    const out = [];
+    for (const a of doc.areas || []) for (const e of a.equipos || []) for (const m of e.mangueras || [])
+      out.push({ area: a, equipo: e, m });
+    out.sort((x, y) => (proxCambio(x.m) || 8640000000000000) - (proxCambio(y.m) || 8640000000000000));
+    if (filtro === "vencidas") return out.filter((r) => { const d = proxCambio(r.m); return d && d < hoy(); });
+    if (filtro === "proximas") return out.filter((r) => { const d = proxCambio(r.m); if (!d) return false; const dias = (d - hoy()) / 864e5; return dias >= 0 && dias <= 30; });
+    return out;
+  }, [doc, filtro]);
+
+  const setCampo = (id, campo, valor) => {
+    setDoc((d) => {
+      const nd = structuredClone(d);
+      for (const a of nd.areas) for (const e of a.equipos || []) {
+        const m = (e.mangueras || []).find((x) => x.id === id);
+        if (m) { m[campo] = valor; return nd; }
+      }
+      return nd;
+    });
+    setDirty(true);
+  };
+  const quitar = (id) => {
+    if (!window.confirm(`¿Quitar la manguera ${id} del plan? Esta acción no se puede deshacer.`)) return;
+    setDoc((d) => {
+      const nd = structuredClone(d);
+      for (const a of nd.areas) for (const e of a.equipos || [])
+        e.mangueras = (e.mangueras || []).filter((x) => x.id !== id);
+      return nd;
+    });
+    setDirty(true);
+  };
+
+  const resumen = useMemo(() => {
+    let venc = 0, prox = 0;
+    for (const r of doc.areas.flatMap((a) => (a.equipos || []).flatMap((e) => e.mangueras || []))) {
+      const d = proxCambio(r);
+      if (!d) continue;
+      const dias = (d - hoy()) / 864e5;
+      if (dias < 0) venc++; else if (dias <= 30) prox++;
+    }
+    return { venc, prox };
+  }, [doc]);
+
+  return html`
+    <div className="mx-auto max-w-[1280px] p-4" style=${{ fontFamily: "'IBM Plex Sans',system-ui,sans-serif" }}>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Cliente</label>
+          <select className=${selCls + " block min-w-[280px]"} value=${clienteId} onChange=${(e) => load(e.target.value)}>
+            <option value="">— Elige un cliente —</option>
+            ${clientes.map((c) => html`<option key=${c.id} value=${c.id}>${c.name}</option>`)}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          ${clienteId && html`
+            <select className=${selCls} value=${filtro} onChange=${(e) => setFiltro(e.target.value)}>
+              <option value="todas">Todas</option>
+              <option value="vencidas">Vencidas (${resumen.venc})</option>
+              <option value="proximas">Próximas 30 días (${resumen.prox})</option>
+            </select>
+            <button disabled=${!dirty || saving}
+              className=${"rounded px-4 py-2 text-[13px] font-bold text-white " + (dirty ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-300")}
+              onClick=${save}>${saving ? "Guardando…" : dirty ? "Guardar cambios" : "Todo guardado"}</button>`}
+        </div>
+      </div>
+
+      ${msg && html`<div className=${"mb-3 rounded-lg px-3 py-2 text-[13px] " + (msg.err ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700")}>${msg.err || msg.ok}</div>`}
+
+      ${!clienteId && html`
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-400">
+          Elige un cliente para ver las mangueras que le has vendido.<br/>
+          <span className="text-[12px]">Cada cotización creada desde el cotizador registra aquí sus mangueras automáticamente. Define la vida útil y programa el reemplazo.</span>
+        </div>`}
+
+      ${clienteId && loading && html`<div className="p-4 text-[13px] text-slate-400">Cargando plan…</div>`}
+
+      ${clienteId && !loading && filas.length === 0 && html`
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-[13px] text-slate-400">
+          ${filtro === "todas"
+            ? "Este cliente aún no tiene mangueras registradas. Se agregan automáticamente al cotizar en el cotizador (cliente → área → equipo)."
+            : "No hay mangueras en este filtro."}
+        </div>`}
+
+      ${filas.length > 0 && html`
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table className="w-full text-[13px]" style=${{ minWidth: 1080 }}>
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wide text-slate-400">
+                <th className="px-2 py-2">Estado</th>
+                <th className="px-2 py-2">ID</th>
+                <th className="px-2 py-2">Ubicación</th>
+                <th className="px-2 py-2">Especificación</th>
+                <th className="px-2 py-2">Orientación</th>
+                <th className="px-2 py-2">Venta</th>
+                <th className="px-2 py-2">Vida útil</th>
+                <th className="px-2 py-2">Próx. cambio</th>
+                <th className="px-2 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filas.map(({ area, equipo, m }) => {
+                const est = estadoDe(m);
+                return html`
+                <tr key=${m.id} className="border-b border-slate-100 align-top hover:bg-slate-50">
+                  <td className="px-2 py-2"><span className=${"whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-bold " + est.cls}>${est.t}</span></td>
+                  <td className="px-2 py-2 font-mono font-bold text-slate-700">${m.id}
+                    ${m.folio && html`<div className="text-[10px] font-normal text-slate-400">${m.folio}</div>`}</td>
+                  <td className="px-2 py-2 text-slate-600">${area.nombre}<div className="text-[11px] text-slate-400">${equipo.nombre}</div></td>
+                  <td className="px-2 py-2 text-slate-600">⌀${DASH[m.A.th] || m.A.th}" · ${m.pres} psi · ${m.len} m
+                    <div className="text-[11px] text-slate-400">A: ${sideLabel(m.A)} · B: ${sideLabel(m.B)}</div></td>
+                  <td className="px-2 py-2 text-slate-600">${orientTxt(m)}</td>
+                  <td className="px-2 py-2">
+                    <input type="date" className=${selCls} value=${m.fecha || ""}
+                      onChange=${(e) => setCampo(m.id, "fecha", e.target.value)} />
+                  </td>
+                  <td className="px-2 py-2">
+                    <div className="flex items-center gap-1">
+                      <input type="number" min="1" className=${selCls + " w-16 text-right"} value=${m.vidaMeses || 12}
+                        onChange=${(e) => setCampo(m.id, "vidaMeses", e.target.value)} />
+                      <span className="text-[11px] text-slate-400">meses</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-2 whitespace-nowrap font-medium text-slate-700">${fmt(proxCambio(m))}</td>
+                  <td className="px-2 py-2 text-right">
+                    <button className="rounded border border-rose-200 px-2 py-0.5 text-[11px] text-rose-500 hover:bg-rose-50"
+                      onClick=${() => quitar(m.id)}>Quitar</button>
+                  </td>
+                </tr>`;
+              })}
+            </tbody>
+          </table>
+        </div>`}
+    </div>`;
+}
+createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>

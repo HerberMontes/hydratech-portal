@@ -120,7 +120,47 @@ function quoteLine(line) {
 }
 var _id = 1;
 function defSide(w) {
-  return validSide(w || { ak: "R", g: "M", sk: "npt", th: "08" });
+  return { ...validSide(w || { ak: "R", g: "M", sk: "npt", th: "08" }), or: w && w.or || 0 };
+}
+// Carátula para capturar la orientación del codo respecto a la curva natural
+// de la manguera (banda ámbar = 0°, hacia el interior de la curva; grados en
+// sentido horario mirando la manguera de frente por ese extremo; pasos de 15°).
+function OrientDial({ value, onChange }) {
+  const S = 96, C = S / 2, R = 36;
+  const a = ((Math.round(value || 0) % 360) + 360) % 360;
+  const h = React.createElement;
+  const setFrom = (clientX, clientY, el) => {
+    const r = el.getBoundingClientRect();
+    const x = clientX - r.left - r.width / 2;
+    const y = clientY - r.top - r.height / 2;
+    const ang = Math.atan2(x, -y) * 180 / Math.PI;
+    onChange(((Math.round(ang / 15) * 15) % 360 + 360) % 360);
+  };
+  const press = (e) => { const p = e.touches ? e.touches[0] : e; setFrom(p.clientX, p.clientY, e.currentTarget); if (e.touches) e.preventDefault(); };
+  const move = (e) => { if (!e.touches && e.buttons !== 1) return; press(e); };
+  const ticks = [];
+  for (let t = 0; t < 360; t += 45) {
+    const rad2 = t * Math.PI / 180;
+    ticks.push(h("line", { key: t, x1: C + (R - 5) * Math.sin(rad2), y1: C - (R - 5) * Math.cos(rad2), x2: C + R * Math.sin(rad2), y2: C - R * Math.cos(rad2), stroke: t % 90 === 0 ? "#64748b" : "#cbd5e1", strokeWidth: t % 90 === 0 ? 2 : 1 }));
+  }
+  const rad = a * Math.PI / 180;
+  const hx = C + (R - 11) * Math.sin(rad), hy = C - (R - 11) * Math.cos(rad);
+  return h("div", { className: "mt-1 flex flex-col items-center select-none", title: "Orientaci\xF3n del codo: 0\xB0 = hacia el interior de la curva natural del rollo" },
+    h("svg", { width: S, height: S, viewBox: "0 0 " + S + " " + S, style: { touchAction: "none", cursor: "pointer" }, onMouseDown: press, onMouseMove: move, onTouchStart: press, onTouchMove: move },
+      h("circle", { cx: C, cy: C, r: R, fill: "#fff", stroke: "#e2e8f0", strokeWidth: 2 }),
+      ticks,
+      h("path", { d: "M " + (C + (R + 4) * Math.sin(-0.5)) + " " + (C - (R + 4) * Math.cos(-0.5)) + " A " + (R + 4) + " " + (R + 4) + " 0 0 1 " + (C + (R + 4) * Math.sin(0.5)) + " " + (C - (R + 4) * Math.cos(0.5)), fill: "none", stroke: "#f59e0b", strokeWidth: 4, strokeLinecap: "round" }),
+      h("text", { x: C, y: 9, textAnchor: "middle", fontSize: 7, fontWeight: 700, fill: "#b45309" }, "CURVA 0\xB0"),
+      h("circle", { cx: C, cy: C, r: 9, fill: "#e2e8f0", stroke: "#94a3b8", strokeWidth: 1.5 }),
+      h("line", { x1: C, y1: C, x2: hx, y2: hy, stroke: "#2563eb", strokeWidth: 4, strokeLinecap: "round" }),
+      h("circle", { cx: hx, cy: hy, r: 5, fill: "#2563eb" })
+    ),
+    h("div", { className: "flex items-center gap-1" },
+      h("button", { type: "button", className: "rounded border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 hover:bg-slate-50", onClick: () => onChange(((a - 15) % 360 + 360) % 360) }, "\u221215"),
+      h("span", { className: "w-9 text-center text-[12px] font-bold tabular-nums text-blue-700" }, a + "\xB0"),
+      h("button", { type: "button", className: "rounded border border-slate-300 bg-white px-1 text-[10px] font-bold text-slate-600 hover:bg-slate-50", onClick: () => onChange((a + 15) % 360) }, "+15")
+    )
+  );
 }
 function newLine() {
   return { id: _id++, len: 1, pres: 3e3, A: defSide(), B: defSide() };
@@ -135,6 +175,7 @@ function SideCells({ side, onChange, borderStart }) {
   const ests = useMemo(() => estFor(side.g), [side.g]);
   const meds = useMemo(() => medFor(side.g, side.sk), [side.g, side.sk]);
   const angs = useMemo(() => angFor(side.g, side.sk, side.th), [side.g, side.sk, side.th]);
+  const keepOr = (s) => ({ ...s, or: side.or || 0 });
   const b = borderStart ? "border-l-2 border-slate-200" : "border-l border-slate-100";
   return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsx("td", { className: b + " px-1 py-1", children: /* @__PURE__ */ jsx(
@@ -143,7 +184,7 @@ function SideCells({ side, onChange, borderStart }) {
         value: side.g,
         className: selCls,
         style: { minWidth: 118 },
-        onChange: (e) => onChange(validSide({ g: e.target.value, sk: side.sk, th: side.th, ak: side.ak })),
+        onChange: (e) => onChange(keepOr(validSide({ g: e.target.value, sk: side.sk, th: side.th, ak: side.ak }))),
         children: fams.map((f) => /* @__PURE__ */ jsx("option", { value: f.g, children: f.label }, f.g))
       }
     ) }),
@@ -153,7 +194,7 @@ function SideCells({ side, onChange, borderStart }) {
         value: side.sk,
         className: selCls,
         style: { minWidth: 118 },
-        onChange: (e) => onChange(validSide({ g: side.g, sk: e.target.value, th: side.th, ak: side.ak })),
+        onChange: (e) => onChange(keepOr(validSide({ g: side.g, sk: e.target.value, th: side.th, ak: side.ak }))),
         children: ests.map((e2) => /* @__PURE__ */ jsx("option", { value: e2.sk, children: e2.sl }, e2.sk))
       }
     ) }),
@@ -163,20 +204,23 @@ function SideCells({ side, onChange, borderStart }) {
         value: side.th,
         className: selCls,
         style: { minWidth: 66 },
-        onChange: (e) => onChange(validSide({ g: side.g, sk: side.sk, th: e.target.value, ak: side.ak })),
+        onChange: (e) => onChange(keepOr(validSide({ g: side.g, sk: side.sk, th: e.target.value, ak: side.ak }))),
         children: meds.map((mm) => /* @__PURE__ */ jsx("option", { value: mm.th, children: mm.ml }, mm.th))
       }
     ) }),
-    /* @__PURE__ */ jsx("td", { className: "px-1 py-1", children: /* @__PURE__ */ jsx(
-      "select",
-      {
-        value: side.ak,
-        className: selCls,
-        style: { minWidth: 92 },
-        onChange: (e) => onChange({ ...side, ak: e.target.value }),
-        children: angs.map((a) => /* @__PURE__ */ jsx("option", { value: a[0], children: a[1] }, a[0]))
-      }
-    ) })
+    /* @__PURE__ */ jsxs("td", { className: "px-1 py-1 align-top", children: [
+      /* @__PURE__ */ jsx(
+        "select",
+        {
+          value: side.ak,
+          className: selCls,
+          style: { minWidth: 92 },
+          onChange: (e) => onChange({ ...side, ak: e.target.value, or: side.or || 0 }),
+          children: angs.map((a) => /* @__PURE__ */ jsx("option", { value: a[0], children: a[1] }, a[0]))
+        }
+      ),
+      side.ak !== "R" && /* @__PURE__ */ jsx(OrientDial, { value: side.or || 0, onChange: (or) => onChange({ ...side, or }) })
+    ] })
   ] });
 }
 function App() {
@@ -189,6 +233,10 @@ function App() {
   const [cotMsg, setCotMsg] = useState(null);
   const [saved, setSaved] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
+  const [areasDoc, setAreasDoc] = useState({ rev: 0, areas: [] });
+  const [areaId, setAreaId] = useState("");
+  const [equipoId, setEquipoId] = useState("");
+  const [cargandoAreas, setCargandoAreas] = useState(false);
   const results = useMemo(() => lines.map(quoteLine), [lines]);
   useEffect(() => {
     fetch("/api/odoo-clientes").then((r) => r.json()).then((d) => {
@@ -199,6 +247,14 @@ function App() {
       if (raw) setSaved(JSON.parse(raw));
     } catch (e) {}
   }, []);
+  useEffect(() => {
+    setAreaId(""); setEquipoId(""); setAreasDoc({ rev: 0, areas: [] });
+    if (!clienteId) return;
+    setCargandoAreas(true);
+    fetch("/api/mangueras-listar?partnerId=" + clienteId).then((r) => r.json()).then((d) => {
+      if (d.ok && d.doc) setAreasDoc(d.doc);
+    }).catch(() => {}).finally(() => setCargandoAreas(false));
+  }, [clienteId]);
   // Aviso al salir con trabajo sin guardar. La captura vive solo en memoria:
   // si la app se cierra, la siguiente vez SIEMPRE inicia en limpio.
   useEffect(() => {
@@ -207,25 +263,66 @@ function App() {
     window.addEventListener("beforeunload", warn);
     return () => { window.__ht_dirty = false; window.removeEventListener("beforeunload", warn); };
   }, [lines]);
+  const areaSel = areasDoc.areas.find((a) => a.id === areaId);
+  const equipoSel = areaSel && (areaSel.equipos || []).find((e) => e.id === equipoId);
+  const orientTxt = (l) => {
+    const p = [];
+    if (l.A.ak !== "R") p.push(`A ${(l.A.or || 0)}\xB0`);
+    if (l.B.ak !== "R") p.push(`B ${(l.B.or || 0)}\xB0`);
+    if (l.A.ak !== "R" && l.B.ak !== "R") p.push(`desfase ${(((l.B.or || 0) - (l.A.or || 0)) % 360 + 360) % 360}\xB0`);
+    return p.length ? ` \u2014 Orientaci\xF3n: ${p.join(" \xB7 ")} (ref. curva)` : "";
+  };
+  const validaObligatorios = () => {
+    if (!clienteId) return "Elige el cliente.";
+    if (!areaId) return "Elige el \xE1rea del cliente (campo obligatorio).";
+    if (!equipoId) return "Elige el equipo (campo obligatorio).";
+    if (lines.length === 0) return "Agrega al menos una manguera.";
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!l.pres || isNaN(+l.pres) || +l.pres <= 0) return `Manguera ${i + 1}: captura la presi\xF3n (PSI).`;
+      if (!l.len || isNaN(+l.len) || +l.len <= 0) return `Manguera ${i + 1}: captura el largo total (m).`;
+    }
+    return null;
+  };
   const cotizar = async () => {
     setCotMsg(null);
-    if (!clienteId) { setCotMsg({ err: "Elige un cliente primero." }); return; }
+    const err = validaObligatorios();
+    if (err) { setCotMsg({ err }); return; }
+    const genId = () => {
+      const A = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+      let s = ""; for (let i = 0; i < 6; i++) s += A[Math.floor(Math.random() * A.length)];
+      return "HT-" + s;
+    };
+    const registro = [];
     const payloadLines = results.map((r, i) => {
       const v = norm(r);
       if (!v) return null;
-      const name = `Manguera \u2300${DASH[v.hose.dash]}" \xB7 ${lines[i].len} m \xB7 ${v.hose.wp} psi \u2014 A: ${describe(v.A)} | B: ${describe(v.B)}`;
+      const mid = genId();
+      const name = `[${mid}] Manguera \u2300${DASH[v.hose.dash]}" \xB7 ${lines[i].len} m \xB7 ${v.hose.wp} psi \u2014 A: ${describe(v.A)} | B: ${describe(v.B)}` + orientTxt(lines[i]);
+      registro.push({ id: mid, pres: +lines[i].pres, len: +lines[i].len, A: { ...lines[i].A }, B: { ...lines[i].B }, fecha: new Date().toISOString().slice(0, 10) });
       return { name, price: v.customer, qty: 1 };
     }).filter(Boolean);
-    if (payloadLines.length === 0) { setCotMsg({ err: "No hay mangueras válidas para cotizar." }); return; }
+    if (payloadLines.length === 0) { setCotMsg({ err: "No hay mangueras v\xE1lidas para cotizar." }); return; }
     setCotizando(true);
     try {
       const res = await fetch("/api/odoo-cotizar", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ partnerId: Number(clienteId), lines: payloadLines }),
+        body: JSON.stringify({
+          partnerId: Number(clienteId),
+          note: `\xC1rea: ${areaSel ? areaSel.nombre : ""} \xB7 Equipo: ${equipoSel ? equipoSel.nombre : ""}`,
+          lines: payloadLines,
+        }),
       });
       const d = await res.json();
-      if (d.ok) setCotMsg({ ok: true, folio: d.folio, link: d.link });
-      else setCotMsg({ err: d.error || "No se pudo crear la cotización." });
+      if (d.ok) {
+        setCotMsg({ ok: true, folio: d.folio, link: d.link });
+        // Registra las mangueras cotizadas en el plan de mantenimiento del cliente.
+        fetch("/api/mangueras-registrar", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ partnerId: Number(clienteId), areaId, equipoId, folio: d.folio, mangueras: registro }),
+        }).catch(() => {});
+      }
+      else setCotMsg({ err: d.error || "No se pudo crear la cotizaci\xF3n." });
     } catch (e) {
       setCotMsg({ err: String(e.message || e) });
     } finally {
@@ -242,25 +339,26 @@ function App() {
   });
   const persistSaved = (arr) => { try { localStorage.setItem("ht_configs_v1", JSON.stringify(arr)); } catch (e) {} };
   const guardar = () => {
-    if (lines.length === 0) return;
+    const errV = validaObligatorios();
+    if (errV) { setCotMsg({ err: errV }); return; }
     if (editandoId) {
       const it = saved.find((s) => s.id === editandoId);
       if (!it) { setEditandoId(null); return; }
       if (!window.confirm(`\u00BFActualizar la configuraci\u00F3n guardada "${it.nombre}" con estos cambios?`)) return;
-      const arr = saved.map((s) => s.id === editandoId ? { ...s, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId } : s);
+      const arr = saved.map((s) => s.id === editandoId ? { ...s, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaId, equipoId } : s);
       setSaved(arr); persistSaved(arr); setEditandoId(null);
       setLines([]); setClienteId(""); setCotMsg(null); setTab("guardados");
       return;
     }
     const nombre = (window.prompt("Nombre para guardar esta configuraci\xF3n:") || "").trim();
     if (!nombre) return;
-    const item = { id: Date.now(), nombre, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId };
+    const item = { id: Date.now(), nombre, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaId, equipoId };
     const arr = [item, ...saved];
     setSaved(arr); persistSaved(arr);
   };
   const limpiar = () => {
     if (lines.length && !window.confirm("Se borrar\u00E1n las mangueras capturadas sin guardar. \u00BFEmpezar una cotizaci\u00F3n nueva en limpio?")) return;
-    setLines([]); setClienteId(""); setEditandoId(null); setCotMsg(null);
+    setLines([]); setClienteId(""); setAreaId(""); setEquipoId(""); setEditandoId(null); setCotMsg(null);
   };
   const cancelarEdicion = () => {
     if (!window.confirm("\u00BFDescartar los cambios de esta edici\u00F3n? La configuraci\u00F3n guardada queda como estaba.")) return;
@@ -271,6 +369,7 @@ function App() {
     if (!it) return;
     setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
     if (it.clienteId !== void 0) setClienteId(it.clienteId);
+    if (it.areaId) setTimeout(() => { setAreaId(it.areaId); setEquipoId(it.equipoId || ""); }, 600);
     setEditandoId(null);
     setTab("cotizacion");
   };
@@ -279,6 +378,7 @@ function App() {
     if (!it) return;
     setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
     if (it.clienteId !== void 0) setClienteId(it.clienteId);
+    if (it.areaId) setTimeout(() => { setAreaId(it.areaId); setEquipoId(it.equipoId || ""); }, 600);
     setEditandoId(id);
     setTab("cotizacion");
   };
@@ -322,7 +422,7 @@ function App() {
   }, [results]);
   const bomCostTotal = bom.reduce((s, b) => s + b.cost * b.qty, 0);
   const copyBOM = () => {
-    const admin = typeof window !== "undefined" && window.HT_IS_ADMIN === true;
+    const admin = false;
     const rows = admin ? [["Codigo", "Descripcion", "Cantidad", "Unidad", "Costo unit", "Costo total"]] : [["Codigo", "Descripcion", "Cantidad", "Unidad"]];
     bom.forEach((b) => rows.push(admin ? [b.code, b.name, b.qty, b.unit, b.cost.toFixed(2), (b.cost * b.qty).toFixed(2)] : [b.code, b.name, b.qty, b.unit]));
     if (admin) rows.push(["", "", "", "", "TOTAL", bomCostTotal.toFixed(2)]);
@@ -331,16 +431,7 @@ function App() {
       setTimeout(() => setCopied(false), 1800);
     });
   };
-  const [canP, setCanP] = useState(typeof window !== "undefined" && window.HT_IS_ADMIN === true);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.HT_IS_ADMIN === true) { setCanP(true); return; }
-    const prev = window.onAuthReady;
-    window.onAuthReady = (u) => { try { prev && prev(u); } catch (e) {} setCanP(window.HT_IS_ADMIN === true); };
-    const t = setInterval(() => { if (window.HT_IS_ADMIN === true) { setCanP(true); clearInterval(t); } }, 300);
-    setTimeout(() => clearInterval(t), 6000);
-    return () => clearInterval(t);
-  }, []);
+  const [canP] = useState(false);
   const th = "px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400";
   return /* @__PURE__ */ jsxs("div", { className: "min-h-screen w-full bg-slate-100 text-slate-900", style: { fontFamily: "'Inter',ui-sans-serif,system-ui,sans-serif" }, children: [
     /* @__PURE__ */ jsx("style", { children: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');.mono{font-family:'JetBrains Mono',ui-monospace,monospace}` }),
@@ -363,6 +454,33 @@ function App() {
       ] })
     ] }) }),
     /* @__PURE__ */ jsxs("main", { className: "mx-auto max-w-[1560px] px-3 py-4", children: [
+      /* @__PURE__ */ jsxs("div", { className: "mb-3 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm", children: [
+        /* @__PURE__ */ jsxs("label", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400", children: [
+          "Cliente *",
+          /* @__PURE__ */ jsxs("select", { value: clienteId, onChange: (e) => setClienteId(e.target.value), className: "mt-0.5 block rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800", style: { minWidth: 220 }, children: [
+            /* @__PURE__ */ jsx("option", { value: "", children: clientes.length ? "Elige cliente\u2026" : "Cargando clientes\u2026" }),
+            ...clientes.map((c) => /* @__PURE__ */ jsx("option", { value: c.id, children: c.name }, c.id))
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("label", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400", children: [
+          "\xC1rea *",
+          /* @__PURE__ */ jsxs("select", { value: areaId, disabled: !clienteId, onChange: (e) => { setAreaId(e.target.value); setEquipoId(""); }, className: "mt-0.5 block rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 disabled:bg-slate-100", style: { minWidth: 180 }, children: [
+            /* @__PURE__ */ jsx("option", { value: "", children: !clienteId ? "Primero el cliente" : cargandoAreas ? "Cargando\u2026" : areasDoc.areas.length ? "Elige \xE1rea\u2026" : "Sin \xE1reas dadas de alta" }),
+            ...areasDoc.areas.map((a) => /* @__PURE__ */ jsx("option", { value: a.id, children: a.nombre }, a.id))
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("label", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400", children: [
+          "Equipo *",
+          /* @__PURE__ */ jsxs("select", { value: equipoId, disabled: !areaId, onChange: (e) => setEquipoId(e.target.value), className: "mt-0.5 block rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 disabled:bg-slate-100", style: { minWidth: 200 }, children: [
+            /* @__PURE__ */ jsx("option", { value: "", children: !areaId ? "Primero el \xE1rea" : (areaSel && areaSel.equipos && areaSel.equipos.length) ? "Elige equipo\u2026" : "Sin equipos en esta \xE1rea" }),
+            ...(areaSel && areaSel.equipos || []).map((e2) => /* @__PURE__ */ jsx("option", { value: e2.id, children: e2.nombre }, e2.id))
+          ] })
+        ] }),
+        clienteId && !cargandoAreas && areasDoc.areas.length === 0 && /* @__PURE__ */ jsxs("span", { className: "text-[12px] text-amber-700", children: [
+          "Este cliente no tiene \xE1reas/equipos dados de alta. ",
+          /* @__PURE__ */ jsx("a", { href: "mangueras.html", className: "font-bold underline", children: "Dalos de alta aqu\xED" })
+        ] })
+      ] }),
       /* @__PURE__ */ jsx("div", { className: "overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm", children: /* @__PURE__ */ jsxs("table", { className: "w-full border-collapse text-sm", style: { minWidth: 1240 }, children: [
         /* @__PURE__ */ jsxs("thead", { children: [
           /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-200 bg-slate-50", children: [
@@ -495,10 +613,7 @@ function App() {
             /* @__PURE__ */ jsx(TabBtn, { on: tab === "guardados", onClick: () => setTab("guardados"), children: saved.length ? "Guardados (" + saved.length + ")" : "Guardados" })
           ] }),
           tab === "cotizacion" ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ jsxs("select", { value: clienteId, onChange: (e) => setClienteId(e.target.value), className: "rounded border border-slate-300 bg-white px-2 py-1.5 text-[12px] text-slate-700", style: { minWidth: 180 }, children: [
-              /* @__PURE__ */ jsx("option", { value: "", children: clientes.length ? "Elige cliente\u2026" : "Cargando clientes\u2026" }),
-              ...clientes.map((c) => /* @__PURE__ */ jsx("option", { value: c.id, children: c.name }, c.id))
-            ] }),
+            /* @__PURE__ */ jsx("span", { className: "max-w-[320px] truncate text-[11px] font-bold text-slate-500", children: equipoSel ? ((clientes.find((c) => String(c.id) === String(clienteId)) || {}).name || "") + " \xB7 " + (areaSel ? areaSel.nombre : "") + " \xB7 " + equipoSel.nombre : "Elige cliente, \xE1rea y equipo arriba" }),
             /* @__PURE__ */ jsx("button", { onClick: cotizar, disabled: cotizando, className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 disabled:opacity-50", children: cotizando ? "Cotizando\u2026" : "Cotizar en Odoo" })
           ] }) : tab === "compra" && bom.length > 0 && /* @__PURE__ */ jsx("button", { onClick: copyBOM, className: "rounded bg-slate-800 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-700", children: copied ? "\u2713 Copiado" : "Copiar para compras" })
         ] }),

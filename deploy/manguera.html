@@ -85,9 +85,7 @@ async function main() {
 
   const h = d.manguera;
   const q = quoteLine({ pres: h.pres, len: h.len, A: h.A, B: h.B });
-  const precioHtml = q.error
-    ? `<span class="text-rose-600 text-[12px]">${q.error}</span>`
-    : `<b>${money(q.customer)}</b> <span class="text-slate-400 text-[12px]">(${q.hose.name}, ${q.sys})</span>`;
+
 
   card.innerHTML = `
     <div class="mb-3">
@@ -102,8 +100,7 @@ async function main() {
     ${row('Orientación de codos', orientTxt(h))}
     ${h.notas ? row('Notas', h.notas) : ''}
     ${row('Alta en censo', (h.alta || '—') + (h.tec ? ' · ' + h.tec : ''))}
-    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-      <div class="text-[13px] text-slate-600">Precio lista actual: ${precioHtml}</div>
+    <div class="mt-4 flex flex-wrap items-center justify-end gap-3">
       <button id="btn-reemplazo" ${q.error ? 'disabled' : ''}
         class="rounded bg-blue-600 px-5 py-2.5 text-[14px] font-bold text-white hover:bg-blue-700 disabled:bg-slate-300">
         Pedir reemplazo
