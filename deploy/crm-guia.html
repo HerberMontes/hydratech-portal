@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía del vendedor · Tube-Mac CRM</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--blue:#263370;--deep:#1b2447;--ink:#1b2138;--body:#4a5267;--muted:#717a90;
+    --line:#e6e9f0;--soft:#f7f9fc;--green:#16a34a;--red:#e5484d;--gold:#c9a14a;
+    --gold-d:#8a6d2c;--gold-bg:#faf4e6;--gold-bd:#ecdcb4}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--deep);font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--body);min-height:100vh;display:flex;flex-direction:column}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  .top{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;color:#aeb6d4}
+  .top .cap{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+  .top a{color:#dfe4f5;text-decoration:none;font-size:13px;font-weight:600;border:1.5px solid rgba(255,255,255,.25);border-radius:9px;padding:8px 14px}
+
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px 20px}
+  .slide{width:640px;max-width:100%;display:none}
+  .slide.on{display:block;animation:in .45s ease}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .cap-n{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+  .slide h2{font-family:'Archivo',sans-serif;font-weight:900;font-size:26px;color:#fff;letter-spacing:-.4px;line-height:1.15}
+  .slide .tx{color:#aeb6d4;font-size:14.5px;margin-top:8px;line-height:1.55;max-width:560px}
+  .slide .tx b{color:#fff;font-weight:600}
+
+  .card{background:#fff;border-radius:18px;padding:20px;margin-top:20px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+
+  /* piezas de maqueta */
+  .flag{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;padding:3px 8px;display:inline-block}
+  .flag.pro{background:#eaf2fb;color:#2b6ba8}.flag.opp{background:#ecf7f0;color:#16a34a}
+  .mq{border:1px solid var(--line);border-radius:12px;padding:12px 14px;position:relative}
+  .mq+.mq{margin-top:9px}
+  .mq .rz{font-size:11px;font-weight:700;display:flex;gap:6px;align-items:center}
+  .mq .rz .dot{width:8px;height:8px;border-radius:50%}
+  .mq .nm{font-weight:600;font-size:14px;color:var(--ink);margin-top:3px}
+  .mq .cl{font-size:12px;color:var(--muted)}
+  .mq .mt{font-family:'Archivo',sans-serif;font-weight:700;color:var(--ink);position:absolute;right:14px;top:14px}
+  .bar-l{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px}
+  .pulse{animation:pulse 1.6s ease infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,161,74,.55)}50%{box-shadow:0 0 0 9px rgba(201,161,74,0)}}
+  .hand{position:absolute;font-size:22px;animation:tap 1.8s ease infinite;filter:drop-shadow(0 3px 5px rgba(0,0,0,.25))}
+  @keyframes tap{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+  .fld-mq{margin-bottom:10px}
+  .fld-mq .lb{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;gap:10px}
+  .fld-mq .lb .tip{color:var(--gold-d);font-family:'IBM Plex Sans',sans-serif;text-transform:none;letter-spacing:0;font-size:11px;font-weight:500;text-align:right}
+  .fld-mq .in{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--ink);background:#fff;min-height:37px;overflow:hidden;white-space:nowrap}
+  .fld-mq.hi .in{border-color:var(--gold);background:#fffdf5}
+  .type::after{content:"|";animation:blink 1s step-end infinite;color:var(--gold)}
+  @keyframes blink{50%{opacity:0}}
+
+  .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;color:var(--muted);background:#fff}
+  .pill.sel{border-color:var(--blue);background:#eef2fb;color:var(--blue);font-weight:600}
+  .goldbox{background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:12px;padding:12px 14px;margin-top:12px}
+  .goldbox .lb{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--gold-d);text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  .lockrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gold-d);font-weight:600}
+  .lock{font-size:20px;display:inline-block;transition:transform .3s}
+
+  .btn-mq{display:inline-block;border-radius:10px;padding:11px 16px;font-weight:600;font-size:13px;color:#fff;background:var(--blue);position:relative}
+  .btn-mq.g{background:var(--green)} .btn-mq.gold{background:var(--gold)}
+  .btn-mq.dis{background:#c6cbdc}
+
+  .steps-mq{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .stp{display:flex;align-items:center;gap:5px}
+  .stp .o{width:10px;height:10px;border-radius:50%;border:2px solid var(--line);background:#fff}
+  .stp.done .o{background:var(--blue);border-color:var(--blue)} .stp.now .o{border-color:var(--gold);width:13px;height:13px}
+  .stp .t{font-size:10px;color:var(--muted)} .stp.now .t{color:var(--gold-d);font-weight:700} .stp.done .t{color:var(--blue)}
+  .stp .ln{width:12px;border-top:2px solid var(--line)}
+
+  .side-mq{display:flex;gap:14px;align-items:flex-start}
+  .rail-mq{width:52px;background:var(--deep);border-radius:12px;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:8px;flex:none}
+  .rail-mq .it{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#8a93b8;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.04em}
+  .rail-mq .it.on{background:var(--blue);color:#fff}
+
+  .wa{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+  .wa .bub{background:#e7ffdb;border-radius:12px 12px 12px 3px;padding:10px 12px;font-size:12px;color:#2a3b22;line-height:1.5;max-width:420px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+
+  /* controles */
+  .ctrl{display:flex;align-items:center;justify-content:center;gap:12px;padding:0 20px 26px}
+  .ctrl button{border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#dfe4f5;font-family:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:10px 18px;cursor:pointer}
+  .ctrl button.play{background:var(--gold);border-color:var(--gold);color:#fff}
+  .ctrl .cnt{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:#8a93b8}
+  .prog{height:3px;background:rgba(255,255,255,.12)}
+  .prog i{display:block;height:100%;background:var(--gold);width:0;transition:width .3s}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media(max-width:560px){.slide h2{font-size:21px}.card{padding:15px}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="cap">Guía del vendedor · Tube-Mac CRM</span>
+  <a href="crm-app.html">Ir al CRM →</a>
+</div>
+<div class="prog"><i id="prog"></i></div>
+
+<div class="stage">
+
+  <!-- 01 · Bienvenida -->
+  <section class="slide on">
+    <div class="cap-n">01 · Bienvenida</div>
+    <h2>Este CRM trabaja para ti,<br>no tú para él.</h2>
+    <p class="tx">Todo vive en <b>tres vistas</b>, en la barra lateral izquierda. Tu casa es <b>MI DÍA</b>: al entrar, el sistema ya decidió por ti qué atender y en qué orden.</p>
+    <div class="card"><div class="side-mq">
+      <div class="rail-mq">
+        <div class="it on pulse">DÍA</div><div class="it">SEM</div><div class="it">PIPE</div><div class="it">?</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Las 3 vistas</div>
+        <div style="font-size:13px;color:var(--body);margin-top:6px;line-height:1.6">
+          <b style="color:var(--ink)">DÍA</b> — qué hago AHORA, en orden.<br>
+          <b style="color:var(--ink)">SEMANA</b> — mi agenda de lunes a viernes.<br>
+          <b style="color:var(--ink)">PIPELINE</b> — dónde está parado cada cliente.<br>
+          <b style="color:var(--ink)">?</b> — esta guía, siempre disponible.
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 02 · Mi Día -->
+  <section class="slide">
+    <div class="cap-n">02 · Mi Día — tu cola de trabajo</div>
+    <h2>Trabaja de arriba hacia abajo.<br>Nada más.</h2>
+    <p class="tx">La cola mezcla <b>prospectos</b> (azul) y <b>oportunidades</b> (verde), ordenados por urgencia, monto y días sin contacto. El punto de color es el <b>semáforo de salud</b>: rojo significa que se está enfriando.</p>
+    <div class="card">
+      <div class="mq pulse"><span class="bar-l" style="background:var(--red)"></span>
+        <span class="flag opp">Oportunidad</span>
+        <div class="rz" style="color:var(--red);margin-top:5px"><span class="dot" style="background:var(--red)"></span>Vencida hace 4 días · 9 días sin contacto</div>
+        <div class="nm">Línea Pyplok prensa 2000T</div><div class="cl">Aceros del Norte · Cotización enviada</div>
+        <span class="mt">$480K</span>
+        <span class="hand" style="right:30px;bottom:8px">👆</span>
+      </div>
+      <div class="mq" style="opacity:.65"><span class="bar-l" style="background:var(--gold)"></span>
+        <span class="flag pro">Prospecto</span>
+        <div class="rz" style="color:var(--gold-d);margin-top:5px"><span class="dot" style="background:var(--gold)"></span>Para hoy · 2º intento de contacto</div>
+        <div class="nm">Prospecto — Minera Cobre Real</div><div class="cl">Ing. Beltrán · Por contactar</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px">👆 <b style="color:var(--ink)">Toca cualquier tarjeta</b> para abrir su ficha completa con toda la historia.</div>
+    </div>
+  </section>
+
+  <!-- 03 · Alta de prospecto -->
+  <section class="slide">
+    <div class="cap-n">03 · Botón «+» → Nuevo prospecto</div>
+    <h2>Un prospecto es alguien que<br>todavía NO es cliente.</h2>
+    <p class="tx">Con el botón <b>+</b> (abajo a la derecha) lo das de alta. Así se llena bien cada campo:</p>
+    <div class="card">
+      <div class="fld-mq hi"><div class="lb"><span>Empresa</span><span class="tip">El nombre oficial, como factura</span></div><div class="in type">Aceros del Norte</div></div>
+      <div class="fld-mq"><div class="lb"><span>Contacto</span><span class="tip">Nombre COMPLETO de la persona</span></div><div class="in">Ing. Rodolfo Ramírez</div></div>
+      <div class="fld-mq"><div class="lb"><span>Puesto</span><span class="tip">Clave: ¿decide o solo recomienda?</span></div><div class="in">Jefe de mantenimiento</div></div>
+      <div class="fld-mq"><div class="lb"><span>Teléfono</span><span class="tip">Con WhatsApp de preferencia — activa «Enviar info»</span></div><div class="in">+52 81 1234 5678</div></div>
+      <div class="fld-mq"><div class="lb"><span>Origen</span><span class="tip">¿Dónde lo conociste? Sirve para saber qué canal funciona</span></div><div class="in">Expo / feria</div></div>
+      <div class="fld-mq"><div class="lb"><span>Nota</span><span class="tip">¿Qué le duele? ¿Quién decide? ¿Cuándo verlo?</span></div><div class="in">Fugas recurrentes en prensa. Decide con gerente de planta.</div></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Al guardar, nace en <b style="color:var(--blue)">«Por contactar»</b> — tu misión: conseguir la cita.</div>
+    </div>
+  </section>
+
+  <!-- 04 · Alta de oportunidad -->
+  <section class="slide">
+    <div class="cap-n">04 · Botón «+» → Nueva oportunidad</div>
+    <h2>Una oportunidad es DINERO<br>con un cliente ya registrado.</h2>
+    <p class="tx">Mismo botón <b>+</b>, segunda pestaña. Aquí lo importante es nombrarla bien y ponerle números:</p>
+    <div class="card">
+      <div class="fld-mq"><div class="lb"><span>Cliente existente</span><span class="tip">Escribe 2 letras y elígelo de la lista (viene de Odoo)</span></div><div class="in">🔍 Aceros del Norte</div></div>
+      <div class="fld-mq hi"><div class="lb"><span>Nombre de la oportunidad</span><span class="tip">Fórmula: QUÉ + PARA QUÉ equipo</span></div><div class="in type">Línea Pyplok prensa 2000T</div></div>
+      <div class="fld-mq"><div class="lb"><span>Monto estimado</span><span class="tip">Tu mejor cálculo — se afina al cotizar</span></div><div class="in">480,000</div></div>
+      <div class="fld-mq"><div class="lb"><span>Fecha esperada de cierre</span><span class="tip">Realista: ¿cuándo podría firmar?</span></div><div class="in">15 / 08 / 2026</div></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Nace en <b style="color:var(--green)">«Nuevo»</b> y de ahí la empujas: cotizar → enviar → ganar.</div>
+    </div>
+  </section>
+
+  <!-- 05 · Registrar toque + regla de oro -->
+  <section class="slide">
+    <div class="cap-n">05 · Registrar toque — LA REGLA DE ORO</div>
+    <h2>Cada llamada se registra.<br>Y nada se guarda sin siguiente paso.</h2>
+    <p class="tx">Después de cada contacto, botón <b>«Registrar»</b>: eliges qué hiciste, qué pasó, y el sistema te <b>sugiere solo</b> el siguiente paso según el resultado.</p>
+    <div class="card">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:6px">¿Qué pasó?</div>
+      <div class="pillrow">
+        <span class="pill">Contactado</span><span class="pill sel pulse">No contestó</span><span class="pill">Pendiente de ellos</span><span class="pill">Avanzó</span>
+      </div>
+      <div class="goldbox">
+        <div class="lb">Siguiente paso — sin esto no se guarda</div>
+        <div class="lockrow"><span class="lock" id="lock-mq">🔒</span> Sugerido: <b>Llamada · Mañana — «Reintentar contacto»</b></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <span class="btn-mq">Guardar y agendar</span>
+        <span style="font-size:12px;color:var(--muted)">→ queda en la bitácora de Odoo y la cita en tu agenda</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 · Ficha y plantillas -->
+  <section class="slide">
+    <div class="cap-n">06 · La ficha — y dónde está el material de la marca</div>
+    <h2>«Enviar info» tiene las plantillas<br>Tube-Mac listas, con el nombre puesto.</h2>
+    <p class="tx">Toca cualquier tarjeta → se abre la <b>ficha</b>: en qué etapa va, su siguiente actividad y toda la bitácora. Abajo, el botón <b>«Enviar info»</b> abre WhatsApp o correo con la <b>plantilla oficial de la marca ya redactada</b> — tú solo la revisas y la mandas.</p>
+    <div class="card">
+      <div class="steps-mq">
+        <span class="stp done"><span class="o"></span><span class="t">Nuevo</span><span class="ln"></span></span>
+        <span class="stp done"><span class="o"></span><span class="t">Por cotizar</span><span class="ln"></span></span>
+        <span class="stp now"><span class="o"></span><span class="t">Cotización enviada</span><span class="ln"></span></span>
+        <span class="stp"><span class="o"></span><span class="t">Ganado</span></span>
+      </div>
+      <div class="wa">
+        <span style="font-size:22px">💬</span>
+        <div class="bub">Ing. Rodolfo, gusto en saludarle 👋 Le comparto lo prometido: en Tube-Mac reparamos e instalamos líneas hidráulicas SIN soldadura… en frío, en minutos, sin permiso de fuego y sin fugas. Info: tube-mac.com</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <span class="btn-mq">Registrar toque</span>
+        <span class="btn-mq pulse" style="background:#fff;color:var(--body);border:1px solid var(--line)">Enviar info<span class="hand" style="right:-6px;top:-20px">👆</span></span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px">Después de enviarla, <b style="color:var(--ink)">registra el toque</b> — así queda en la historia.</div>
+    </div>
+  </section>
+
+  <!-- 07 · Conversión -->
+  <section class="slide">
+    <div class="cap-n">07 · El momento estrella</div>
+    <h2>Cliente aprobado =<br>el prospecto se vuelve oportunidad.</h2>
+    <p class="tx">Cuando el prospecto llega a <b>«Alta en proceso»</b> y lo aprueban, aparece el botón verde. Un toque hace todo: crea el <b>cliente en Odoo</b>, lo convierte en <b>oportunidad en «Nuevo»</b> con toda su historia, y agenda tu primer paso comercial.</p>
+    <div class="card" style="text-align:center;padding:28px 20px">
+      <span class="flag pro">Prospecto</span>
+      <span style="font-size:20px;color:var(--gold);margin:0 14px">→ ⭐ →</span>
+      <span class="flag opp">Oportunidad</span>
+      <div style="margin-top:18px"><span class="btn-mq g pulse">✓ Cliente aprobado<span class="hand" style="right:-8px;top:-22px">👆</span></span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:16px">La bitácora del prospecto viaja con la oportunidad — no se pierde nada.</div>
+    </div>
+  </section>
+
+  <!-- 08 · Cierre -->
+  <section class="slide">
+    <div class="cap-n">08 · Los 3 hábitos</div>
+    <h2>Así se ve un vendedor<br>que nunca deja enfriar nada.</h2>
+    <p class="tx">El CRM hace el resto: te persigue con el semáforo, te ordena el día y te pone las plantillas en la mano.</p>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:14px;color:var(--body)">
+        <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-family:'Archivo',sans-serif;font-weight:900;color:var(--gold);font-size:18px">1</span><span><b style="color:var(--ink)">Empieza en MI DÍA</b> y trabaja la cola de arriba hacia abajo — todos los días.</span></div>
+        <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-family:'Archivo',sans-serif;font-weight:900;color:var(--gold);font-size:18px">2</span><span><b style="color:var(--ink)">Registra cada toque</b> al momento — lo que no está en el CRM, no pasó.</span></div>
+        <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-family:'Archivo',sans-serif;font-weight:900;color:var(--gold);font-size:18px">3</span><span><b style="color:var(--ink)">Nunca cierres sin siguiente paso</b> — el candado dorado es tu mejor amigo.</span></div>
+      </div>
+      <div style="text-align:center;margin-top:22px"><a href="crm-app.html" style="display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:13px 26px;border-radius:12px">Abrir mi CRM →</a></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="ctrl">
+  <button onclick="mov(-1)">← Anterior</button>
+  <button class="play" id="btn-play" onclick="togglePlay()">⏸ Pausar</button>
+  <button onclick="mov(1)">Siguiente →</button>
+  <span class="cnt" id="cnt">1 / 8</span>
+</div>
+
+<script>
+const slides=[...document.querySelectorAll(".slide")];
+let idx=0, timer=null, playing=true;
+const DUR=9000;
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function show(i){
+  idx=(i+slides.length)%slides.length;
+  slides.forEach((s,k)=>s.classList.toggle("on",k===idx));
+  document.getElementById("cnt").textContent=(idx+1)+" / "+slides.length;
+  document.getElementById("prog").style.width=((idx+1)/slides.length*100)+"%";
+  if(idx===4){const l=document.getElementById("lock-mq");if(l){l.textContent="🔒";setTimeout(()=>{l.textContent="🔓";l.style.transform="rotate(-12deg)";},2600);}}
+}
+function mov(d){show(idx+d);resetTimer();}
+function tick(){show(idx+1);}
+function resetTimer(){clearInterval(timer);if(playing&&!reduced)timer=setInterval(tick,DUR);}
+function togglePlay(){playing=!playing;document.getElementById("btn-play").textContent=playing?"⏸ Pausar":"▶ Reproducir";resetTimer();}
+if(reduced){playing=false;document.getElementById("btn-play").textContent="▶ Reproducir";}
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")mov(1);if(e.key==="ArrowLeft")mov(-1);if(e.key===" "){e.preventDefault();togglePlay();}});
+show(0);resetTimer();
+</script>
+</body>
+</html>
