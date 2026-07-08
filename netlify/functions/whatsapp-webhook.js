@@ -69,6 +69,48 @@ const firmaToken = (id) => crypto.createHmac("sha256", SECRET).update(String(id)
    (eventual), una invocación puede leer el estado viejo y el bot "olvida"
    en qué paso iba, regresando al menú a mitad del flujo. */
 const store = () => getStore({ name: "wa-estado", consistency: "strong" });
+
+/* ============ Fotos y notas: registros INDEPENDIENTES (a prueba de carreras) ============
+   WhatsApp entrega varias fotos/audios en webhooks SIMULTÁNEOS. Si se guardaran
+   dentro del estado, una invocación pisaría lo de la otra (así se perdían fotos
+   y texto). Cada foto/nota se guarda como blob propio y se recolectan al final. */
+const media = () => getStore({ name: "wa-media", consistency: "strong" });
+const sufijo = (msg) => Date.now() + "-" + String(msg.id || Math.random()).slice(-10).replace(/[^A-Za-z0-9._-]/g, "");
+const agregarNota = (tel, sec, texto, msg) => media().set(`nota:${tel}:${sec}:${sufijo(msg)}`, texto);
+const agregarFoto = (tel, sec, dataURL, cap, msg) => media().set(`foto:${tel}:${sec}:${sufijo(msg)}`, JSON.stringify({ dataURL, sec, cap: cap || "" }));
+const setPortada = (tel, dataURL) => media().set(`portada:${tel}`, dataURL);
+async function contar(prefix) {
+  const r = await media().list({ prefix }).catch(() => ({ blobs: [] }));
+  return (r.blobs || []).length;
+}
+async function recolectar(tel) {
+  const st = media();
+  const notas = { hallazgos: [], actividades: [], plan: [], voz: [] };
+  const rn = await st.list({ prefix: `nota:${tel}:` }).catch(() => ({ blobs: [] }));
+  for (const b of (rn.blobs || []).sort((a, z) => a.key.localeCompare(z.key))) {
+    const sec = b.key.split(":")[2];
+    const v = await st.get(b.key).catch(() => "");
+    if (notas[sec] !== undefined && v) notas[sec].push(v);
+  }
+  const fotos = [];
+  const rf = await st.list({ prefix: `foto:${tel}:` }).catch(() => ({ blobs: [] }));
+  for (const b of (rf.blobs || []).sort((a, z) => a.key.localeCompare(z.key))) {
+    try { const v = await st.get(b.key); if (v) fotos.push(JSON.parse(v)); } catch (e) {}
+  }
+  const portada = await st.get(`portada:${tel}`).catch(() => null);
+  return {
+    notas: { h: notas.hallazgos.join(" "), a: notas.actividades.join(" "), p: notas.plan.join(" "), voz: notas.voz.join("\n") },
+    fotos, portada: portada || null,
+  };
+}
+async function limpiarMedia(tel) {
+  const st = media();
+  for (const pref of [`nota:${tel}:`, `foto:${tel}:`]) {
+    const r = await st.list({ prefix: pref }).catch(() => ({ blobs: [] }));
+    for (const b of (r.blobs || [])) await st.delete(b.key).catch(() => {});
+  }
+  await st.delete(`portada:${tel}`).catch(() => {});
+}
 const leerEstado = async (tel) => { try { return JSON.parse(await store().get(tel) || "null") || { paso: "MENU" }; } catch (e) { return { paso: "MENU" }; } };
 const guardarEstado = (tel, st) => store().set(tel, JSON.stringify(st));
 const borrarEstado = (tel) => store().delete(tel).catch(() => {});
@@ -215,6 +257,7 @@ async function atender(msg) {
   /* ---- Comandos globales ---- */
   if (["menu", "menú", "hola", "cancelar", "inicio"].includes(cmd)) {
     await borrarEstado(tel);
+    await limpiarMedia(tel);
     await guardarEstado(tel, { paso: "MENU", lastMsgId: msg.id });
     await mandarMenu(tel, nombreTecnico(tel) || msg.nombre);
     return;
@@ -231,6 +274,7 @@ async function atender(msg) {
     return;
   }
   if (msg.botonId === "op_voz" || (st.paso === "MENU" && cmd === "2")) {
+    await limpiarMedia(tel);
     await guardarEstado(tel, { paso: "VOZ_BUSCA", lastMsgId: msg.id });
     await enviarTexto(tel, T.voz);
     return;
@@ -240,7 +284,8 @@ async function atender(msg) {
   if (st.paso === "ORDEN" && msg.botonId && msg.botonId.startsWith("ord_")) {
     const id = parseInt(msg.botonId.slice(4), 10);
     const o = (st.ordenes || []).find((x) => x.id === id) || { id, name: "", partner: "" };
-    await guardarEstado(tel, { paso: "MARCA", orden: o, notas: { h: "", a: "", p: "" }, fotos: [], portada: null, brand: "hydratech", lastMsgId: msg.id });
+    await limpiarMedia(tel); // arrancar limpio: sin fotos/notas de intentos anteriores
+    await guardarEstado(tel, { paso: "MARCA", orden: o, brand: "hydratech", lastMsgId: msg.id });
     await enviarBotones(tel, `Orden *${o.name}* — ${o.partner}${o.nota ? "\n📝 " + o.nota : ""}\n\n¿A nombre de qué *empresa* va el reporte?`, [
       { id: "br_hydratech", titulo: "HydraTech Group" },
       { id: "br_tubemac", titulo: "Tube-Mac" },
@@ -261,8 +306,8 @@ async function atender(msg) {
 
   if (st.paso === "PORTADA") {
     if (msg.tipo === "image" && msg.mediaId) {
-      const media = await descargarMedia(msg.mediaId);
-      st.portada = `data:${media.mime};base64,${media.base64}`;
+      const m = await descargarMedia(msg.mediaId);
+      await setPortada(tel, `data:${m.mime};base64,${m.base64}`);
       st.paso = "S1"; await guardarEstado(tel, st);
       await enviarTexto(tel, "📷 Portada guardada.\n\n" + T.s1);
       return;
@@ -282,35 +327,35 @@ async function atender(msg) {
 
     if (msg.tipo === "audio" && msg.mediaId) {
       await enviarTexto(tel, "🎧 Escuchando tu nota…");
-      const media = await descargarMedia(msg.mediaId);
-      const tx = await transcribirAudio(media.mime, media.base64);
-      st.notas[campo] = (st.notas[campo] ? st.notas[campo] + " " : "") + tx;
-      await guardarEstado(tel, st);
-      await enviarTexto(tel, `✍️ Anoté:\n_"${tx.slice(0, 400)}"_\n\nManda *fotos* u otro audio para agregar más, o escribe *LISTO* para continuar.`);
+      const m = await descargarMedia(msg.mediaId);
+      const tx = await transcribirAudio(m.mime, m.base64);
+      await agregarNota(tel, sec, tx, msg); // registro independiente: no se pisa con mensajes simultáneos
+      await enviarTexto(tel, `✍️ Anoté en *${sec.toUpperCase()}*:\n_"${tx.slice(0, 400)}"_\n\nManda *fotos* u otro audio para agregar más, o escribe *LISTO* para continuar.`);
       return;
     }
     if (msg.tipo === "image" && msg.mediaId) {
-      if ((st.fotos || []).length >= 9) { await enviarTexto(tel, "Máximo 9 fotos por reporte. Escribe *LISTO* para continuar."); return; }
-      const media = await descargarMedia(msg.mediaId);
-      st.fotos.push({ dataURL: `data:${media.mime};base64,${media.base64}`, sec, cap: msg.caption || "" });
-      await guardarEstado(tel, st);
-      await enviarTexto(tel, `📸 Foto guardada en *${sec}* (${st.fotos.length} en total).`);
+      const total = await contar(`foto:${tel}:`);
+      if (total >= 9) { await enviarTexto(tel, "Máximo 9 fotos por reporte. Escribe *LISTO* para continuar."); return; }
+      const m = await descargarMedia(msg.mediaId);
+      await agregarFoto(tel, sec, `data:${m.mime};base64,${m.base64}`, msg.caption || "", msg);
+      await enviarTexto(tel, `📸 Foto guardada en *${sec.toUpperCase()}* (${total + 1} en total).`);
       return;
     }
     if (cmd === "listo" || cmd === "siguiente") {
       // Requisitos: HALLAZGOS y ACTIVIDADES llevan OBLIGATORIAMENTE nota (voz o texto) + al menos 1 foto.
       // PLAN DE ACCIÓN lleva nota obligatoria; las fotos ahí son opcionales.
-      const fotosSec = (st.fotos || []).filter((f) => f.sec === sec).length;
+      const fotosSec = await contar(`foto:${tel}:${sec}:`);
+      const notasSec = await contar(`nota:${tel}:${sec}:`);
       if (st.paso === "S1" || st.paso === "S2") {
         const faltan = [];
-        if (!st.notas[campo]) faltan.push("una *nota de voz* (o texto)");
+        if (!notasSec) faltan.push("una *nota de voz* (o texto)");
         if (!fotosSec) faltan.push("al menos una *foto*");
         if (faltan.length) {
           await enviarTexto(tel, `⚠️ Para cerrar *${sec.toUpperCase()}* falta: ${faltan.join(" y ")}.\nEs obligatorio en esta sección — mándalo y luego escribe *LISTO*.`);
           return;
         }
       }
-      if (st.paso === "S3" && !st.notas[campo]) {
+      if (st.paso === "S3" && !notasSec) {
         await enviarTexto(tel, "⚠️ Falta la *nota de voz* (o texto) del *PLAN DE ACCIÓN* antes de generar el reporte. Las fotos aquí son opcionales.");
         return;
       }
@@ -322,9 +367,8 @@ async function atender(msg) {
       return;
     }
     if (texto) { // texto libre también suma a la sección
-      st.notas[campo] = (st.notas[campo] ? st.notas[campo] + " " : "") + texto;
-      await guardarEstado(tel, st);
-      await enviarTexto(tel, "✍️ Anotado. Escribe *LISTO* cuando termines esta sección.");
+      await agregarNota(tel, sec, texto, msg);
+      await enviarTexto(tel, `✍️ Anotado en *${sec.toUpperCase()}*. Escribe *LISTO* cuando termines esta sección.`);
       return;
     }
   }
@@ -357,25 +401,26 @@ async function atender(msg) {
   if (st.paso === "VOZ_AUDIO") {
     if (msg.tipo === "audio" && msg.mediaId) {
       await enviarTexto(tel, "🎧 Escuchando…");
-      const media = await descargarMedia(msg.mediaId);
-      const tx = await transcribirAudio(media.mime, media.base64);
-      st.tx = (st.tx ? st.tx + "\n" : "") + tx;
-      await guardarEstado(tel, st);
+      const m = await descargarMedia(msg.mediaId);
+      const tx = await transcribirAudio(m.mime, m.base64);
+      await agregarNota(tel, "voz", tx, msg);
       await enviarTexto(tel, `✍️ Anoté:\n_"${tx.slice(0, 400)}"_\n\nManda otro audio, *fotos*, o escribe *LISTO*.`);
       return;
     }
     if (msg.tipo === "image" && msg.mediaId) {
-      if ((st.fotos || []).length >= 6) { await enviarTexto(tel, "Máximo 6 fotos. Escribe *LISTO* para continuar."); return; }
-      const media = await descargarMedia(msg.mediaId);
-      st.fotos.push({ mime: media.mime, base64: media.base64 });
-      await guardarEstado(tel, st);
-      await enviarTexto(tel, `📸 Foto guardada (${st.fotos.length}).`);
+      const total = await contar(`foto:${tel}:voz:`);
+      if (total >= 6) { await enviarTexto(tel, "Máximo 6 fotos. Escribe *LISTO* para continuar."); return; }
+      const m = await descargarMedia(msg.mediaId);
+      await agregarFoto(tel, "voz", `data:${m.mime};base64,${m.base64}`, "", msg);
+      await enviarTexto(tel, `📸 Foto guardada (${total + 1}).`);
       return;
     }
     if (cmd === "listo") {
-      if (!st.tx) { await enviarTexto(tel, "Aún no me mandas ninguna nota de voz. 🎤"); return; }
+      const med = await recolectar(tel);
+      if (!med.notas.voz) { await enviarTexto(tel, "Aún no me mandas ninguna nota de voz. 🎤"); return; }
+      st.tx = med.notas.voz; // para la transcripción completa al guardar
       await enviarTexto(tel, "🤖 Estructurando la información…");
-      const v = await estructurarVozCliente(`Cliente: ${st.ref || "(no identificado)"}\n\n${st.tx}`);
+      const v = await estructurarVozCliente(`Cliente: ${st.ref || "(no identificado)"}\n\n${med.notas.voz}`);
       st.voz = v; st.paso = "VOZ_CONF";
       await guardarEstado(tel, st);
       const li = (arr) => (arr || []).map((x) => "• " + (x.titulo ? `${x.titulo} (${x.prioridad || "media"})` : x)).join("\n") || "• (nada)";
@@ -448,11 +493,14 @@ async function guardarVozCliente(tel, st, msg) {
   if (vendedor) lead.user_id = vendedor.id;
   const leadId = await executeKw("crm.lead", "create", [lead]);
 
-  // Fotos adjuntas al lead
-  for (const f of (st.fotos || [])) {
+  // Fotos adjuntas al lead (recolectadas de los registros independientes)
+  const medFotos = (await recolectar(tel)).fotos.filter((f) => f.sec === "voz");
+  for (const f of medFotos) {
+    const m = /^data:([^;]+);base64,(.+)$/.exec(f.dataURL || "");
+    if (!m) continue;
     await executeKw("ir.attachment", "create", [{
       name: "voz-cliente.jpg", res_model: "crm.lead", res_id: leadId,
-      type: "binary", mimetype: f.mime || "image/jpeg", datas: f.base64,
+      type: "binary", mimetype: m[1] || "image/jpeg", datas: m[2],
     }]).catch(() => {});
   }
 
@@ -474,6 +522,7 @@ async function guardarVozCliente(tel, st, msg) {
   } catch (e) {}
 
   await borrarEstado(tel);
+  await limpiarMedia(tel);
   await enviarTexto(tel, `✅ Guardado. Quedó en el CRM${vendedor ? ` asignado a *${vendedor.name}*` : ""}${hayQuejas ? " y ya se avisó de la queja" : ""}. ¡Nada se pierde! Escribe *menu* para otra cosa.`);
 
   // Avisos: admin SIEMPRE; vendedor por WhatsApp si está mapeado
@@ -487,9 +536,12 @@ async function guardarVozCliente(tel, st, msg) {
 async function generarYEnviar(tel, st) {
   const o = st.orden || {};
   const tec = nombreTecnico(tel) || "";
+  // Recolectar TODO desde los registros independientes (a prueba de mensajes simultáneos)
+  const med = await recolectar(tel);
+  const fotosReporte = med.fotos.filter((f) => ["hallazgos", "actividades", "plan"].includes(f.sec));
   const contexto = `- Cliente: ${o.partner || "(de la orden)"}\n- Orden: ${o.name || ""}\n- Fecha: ${new Date().toISOString().slice(0, 10)}\n- Técnicos: ${tec || "(n/d)"}`;
-  const notas = `[HALLAZGOS / cómo se encontró]\n${st.notas.h || "(sin notas)"}\n\n[ACTIVIDADES REALIZADAS]\n${st.notas.a || "(sin notas)"}\n\n[PLAN DE ACCIÓN / pendientes]\n${st.notas.p || "(sin notas)"}`;
-  const content = await generarReporteIA({ contexto, notas, images: st.fotos });
+  const notas = `[HALLAZGOS / cómo se encontró]\n${med.notas.h || "(sin notas)"}\n\n[ACTIVIDADES REALIZADAS]\n${med.notas.a || "(sin notas)"}\n\n[PLAN DE ACCIÓN / pendientes]\n${med.notas.p || "(sin notas)"}`;
+  const content = await generarReporteIA({ contexto, notas, images: fotosReporte });
 
   const now = new Date().toISOString();
   const report = {
@@ -498,12 +550,13 @@ async function generarYEnviar(tel, st) {
     cliente: o.partner || "", folio: o.name || "", fecha: now.slice(0, 10),
     planta: "", tipo: content.tipo_servicio || "",
     tecnicos: tec ? [tec] : [],
-    notas: { hallazgos: st.notas.h, actividades: st.notas.a, plan: st.notas.p },
-    content, images: st.fotos || [], coverPhoto: st.portada || (st.fotos && st.fotos[0] && st.fotos[0].dataURL) || null,
+    notas: { hallazgos: med.notas.h, actividades: med.notas.a, plan: med.notas.p },
+    content, images: fotosReporte, coverPhoto: med.portada || (fotosReporte[0] && fotosReporte[0].dataURL) || null,
     updatedAt: now, submittedAt: now,
   };
   await guardarReporte(o.id, report);
   await borrarEstado(tel);
+  await limpiarMedia(tel);
 
   await enviarTexto(tel, `✅ *Reporte generado y enviado a validación.*\n\n${resumenReporte(report)}\n\nEn cuanto lo validen te llega aquí mismo el *link de firma* para el cliente.`);
   if (ADMIN) {
