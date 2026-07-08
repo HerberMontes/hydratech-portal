@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="assets/dc-runtime.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <style>/* vietnamese */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-01.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-02.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-03.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-01.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-02.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-03.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-01.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-02.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-03.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-01.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-02.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-03.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 900;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-01.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 900;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-02.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 900;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-03.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Archivo Black';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-04.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Archivo Black';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-05.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-06.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-07.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-08.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-09.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/woff2-10.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/woff2-11.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/woff2-12.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/woff2-13.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/woff2-14.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/woff2-15.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/woff2-16.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/woff2-17.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/woff2-18.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/woff2-19.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/woff2-20.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-21.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-22.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-23.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-24.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-25.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-26.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-21.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-22.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-23.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-24.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-25.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-26.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-21.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-22.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-23.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-24.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-25.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("assets/woff2-26.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+  <style>
+    body { margin: 0; background: #141829; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; -webkit-font-smoothing: antialiased; }
+    html { scroll-behavior: smooth; }
+    a { color: #204b9a; text-decoration: none; }
+    a:hover { color: #3b78e7; }
+    @keyframes htArrow { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(10px); opacity: .4; } }
+    @keyframes htFadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes htSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes htSlideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+    @keyframes htBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+    input::placeholder, textarea::placeholder { color: #9aa6bd; }
+  </style>
+</helmet>
+
+<div style="background: #ffffff;">
+
+  <!-- ============ 1) HERO CINEMÁTICO (pinned, scroll-driven) ============ -->
+  <section data-screen-label="01 Gancho" data-hero-track="1" style="position: relative; height: 200vh; background: #141829;">
+    <div style="position: sticky; top: 0; height: 100vh; overflow: hidden; background: #141829; display: flex; flex-direction: column; justify-content: center;">
+      <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 56px 56px; pointer-events: none;"></div>
+      <div data-parallax="0.18" style="position: absolute; top: -220px; right: -220px; width: 640px; height: 640px; border-radius: 50%; background: radial-gradient(circle, rgba(32,75,154,0.55) 0%, transparent 70%); pointer-events: none;"></div>
+
+      <!-- nav dentro del héroe -->
+      <div style="position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 18px 5vw; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 6;">
+        <div id="logo" style="display: flex; align-items: baseline;">
+          <span style="font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 21px; letter-spacing: 1px; color: #ffffff;">HYDRA</span><span style="font-family: 'Archivo Black', sans-serif; font-size: 21px; letter-spacing: 1px; color: #3b78e7;">TECH</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 18px;">
+          <sc-if value="{{ showLiveBadge }}" hint-placeholder-val="{{ false }}">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: #37d98a; white-space: nowrap; animation: htBlink 2.4s ease-in-out infinite;">● TALLER OPERANDO</span>
+          </sc-if>
+          <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 12px 22px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer;" style-hover="background: #5a8ef0;">Cotizar ahora</button>
+          <!-- 🔒 Acceso al portal interno -->
+          <a href="{{ portalUrl }}" target="_blank" rel="noopener" aria-label="Acceso interno — Portal HydraTech" title="Acceso interno" style="width: 41px; height: 41px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.28); display: grid; place-items: center; color: #b9c4dd; text-decoration: none; transition: all .2s ease; flex-shrink: 0;" style-hover="border-color: #3b78e7; color: #3b78e7; background: rgba(59,120,231,0.14);">
+            <span style="display: block;">
+              <span style="display: block; width: 9px; height: 8px; border: 2px solid currentColor; border-bottom: none; border-radius: 5px 5px 0 0; margin: 0 auto;"></span>
+              <span style="display: block; width: 15px; height: 11px; background: currentColor; border-radius: 2.5px;"></span>
+            </span>
+          </a>
+        </div>
+      </div>
+
+      <!-- copy del héroe (se desvanece al hacer scroll) -->
+      <div data-hero-copy="1" style="position: relative; z-index: 4; text-align: center; padding: 104px 5vw 8vh; max-width: 1000px; margin: 0 auto; will-change: transform, opacity;">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #7d8cb0; margin-bottom: 24px; animation: htFadeUp .6s ease both;">HIDRÁULICA INDUSTRIAL · NUEVO LEÓN · COAHUILA · TAMAULIPAS</div>
+        <h1 style="font-family: 'Archivo Black', sans-serif; font-size: clamp(36px, 5.4vw, 74px); line-height: 1.02; color: #ffffff; margin: 0 auto 22px; animation: htFadeUp .6s ease .05s both;">¿Tu equipo hidráulico te está costando <span style="color: #3b78e7;">horas de producción</span>?</h1>
+        <p style="font-size: clamp(17px, 1.6vw, 21px); line-height: 1.55; color: #b9c4dd; margin: 0 auto 32px; max-width: 640px; animation: htFadeUp .6s ease .1s both;">Somos el único taller del noreste que repara tu bomba <strong style="color: #ffffff;">y te lo demuestra</strong> con datos de un banco de pruebas.</p>
+        <div style="animation: htFadeUp .6s ease .15s both;">
+          <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 20px clamp(22px, 4vw, 42px); font-family: 'Archivo', sans-serif; font-weight: 800; font-size: clamp(15px, 1.6vw, 17px); cursor: pointer; box-shadow: 0 10px 34px rgba(59,120,231,0.35); max-width: 100%;" style-hover="background: #5a8ef0;">Cotizar ahora — respuesta hoy mismo</button>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7d8cb0; margin-top: 14px; letter-spacing: 0.5px;">2 minutos · sin compromiso · respuesta el mismo día hábil</div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center; margin-top: 36px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1.5px; color: #7d8cb0;">
+          <span>DESDE 2018</span>
+          <span style="color: #37d98a;">+500 EQUIPOS</span>
+          <span>BANCO DE PRUEBAS ÚNICO EN LA REGIÓN</span>
+        </div>
+      </div>
+
+      <!-- video que crece al hacer scroll -->
+      <div data-hero-video="1" style="position: absolute; left: 50%; bottom: -62vh; z-index: 3; width: min(920px, 88vw); transform: translateX(-50%) scale(0.9); will-change: transform; transform-origin: center bottom;">
+        <div id="hero-video" style="position: relative; aspect-ratio: 16 / 9; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 12px, transparent 12px, transparent 24px), #1c2440; border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; box-shadow: 0 -30px 90px rgba(0,0,0,0.5); display: grid; place-items: center; cursor: pointer; overflow: hidden;">
+          <div style="width: 78px; height: 78px; border-radius: 50%; border: 2px solid #3b78e7; display: grid; place-items: center; background: rgba(20,24,41,0.6);">
+            <div style="width: 0; height: 0; border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-left: 21px solid #3b78e7; margin-left: 5px;"></div>
+          </div>
+          <div style="position: absolute; top: 16px; left: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: #7d8cb0;">VIDEO: TU BANCO DE PRUEBAS, EN VIVO — 45 SEG</div>
+        </div>
+      </div>
+
+      <div data-hero-arrow="1" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #3b78e7; font-size: 22px; z-index: 6; animation: htArrow 1.8s ease-in-out infinite;">↓</div>
+    </div>
+  </section>
+
+  <!-- nav superior fija tras el héroe -->
+  <sc-if value="{{ showSticky }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; top: 0; left: 0; right: 0; z-index: 92; background: rgba(20,24,41,0.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; padding: 10px 5vw; animation: htSlideDown .35s ease;">
+      <div style="display: flex; align-items: baseline;">
+        <span style="font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 1px; color: #ffffff;">HYDRA</span><span style="font-family: 'Archivo Black', sans-serif; font-size: 17px; letter-spacing: 1px; color: #3b78e7;">TECH</span>
+      </div>
+      <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 10px 20px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 13.5px; cursor: pointer;" style-hover="background: #5a8ef0;">Cotizar ahora</button>
+    </div>
+  </sc-if>
+
+  <!-- ============ 2) EL DOLOR ============ -->
+  <section data-screen-label="02 El dolor" style="background: #f2f5fa; padding: clamp(64px, 10vw, 110px) 5vw;">
+    <div style="max-width: 1000px; margin: 0 auto;">
+      <div data-reveal="1" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #204b9a; margin-bottom: 14px;">SEC.02 — BITÁCORA DE FALLAS</div>
+      <h2 data-reveal="1" data-delay="80" style="font-family: 'Archivo Black', sans-serif; font-size: clamp(30px, 3.6vw, 48px); color: #141829; margin: 0 0 40px;">¿Te suena?</h2>
+      <div style="border-top: 2px solid #141829;">
+        <sc-for list="{{ pains }}" as="pain" hint-placeholder-count="4">
+          <div data-reveal="1" data-delay="{{ pain.delay }}" style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 24px; padding: 24px 4px; border-bottom: 1px solid #d7deeb;">
+            <span style="font-family: 'Archivo Black', sans-serif; font-size: clamp(22px, 2.6vw, 30px); color: #204b9a; flex-shrink: 0; width: 62px;">{{ pain.num }}</span>
+            <span style="font-size: clamp(17px, 1.8vw, 21px); line-height: 1.45; color: #1a2438; font-weight: 500; flex: 1; min-width: 220px;">“{{ pain.text }}”</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1.5px; color: #9aa6bd; flex-shrink: 0;">{{ pain.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div data-reveal="1" data-delay="120" style="text-align: center; margin-top: 60px;">
+        <p style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: clamp(21px, 2.3vw, 29px); color: #141829; max-width: 680px; margin: 0 auto 28px; line-height: 1.35;">El problema no es tu equipo. Es que nadie te está dando <span style="background: #204b9a; color: #ffffff; padding: 2px 10px;">PRUEBAS</span>.</p>
+        <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 18px 34px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: transform .2s ease;" style-hover="background: #5a8ef0; transform: translateY(-2px);">Cotizar ahora — respuesta hoy mismo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3) LA SOLUCIÓN ============ -->
+  <section data-screen-label="03 La solución" style="background: #ffffff; padding: clamp(64px, 10vw, 110px) 5vw;">
+    <div style="max-width: 1000px; margin: 0 auto;">
+      <div data-reveal="1" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #204b9a; margin-bottom: 14px;">SEC.03 — EL MÉTODO HYDRATECH</div>
+      <h2 data-reveal="1" data-delay="80" style="font-family: 'Archivo Black', sans-serif; font-size: clamp(30px, 3.6vw, 48px); color: #141829; margin: 0 0 48px;">No adivinamos. <span style="color: #204b9a;">Probamos.</span></h2>
+
+      <div style="display: flex; flex-direction: column; gap: 0; margin-bottom: 64px;">
+        <sc-for list="{{ methodSteps }}" as="m" hint-placeholder-count="3">
+          <div data-reveal="1" data-delay="{{ m.delay }}" style="display: grid; grid-template-columns: 56px 1fr; gap: 24px;">
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <div style="width: 44px; height: 44px; border: 2px solid #204b9a; border-radius: 50%; background: #ffffff; display: grid; place-items: center; font-family: 'Archivo Black', sans-serif; font-size: 16px; color: #141829; flex-shrink: 0;">{{ m.n }}</div>
+              <sc-if value="{{ m.line }}" hint-placeholder-val="{{ true }}">
+                <div style="width: 2px; flex: 1; background: #e2e8f2; min-height: 34px;"></div>
+              </sc-if>
+            </div>
+            <div style="padding-bottom: 34px;">
+              <div style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 21px; color: #141829; margin: 10px 0 8px;">{{ m.title }}</div>
+              <div style="font-size: 16px; line-height: 1.55; color: #4a5871; max-width: 620px;">{{ m.desc }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div data-reveal="1" style="background: #141829; border: 1px solid #204b9a; border-radius: 12px; padding: 32px clamp(22px, 4vw, 44px) 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 14px; margin-bottom: 26px; flex-wrap: wrap;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 2px; color: #b9c4dd;">REPORTE DE BANCO DE PRUEBAS · ANTES / DESPUÉS</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #37d98a;">● MEDIDO EN VIVO</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 26px 48px; align-items: end;">
+          <div>
+            <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1px; color: #b9c4dd; margin-bottom: 8px;">
+              <span>EFICIENCIA AL LLEGAR</span><span style="color: #e05656; font-weight: 600;"><span data-bar-num="61">0</span>%</span>
+            </div>
+            <div style="height: 16px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+              <div data-bar="61" style="height: 100%; width: 0%; background: #e05656; transition: width 1.4s ease;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1px; color: #b9c4dd; margin-bottom: 8px;">
+              <span>EFICIENCIA REPARADA</span><span style="color: #37d98a; font-weight: 600;"><span data-bar-num="96.7">0</span>%</span>
+            </div>
+            <div style="height: 16px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+              <div data-bar="96.7" style="height: 100%; width: 0%; background: #37d98a; transition: width 1.4s ease .2s;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 28px; flex-wrap: wrap;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 2px; color: #7d8cb0;">ESE REPORTE ES TU EVIDENCIA ANTE PLANTA.</span>
+          <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 15px 28px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer; transition: transform .2s ease;" style-hover="background: #5a8ef0; transform: translateY(-2px);">Cotizar ahora</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4) QUÉ RESOLVEMOS ============ -->
+  <section data-screen-label="04 Qué resolvemos" style="background: #eef2f9; padding: clamp(64px, 10vw, 110px) 5vw;">
+    <div style="max-width: 1000px; margin: 0 auto;">
+      <div data-reveal="1" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #204b9a; margin-bottom: 14px;">SEC.04 — MENÚ DE DOLORES</div>
+      <h2 data-reveal="1" data-delay="80" style="font-family: 'Archivo Black', sans-serif; font-size: clamp(30px, 3.6vw, 48px); color: #141829; margin: 0 0 12px;">¿Qué te está fallando?</h2>
+      <p data-reveal="1" data-delay="140" style="font-size: 17px; color: #4a5871; margin: 0 0 36px;">Toca tu problema y cotízalo directo. Nosotros ponemos la prueba.</p>
+      <div data-reveal="1" data-delay="180" style="border-top: 2px solid #141829; background: #ffffff;">
+        <sc-for list="{{ listServices }}" as="s" hint-placeholder-count="7">
+          <button onclick="{{ s.pick }}" style="width: 100%; display: flex; align-items: center; gap: 18px; text-align: left; background: none; border: none; border-bottom: 1px solid #dde4f0; padding: 18px 20px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: background .2s ease, padding-left .2s ease;" style-hover="background: #f0f5ff; padding-left: 28px;">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1px; color: #204b9a; font-weight: 600; flex-shrink: 0; width: 26px;">{{ s.num }}</span>
+            <span style="font-size: 16px; line-height: 1.4; color: #1a2438; font-weight: 500; flex: 1;">{{ s.label }}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1px; color: #3b78e7; flex-shrink: 0;">COTIZAR →</span>
+          </button>
+        </sc-for>
+      </div>
+      <div data-reveal="1" style="text-align: center; margin-top: 44px;">
+        <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 18px 34px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 16px; cursor: pointer; transition: transform .2s ease;" style-hover="background: #5a8ef0; transform: translateY(-2px);">Cotizar ahora — respuesta hoy mismo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5) PRUEBA ============ -->
+  <section data-screen-label="05 Prueba" style="background: #141829; padding: clamp(64px, 10vw, 110px) 0;">
+    <div style="max-width: 1100px; margin: 0 auto; padding: 0 5vw;">
+      <div data-reveal="1" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #37d98a; margin-bottom: 14px;">SEC.05 — SIN FILTROS NI ACTORES</div>
+      <h2 data-reveal="1" data-delay="80" style="font-family: 'Archivo Black', sans-serif; font-size: clamp(30px, 3.6vw, 48px); color: #ffffff; margin: 0 0 40px;">Nuestro taller, en vivo</h2>
+    </div>
+    <div style="display: flex; gap: 16px; overflow-x: auto; padding: 4px 5vw 20px; scroll-snap-type: x mandatory;">
+      <sc-for list="{{ clips }}" as="clip" hint-placeholder-count="6">
+        <div id="{{ clip.id }}" data-reveal="1" data-delay="{{ clip.delay }}" style="flex: 0 0 auto; width: 210px; aspect-ratio: 9 / 16; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 12px, transparent 12px, transparent 24px), #1c2440; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; position: relative; display: grid; place-items: center; cursor: pointer; scroll-snap-align: start; transition: transform .3s ease, border-color .3s ease;" style-hover="transform: scale(1.03); border-color: #3b78e7;">
+          <div style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid #3b78e7; background: rgba(20,24,41,0.7); display: grid; place-items: center;">
+            <div style="width: 0; height: 0; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 14px solid #3b78e7; margin-left: 4px;"></div>
+          </div>
+          <div style="position: absolute; bottom: 12px; left: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 1.5px; color: #7d8cb0;">{{ clip.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="max-width: 1100px; margin: 48px auto 0; padding: 0 5vw;">
+      <div style="display: flex; flex-direction: column; gap: 0; border-top: 1px solid rgba(255,255,255,0.14);">
+        <sc-for list="{{ testimonials }}" as="t" hint-placeholder-count="3">
+          <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 40px; padding: 26px 4px; border-bottom: 1px solid rgba(255,255,255,0.14); align-items: baseline;">
+            <div style="font-size: 17px; line-height: 1.55; color: #ffffff;">“{{ t.quote }}”</div>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 1px; color: #37d98a;">{{ t.who }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div data-reveal="1" style="display: flex; flex-wrap: wrap; gap: 20px 60px; margin-top: 52px; align-items: baseline; justify-content: center;">
+        <div style="display: flex; align-items: baseline; gap: 12px;">
+          <span style="font-family: 'Archivo Black', sans-serif; font-size: 48px; color: #3b78e7;"><span data-counter="7">7</span></span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 2px; color: #7d8cb0;">AÑOS</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 12px;">
+          <span style="font-family: 'Archivo Black', sans-serif; font-size: 48px; color: #3b78e7;">+<span data-counter="500">500</span></span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 2px; color: #7d8cb0;">EQUIPOS</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 12px;">
+          <span style="font-family: 'Archivo Black', sans-serif; font-size: 48px; color: #3b78e7;">24/7</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 2px; color: #7d8cb0;">URGENCIAS</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6) OBJECIONES / FAQ ============ -->
+  <section data-screen-label="06 Objeciones" style="background: #ffffff; padding: clamp(64px, 10vw, 110px) 5vw;">
+    <div style="max-width: 760px; margin: 0 auto;">
+      <div data-reveal="1" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #204b9a; margin-bottom: 14px;">SEC.06 — ANTES DE QUE PREGUNTES</div>
+      <h2 data-reveal="1" data-delay="80" style="font-family: 'Archivo Black', sans-serif; font-size: clamp(28px, 3.2vw, 42px); color: #141829; margin: 0 0 36px;">Lo que seguro te estás preguntando</h2>
+      <div data-reveal="1" data-delay="140" style="border-top: 2px solid #141829;">
+        <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+          <div style="border-bottom: 1px solid #d7deeb;">
+            <button onclick="{{ f.toggle }}" style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; background: none; border: none; padding: 21px 4px; cursor: pointer; text-align: left;">
+              <span style="font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 17.5px; color: #141829;">{{ f.q }}</span>
+              <span style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 22px; color: #3b78e7; flex-shrink: 0;">{{ f.icon }}</span>
+            </button>
+            <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 0 4px 22px; font-size: 16px; line-height: 1.6; color: #4a5871; max-width: 640px; animation: htFadeUp .3s ease;">{{ f.a }}</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7) CIERRE ============ -->
+  <section data-screen-label="07 Cierre" style="background: linear-gradient(160deg, #204b9a 0%, #16346b 100%); background-color: #204b9a; padding: clamp(72px, 11vw, 120px) 5vw; text-align: center;">
+    <div style="max-width: 820px; margin: 0 auto;">
+      <div data-reveal="1" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 3px; color: #b9c4dd; margin-bottom: 22px;">SEC.07 — EL COSTO DE ESPERAR</div>
+      <p data-reveal="1" data-delay="80" style="font-family: 'Archivo Black', sans-serif; font-size: clamp(26px, 3.4vw, 46px); color: #ffffff; line-height: 1.18; margin: 0 0 40px;">Cada día con una fuga o una bomba ineficiente es dinero que se va por la línea de retorno.</p>
+      <div data-reveal="1" data-delay="140">
+        <button onclick="{{ openQuoter }}" style="background: #ffffff; color: #204b9a; border: none; border-radius: 4px; padding: 22px clamp(24px, 4vw, 44px); font-family: 'Archivo', sans-serif; font-weight: 800; font-size: clamp(16px, 1.8vw, 19px); max-width: 100%; cursor: pointer; box-shadow: 0 10px 34px rgba(13,30,66,0.4); transition: transform .2s ease;" style-hover="transform: translateY(-2px);">Cotizar ahora — respuesta hoy mismo</button>
+        <div style="margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;">
+          <span style="font-size: 15.5px; color: #b9c4dd;">¿Prefieres WhatsApp?</span>
+          <a href="{{ waHref }}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: #37d98a; color: #141829; border-radius: 4px; padding: 12px 22px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 15px;" style-hover="background: #4fe69c; color: #141829;">Escríbenos ahora</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 8) FOOTER ============ -->
+  <footer data-screen-label="08 Footer" style="background: #141829; padding: 44px 5vw 100px; color: #7d8cb0; border-top: 1px solid rgba(255,255,255,0.1);">
+    <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 24px 48px; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: baseline;">
+        <span style="font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: 1px; color: #ffffff;">HYDRA</span><span style="font-family: 'Archivo Black', sans-serif; font-size: 16px; letter-spacing: 1px; color: #3b78e7;">TECH</span>
+      </div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 1px;">COBERTURA: NUEVO LEÓN · COAHUILA · TAMAULIPAS</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 1px; display: flex; gap: 24px; flex-wrap: wrap;">
+        <span>81 2904 9481</span>
+        <span>ventas@hydratechgroup.mx</span>
+        <a href="#" style="color: #7d8cb0;" style-hover="color: #3b78e7;">AVISO DE PRIVACIDAD</a>
+        <a href="{{ portalUrl }}" target="_blank" rel="noopener" aria-label="Acceso interno — Portal HydraTech" style="color: #7d8cb0; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;" style-hover="color: #3b78e7;">
+          <span style="display: block;">
+            <span style="display: block; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: none; border-radius: 3px 3px 0 0; margin: 0 auto;"></span>
+            <span style="display: block; width: 10px; height: 7px; background: currentColor; border-radius: 1.5px;"></span>
+          </span>
+          ACCESO INTERNO
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ BARRA CTA PEGAJOSA ============ -->
+  <sc-if value="{{ showSticky }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; background: rgba(20,24,41,0.9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid rgba(255,255,255,0.14); padding: 10px 5vw; display: flex; align-items: center; justify-content: space-between; gap: 14px; animation: htSlideUp .3s ease;">
+      <span style="font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 15px; color: #ffffff; min-width: 0;">¿Equipo fallando?</span>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button onclick="{{ openQuoter }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 11px 20px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer;" style-hover="background: #5a8ef0;">Cotizar ahora</button>
+        <a href="{{ waHref }}" target="_blank" aria-label="WhatsApp" style="width: 40px; height: 40px; border-radius: 50%; background: #37d98a; display: grid; place-items: center;" style-hover="background: #4fe69c;">
+          <span style="display: block; width: 18px; height: 14px; background: #141829; border-radius: 5px 5px 5px 0;"></span>
+        </a>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ WHATSAPP FLOTANTE ============ -->
+  <a href="{{ waHref }}" target="_blank" aria-label="WhatsApp" style="position: fixed; right: 20px; bottom: 84px; z-index: 95; width: 58px; height: 58px; border-radius: 50%; background: #37d98a; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(20,24,41,0.4); transition: transform .2s ease;" style-hover="background: #4fe69c; transform: scale(1.06);">
+    <span style="display: block; width: 26px; height: 20px; background: #141829; border-radius: 7px 7px 7px 0;"></span>
+  </a>
+
+  <!-- ============ MODAL COTIZADOR ============ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onclick="{{ closeQuoter }}" style="position: fixed; inset: 0; z-index: 100; background: rgba(20,24,41,0.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; padding: 18px; overflow-y: auto;">
+      <div onclick="{{ stopProp }}" style="width: min(680px, 100%); max-height: 92vh; overflow-y: auto; background: #ffffff; border-radius: 14px; box-shadow: 0 30px 80px rgba(0,0,0,0.4); animation: htFadeUp .25s ease;">
+        <div style="height: 5px; background: #eef2f9; border-radius: 14px 14px 0 0; overflow: hidden;">
+          <div style="height: 100%; width: {{ progressPct }}%; background: #3b78e7; transition: width .3s ease;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 26px 0;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 2px; color: #204b9a;">{{ stepLabel }}</span>
+          <button onclick="{{ closeQuoter }}" aria-label="Cerrar" style="background: none; border: none; font-size: 24px; color: #9aa6bd; cursor: pointer; line-height: 1;" style-hover="color: #141829;">×</button>
+        </div>
+
+        <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 12px 26px 30px;">
+            <h3 style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 23px; color: #141829; margin: 8px 0 20px;">¿Qué te está fallando?</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px;">
+              <sc-for list="{{ quoterServices }}" as="qs" hint-placeholder-count="7">
+                <button onclick="{{ qs.pick }}" style="text-align: left; background: #f7f9fc; border: 1.5px solid #dde4f0; border-radius: 10px; padding: 16px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 10px; font-family: 'IBM Plex Sans', sans-serif; transition: transform .15s ease;" style-hover="border-color: #3b78e7; background: #f0f5ff; transform: translateY(-2px);">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1.5px; color: #204b9a; font-weight: 600;">{{ qs.num }}</span>
+                  <span style="font-size: 14px; line-height: 1.4; color: #1a2438; font-weight: 500;">{{ qs.short }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 12px 26px 30px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: #eef2f9; border-radius: 20px; padding: 6px 14px; margin: 8px 0 14px;">
+              <span style="color: #37d98a; font-family: 'Archivo Black', sans-serif; font-size: 13px;">✓</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 1px; color: #204b9a;">{{ selectedServiceShort }}</span>
+            </div>
+            <h3 style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 23px; color: #141829; margin: 0 0 20px;">Cuéntanos el detalle</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <input type="text" placeholder="Equipo / marca (ej. bomba Rexroth A10VSO)" style="border: 1.5px solid #dde4f0; border-radius: 8px; padding: 14px 16px; font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; outline-color: #3b78e7;">
+              <textarea rows="3" placeholder="Describe la falla en tus palabras" style="border: 1.5px solid #dde4f0; border-radius: 8px; padding: 14px 16px; font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; resize: vertical; outline-color: #3b78e7;"></textarea>
+              <div>
+                <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 2px; color: #4a5871; margin-bottom: 10px;">¿QUÉ TAN URGENTE?</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                  <sc-for list="{{ urgencyOpts }}" as="u" hint-placeholder-count="3">
+                    <button onclick="{{ u.pick }}" style="{{ u.style }}">
+                      <span style="font-size: 16px;">{{ u.emoji }}</span>
+                      <span style="font-size: 14px; font-weight: 600;">{{ u.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 26px;">
+              <button onclick="{{ goBack }}" style="background: none; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 1px; color: #4a5871; cursor: pointer;" style-hover="color: #141829;">← ATRÁS</button>
+              <button onclick="{{ toStep3 }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 15px 28px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer;" style-hover="background: #5a8ef0;">Continuar →</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 12px 26px 30px;">
+            <h3 style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 23px; color: #141829; margin: 8px 0 6px;">¿A dónde te respondemos?</h3>
+            <p style="font-size: 14.5px; color: #4a5871; margin: 0 0 20px;">Hoy mismo, en día hábil. Sin cadena de correos.</p>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <input type="text" placeholder="Empresa" style="border: 1.5px solid #dde4f0; border-radius: 8px; padding: 14px 16px; font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; outline-color: #3b78e7;">
+              <input type="text" placeholder="Nombre y puesto" style="border: 1.5px solid #dde4f0; border-radius: 8px; padding: 14px 16px; font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; outline-color: #3b78e7;">
+              <input type="tel" placeholder="WhatsApp (10 dígitos)" style="border: 1.5px solid #dde4f0; border-radius: 8px; padding: 14px 16px; font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; outline-color: #3b78e7;">
+              <input type="email" placeholder="Correo" style="border: 1.5px solid #dde4f0; border-radius: 8px; padding: 14px 16px; font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; color: #1a2438; outline-color: #3b78e7;">
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 26px;">
+              <button onclick="{{ goBack }}" style="background: none; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 1px; color: #4a5871; cursor: pointer;" style-hover="color: #141829;">← ATRÁS</button>
+              <button onclick="{{ submit }}" style="background: #3b78e7; color: #ffffff; border: none; border-radius: 4px; padding: 16px 28px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 15px; cursor: pointer;" style-hover="background: #5a8ef0;">Enviar — respondemos hoy mismo</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSent }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 20px 26px 36px; text-align: center;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: #eaf9f1; display: grid; place-items: center; margin: 10px auto 18px;">
+              <span style="color: #37d98a; font-family: 'Archivo Black', sans-serif; font-size: 26px;">✓</span>
+            </div>
+            <h3 style="font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 24px; color: #141829; margin: 0 0 10px;">Listo. Ya está en manos del taller.</h3>
+            <p style="font-size: 15.5px; line-height: 1.6; color: #4a5871; max-width: 420px; margin: 0 auto 24px;">Un técnico —no un vendedor— revisa tu caso y te contesta hoy mismo en día hábil. Si tu línea está parada, escríbenos directo:</p>
+            <a href="{{ waHref }}" target="_blank" style="display: inline-block; background: #37d98a; color: #141829; border-radius: 6px; padding: 14px 26px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 15px;" style-hover="background: #4fe69c; color: #141829;">Abrir WhatsApp ahora</a>
+            <div style="margin-top: 18px;">
+              <button onclick="{{ closeQuoter }}" style="background: none; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 1px; color: #9aa6bd; cursor: pointer;" style-hover="color: #141829;">CERRAR</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script="" data-props="{
+  &quot;whatsappNumber&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;5218129049481&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Contacto&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    modalOpen: false,
+    step: 1,
+    sent: false,
+    service: null,
+    urgency: null,
+    openFaq: -1,
+    showSticky: false,
+    narrow: typeof window !== 'undefined' && window.innerWidth < 760
+  };
+
+  services = [
+    { num: '01', short: 'Reparación de bombas', label: 'Reparación de bombas y calibración en banco (hasta 500 cc)' },
+    { num: '02', short: 'Re-empacado de bloques', label: 'Re-empacado de bloques y manifolds con kits para Rexroth' },
+    { num: '03', short: 'Acumuladores y nitrógeno', label: 'Acumuladores: vejigas y carga de nitrógeno baja/alta presión' },
+    { num: '04', short: 'Falla en sitio', label: 'Soporte técnico en sitio para fallas' },
+    { num: '05', short: 'Mangueras 24/7', label: 'Fabricación de mangueras 24/7 con plan predictivo' },
+    { num: '06', short: 'Componentes equivalentes', label: 'Componentes en equivalentes (bombas, válvulas, cilindros) mejorando precio y entrega' },
+    { num: '07', short: 'Válvulas proporcionales', label: 'Calibración de válvulas proporcionales y servoválvulas' }
+  ];
+
+  faqData = [
+    { q: '¿Atienden urgencias?', a: 'Sí. Mangueras se fabrican 24/7 y para fallas críticas mandamos soporte técnico a tu planta. Si tu línea está parada, márcalo en el cotizador con el semáforo rojo y tu caso pasa al frente.' },
+    { q: '¿Trabajan con mi marca de equipo?', a: 'Trabajamos con las principales marcas industriales — Rexroth, Parker, Vickers/Eaton, Danfoss y equivalentes. Si tu equipo bombea aceite, casi seguro lo conocemos. Dinos marca y modelo en el cotizador y te confirmamos hoy mismo.' },
+    { q: 'No estamos dados de alta como su cliente', a: 'Para eso existe el Kit Alta Exprés: te entregamos el expediente completo de proveedor en 24 horas. Regístranos antes de la emergencia, para que el día que la línea se pare no te frene el papeleo.' },
+    { q: '¿Qué me entregan al final?', a: 'El reporte del banco de pruebas: desempeño medido de tu equipo antes y después de la reparación. Es tu evidencia ante planta de que quedó bien — no una palabra, un dato.' }
+  ];
+
+  componentDidMount() {
+    this._rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const track = document.querySelector('[data-hero-track]');
+    const heroCopy = document.querySelector('[data-hero-copy]');
+    const heroVideo = document.querySelector('[data-hero-video]');
+    const heroArrow = document.querySelector('[data-hero-arrow]');
+    const parallaxEls = Array.from(document.querySelectorAll('[data-parallax]'));
+
+    this._onScroll = () => {
+      const y = window.scrollY;
+      const vh = window.innerHeight;
+
+      const show = y > vh * 1.05;
+      if (show !== this.state.showSticky) this.setState({ showSticky: show });
+
+      if (this._rm) return;
+
+      // progreso 0→1 dentro del héroe pineado
+      if (track && heroCopy && heroVideo) {
+        const total = track.offsetHeight - vh;
+        const p = Math.min(1, Math.max(0, y / total));
+        // copy: sube y se desvanece
+        heroCopy.style.opacity = String(1 - Math.min(1, p * 1.6));
+        heroCopy.style.transform = 'translateY(' + (-p * 120) + 'px) scale(' + (1 - p * 0.06) + ')';
+        // video: crece y sube al centro
+        const scale = 0.9 + p * 0.12;
+        const rise = p * (this.state.narrow ? 58 : 78); // vh
+        heroVideo.style.transform = 'translateX(-50%) translateY(' + (-rise) + 'vh) scale(' + scale + ')';
+        if (heroArrow) heroArrow.style.opacity = String(1 - p * 3);
+      }
+
+      parallaxEls.forEach(el => {
+        const f = parseFloat(el.getAttribute('data-parallax'));
+        el.style.translate = '0 ' + (y * f) + 'px';
+      });
+    };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onScroll();
+
+    this._onResize = () => {
+      const narrow = window.innerWidth < 760;
+      if (narrow !== this.state.narrow) this.setState({ narrow });
+    };
+    window.addEventListener('resize', this._onResize);
+
+    // reveals con stagger opcional (data-delay en ms)
+    const reveals = Array.from(document.querySelectorAll('[data-reveal]'));
+    if (!this._rm) {
+      reveals.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(26px)';
+      });
+      const ro = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            const d = parseInt(e.target.getAttribute('data-delay') || '0', 10);
+            e.target.style.transition = 'opacity .7s cubic-bezier(.22,1,.36,1) ' + d + 'ms, transform .7s cubic-bezier(.22,1,.36,1) ' + d + 'ms';
+            e.target.style.opacity = '1';
+            e.target.style.transform = 'translateY(0)';
+            ro.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      reveals.forEach(el => ro.observe(el));
+      this._ro = ro;
+    }
+
+    // barras del reporte
+    const bars = Array.from(document.querySelectorAll('[data-bar]'));
+    const bo = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.width = e.target.getAttribute('data-bar') + '%';
+          bo.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    bars.forEach(el => { if (this._rm) { el.style.transition = 'none'; } bo.observe(el); });
+    this._bo = bo;
+
+    // contadores (enteros y decimales)
+    const counters = Array.from(document.querySelectorAll('[data-counter], [data-bar-num]'));
+    const co = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        co.unobserve(e.target);
+        const raw = e.target.getAttribute('data-counter') || e.target.getAttribute('data-bar-num');
+        const target = parseFloat(raw);
+        const dec = raw.includes('.') ? 1 : 0;
+        if (this._rm) { e.target.textContent = target.toFixed(dec); return; }
+        const t0 = performance.now();
+        const dur = 1400;
+        const tick = now => {
+          const p = Math.min(1, (now - t0) / dur);
+          const eased = 1 - Math.pow(1 - p, 3);
+          e.target.textContent = (target * eased).toFixed(dec);
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(el => co.observe(el));
+    this._co = co;
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onResize);
+    if (this._ro) this._ro.disconnect();
+    if (this._bo) this._bo.disconnect();
+    if (this._co) this._co.disconnect();
+    document.body.style.overflow = '';
+  }
+
+  open(serviceIdx) {
+    document.body.style.overflow = 'hidden';
+    this.setState({
+      modalOpen: true,
+      sent: false,
+      step: serviceIdx == null ? 1 : 2,
+      service: serviceIdx == null ? null : serviceIdx,
+      urgency: null
+    });
+  }
+
+  close() {
+    document.body.style.overflow = '';
+    this.setState({ modalOpen: false });
+  }
+
+  renderVals() {
+    const { step, sent, service, urgency, openFaq, showSticky, modalOpen } = this.state;
+
+    const num = (this.props.whatsappNumber ?? '5218129049481').replace(/[^0-9]/g, '');
+    const msg = encodeURIComponent('Hola HydraTech, tengo un equipo hidráulico fallando y quiero cotizar.');
+    const waHref = 'https://wa.me/' + num + '?text=' + msg;
+
+    // ⬇️ CAMBIA AQUÍ la URL de tu portal interno (candado del nav y footer)
+    const portalUrl = this.props.portalUrl ?? 'https://herbermontes.github.io/hydratech-portal/';
+
+    const urgencyBase = 'display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; padding: 13px 10px; cursor: pointer; font-family: IBM Plex Sans, sans-serif; color: #1a2438;';
+    const urgencyDefs = [
+      { emoji: '🔴', label: 'Parado ahora' },
+      { emoji: '🟡', label: 'Esta semana' },
+      { emoji: '🔵', label: 'Planeado' }
+    ];
+
+    return {
+      showSticky,
+      modalOpen,
+      waHref,
+      portalUrl,
+      showLiveBadge: !this.state.narrow,
+
+      pains: [
+        { num: 'F-01', delay: 0, text: 'La bomba “reparada” volvió a fallar al mes.', tag: 'RETRABAJO' },
+        { num: 'F-02', delay: 90, text: 'Nadie encuentra el número de parte del empaque.', tag: 'REFACCIONES' },
+        { num: 'F-03', delay: 180, text: 'El proveedor no contesta cuando la línea está parada.', tag: 'LÍNEA PARADA' },
+        { num: 'F-04', delay: 270, text: 'Me entregan el equipo sin ninguna evidencia de que quedó bien.', tag: 'SIN PRUEBAS' }
+      ],
+
+      methodSteps: [
+        { n: '1', delay: 0, line: true, title: 'Diagnóstico de causa raíz', desc: 'Encontramos por qué falló, no solo qué falló. Sin causa raíz, la falla regresa.' },
+        { n: '2', delay: 110, line: true, title: 'Reparación por especialistas', desc: 'Técnicos hidráulicos, refacciones correctas y kits originales o equivalentes certificados.' },
+        { n: '3', delay: 220, line: false, title: 'Prueba en banco', desc: 'Tu equipo se mide en el banco de pruebas y te entregamos el reporte de desempeño, antes y después.' }
+      ],
+
+      listServices: this.services.map((s, i) => ({ ...s, pick: () => this.open(i) })),
+      quoterServices: this.services.map((s, i) => ({ ...s, pick: () => this.setState({ service: i, step: 2 }) })),
+      selectedServiceShort: service == null ? 'Servicio por definir' : this.services[service].short,
+
+      clips: [1, 2, 3, 4, 5, 6].map((n, i) => ({ id: 'clip-' + n, delay: i * 70, label: 'CLIP 0' + n + ' · TALLER' })),
+
+      testimonials: [
+        { quote: 'Antes mandaba las bombas a Monterrey y rezaba. Ahora me llegan con su reporte del banco y se acabaron las discusiones con producción.', who: 'JEFE DE MANTENIMIENTO · PLANTA AUTOMOTRIZ, SALTILLO' },
+        { quote: 'Una manguera a las 2 de la mañana en domingo. Contestaron, la fabricaron y la línea arrancó antes del primer turno.', who: 'SUPERVISOR DE MANTENIMIENTO · ACERERA, MONTERREY' },
+        { quote: 'El Kit Alta Exprés nos salvó: los dimos de alta en un día y a la semana ya nos estaban sacando de una parada.', who: 'GERENTE DE PLANTA · METALMECÁNICA, RAMOS ARIZPE' }
+      ],
+
+      faqs: this.faqData.map((f, i) => ({
+        ...f,
+        open: openFaq === i,
+        icon: openFaq === i ? '–' : '+',
+        toggle: () => this.setState({ openFaq: openFaq === i ? -1 : i })
+      })),
+
+      isStep1: !sent && step === 1,
+      isStep2: !sent && step === 2,
+      isStep3: !sent && step === 3,
+      isSent: sent,
+      stepLabel: sent ? 'LISTO' : 'PASO ' + step + ' DE 3',
+      progressPct: sent ? 100 : Math.round((step / 3) * 100),
+
+      urgencyOpts: urgencyDefs.map((u, i) => ({
+        ...u,
+        style: urgencyBase + (urgency === i
+          ? ' border: 2px solid #3b78e7; background: #f0f5ff; font-weight: 600;'
+          : ' border: 1.5px solid #dde4f0; background: #ffffff;'),
+        pick: () => this.setState({ urgency: i })
+      })),
+
+      openQuoter: () => this.open(null),
+      closeQuoter: () => this.close(),
+      stopProp: e => e.stopPropagation(),
+      goBack: () => this.setState({ step: Math.max(1, step - 1) }),
+      toStep3: () => this.setState({ step: 3 }),
+      submit: () => this.setState({ sent: true })
+    };
+  }
+}
+</script>
+
+
+</body></html>
