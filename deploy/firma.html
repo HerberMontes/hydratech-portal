@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Firma de reporte · HydraTech</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;} body{margin:0; background:#e9edf3; font-family:'IBM Plex Sans',system-ui,sans-serif; color:#1b2138;}
+  .bar{background:#141829; border-bottom:3px solid #263370; padding:10px 16px; display:flex; align-items:center; gap:10px;}
+  .bar img{height:18px;} .bar span{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#5b6390;}
+  .wrap{max-width:640px; margin:0 auto; padding:16px;}
+  .card{background:#fff; border:1px solid #dfe4ee; border-radius:14px; padding:16px; margin-bottom:14px;}
+  h1{font-family:'Archivo',sans-serif; font-size:17px; margin:0 0 4px;} .sub{font-size:12.5px; color:#8a93a8; margin-bottom:10px;}
+  h2{font-family:'Archivo',sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:#263370; margin:14px 0 6px;}
+  ul{margin:0; padding-left:18px;} li{font-size:13.5px; margin:4px 0;}
+  .sev{font-family:'IBM Plex Mono',monospace; font-size:10.5px; padding:1px 6px; border-radius:5px; margin-left:5px;}
+  .sev.critica{background:#fdecec; color:#b4232a;} .sev.atencion{background:#fff4e0; color:#9a6200;} .sev.normal,.sev.baja{background:#eef2ff; color:#263370;}
+  label{display:block; font-size:12px; font-weight:600; color:#404a63; margin:10px 0 5px;}
+  input{width:100%; border:1px solid #dfe4ee; border-radius:8px; padding:10px 11px; font-size:15px;}
+  canvas{width:100%; height:180px; border:2px dashed #c7cfdf; border-radius:10px; background:#fcfdff; touch-action:none; display:block;}
+  .btns{display:flex; gap:8px; margin-top:12px;}
+  .btn{flex:1; border:0; border-radius:9px; padding:13px; font-size:15px; font-weight:700; cursor:pointer;}
+  .primary{background:#263370; color:#fff;} .primary:disabled{opacity:.5;}
+  .ghost{background:#eef2ff; color:#263370; flex:0 0 auto; padding:13px 16px;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:12px; color:#8a93a8; margin-top:10px; text-align:center;}
+  .status.err{color:#b4232a;} .ok{background:#eafaf0; border:1px solid #bde5cc; color:#166534; border-radius:10px; padding:14px; text-align:center; font-weight:600;}
+  .fotos{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;}
+  .fotos img{width:100%; height:80px; object-fit:cover; border-radius:8px; border:1px solid #e2e7f0;}
+</style>
+</head>
+<body>
+<div class="bar"><img id="logo" src="assets/hydratech-wordmark-white.png" alt="Logo"><span>Firma de conformidad</span></div>
+<div class="wrap">
+  <div class="card" id="rep"><div class="status">Cargando reporte…</div></div>
+  <div class="card" id="firmaCard" style="display:none;">
+    <h2 style="margin-top:0;">Firma de conformidad del cliente</h2>
+    <label>Nombre de quien firma</label>
+    <input id="firmante" placeholder="Nombre y apellido" autocomplete="name">
+    <label>Firme dentro del recuadro</label>
+    <canvas id="pad"></canvas>
+    <div class="btns">
+      <button class="btn ghost" id="limpiar">Borrar</button>
+      <button class="btn primary" id="firmar" disabled>Firmar y archivar</button>
+    </div>
+    <div class="status" id="st">Al firmar, acepta que el servicio descrito fue realizado.</div>
+  </div>
+</div>
+<script>
+const p = new URLSearchParams(location.search);
+const id = p.get("id"), t = p.get("t");
+const $ = (x) => document.getElementById(x);
+const esc = (s) => String(s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function pinta(rep, yaFirmado){
+  if(rep.brand === "tubemac"){
+    document.getElementById("logo").src = "assets/tubemac/tubemac-logo-white.png";
+    document.title = "Firma de reporte · Tube-Mac";
+  }
+  const li = (arr, f) => (arr||[]).map(x=>"<li>"+f(x)+"</li>").join("") || "<li>(sin puntos)</li>";
+  const c = rep.content || {};
+  $("rep").innerHTML =
+    '<h1>Reporte de servicio '+esc(rep.folio||"")+'</h1>'+
+    '<div class="sub">'+esc(rep.cliente||"")+' · '+esc(rep.fecha||"")+' · Técnicos: '+esc((rep.tecnicos||[]).join(", ")||"n/d")+'</div>'+
+    (yaFirmado ? '<div class="ok">✍️ Este reporte ya fue firmado'+(rep.firma&&rep.firma.firmante?(' por '+esc(rep.firma.firmante)):'')+'. Gracias.</div>' : '')+
+    '<h2>Hallazgos</h2><ul>'+li(c.hallazgos, h=>esc(h.titulo)+(h.descripcion?': '+esc(h.descripcion):'')+' <span class="sev '+esc(h.severidad||"normal")+'">'+esc(h.severidad||"normal")+'</span>')+'</ul>'+
+    '<h2>Actividades realizadas</h2><ul>'+li(c.actividades, a=>esc(a.titulo)+(a.descripcion?': '+esc(a.descripcion):'')+(a.estado?' <span class="sev normal">'+esc(a.estado)+'</span>':''))+'</ul>'+
+    '<h2>Plan de acción</h2><ul>'+li(c.plan, x=>esc(x.titulo)+(x.descripcion?': '+esc(x.descripcion):'')+' <span class="sev '+(x.prioridad==='alta'?'critica':x.prioridad==='media'?'atencion':'baja')+'">'+esc(x.prioridad||"")+' · '+esc(x.urgencia||"")+'</span>')+'</ul>'+
+    ((rep.images||[]).length ? '<h2>Evidencia</h2><div class="fotos">'+rep.images.slice(0,6).map(im=>'<img src="'+im.dataURL+'">').join("")+'</div>' : '');
+}
+
+async function cargar(){
+  try{
+    const r = await fetch("/api/reporte-firmar?id="+encodeURIComponent(id)+"&t="+encodeURIComponent(t));
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error||("HTTP "+r.status));
+    pinta(d.report, d.yaFirmado);
+    if(!d.yaFirmado) $("firmaCard").style.display="block";
+  }catch(e){ $("rep").innerHTML='<div class="status err">✗ '+esc(e.message||e)+'</div>'; }
+}
+
+/* ===== Pad de firma ===== */
+const cv = $("pad"); const ctx = cv.getContext("2d");
+let trazo=false, hayFirma=false;
+function fit(){ const r=cv.getBoundingClientRect(); const img=hayFirma?ctx.getImageData(0,0,cv.width,cv.height):null;
+  cv.width=r.width*2; cv.height=r.height*2; ctx.scale(2,2); ctx.lineWidth=2.2; ctx.lineCap="round"; ctx.strokeStyle="#1b2138";
+  if(img) ctx.putImageData(img,0,0); }
+window.addEventListener("resize", fit); setTimeout(fit, 60);
+const pos = (e)=>{ const r=cv.getBoundingClientRect(); const p=e.touches?e.touches[0]:e; return {x:p.clientX-r.left, y:p.clientY-r.top}; };
+function down(e){ e.preventDefault(); trazo=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }
+function move(e){ if(!trazo) return; e.preventDefault(); const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); hayFirma=true; $("firmar").disabled=false; }
+function up(){ trazo=false; }
+cv.addEventListener("mousedown",down); cv.addEventListener("mousemove",move); window.addEventListener("mouseup",up);
+cv.addEventListener("touchstart",down,{passive:false}); cv.addEventListener("touchmove",move,{passive:false}); cv.addEventListener("touchend",up);
+$("limpiar").addEventListener("click",()=>{ ctx.clearRect(0,0,cv.width,cv.height); hayFirma=false; $("firmar").disabled=true; });
+
+$("firmar").addEventListener("click", async ()=>{
+  if(!hayFirma) return;
+  $("firmar").disabled=true; $("st").className="status"; $("st").textContent="Archivando…";
+  try{
+    const r = await fetch("/api/reporte-firmar", { method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ id, t, firma: cv.toDataURL("image/png"), firmante: $("firmante").value.trim() }) });
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error||("HTTP "+r.status));
+    $("firmaCard").innerHTML='<div class="ok">✅ Reporte firmado y archivado. ¡Gracias!</div>';
+  }catch(e){ $("st").className="status err"; $("st").textContent="✗ "+(e.message||e); $("firmar").disabled=false; }
+});
+
+cargar();
+</script>
+</body>
+</html>

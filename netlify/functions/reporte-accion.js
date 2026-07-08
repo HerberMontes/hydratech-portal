@@ -3,6 +3,7 @@
 // approve  -> marca el reporte como aprobado (queda archivado en la orden).
 // cancel   -> ELIMINA el reporte de la orden; la orden vuelve a aparecer para rehacerse desde cero.
 import { executeKw, checkToken, json } from "./lib/odoo.js";
+import { crearOportunidadDePlan } from "./lib/crm-plan.js";
 
 const ATT_NAME = "portal_reporte.json";
 
@@ -32,6 +33,11 @@ export default async (req) => {
     try { rep = JSON.parse(Buffer.from(found[0].datas || "", "base64").toString("utf8")) || {}; } catch (e) {}
     rep.status = "approved";
     rep.approvedAt = new Date().toISOString();
+    /* PLAN -> CRM: el plan de acción se convierte en UNA oportunidad ligada al
+       cliente y asignada al vendedor de la orden, con una actividad (y fecha
+       límite según urgencia) por cada punto. Idempotente vía rep.crmLeadId. */
+    let crmLeadId = null;
+    try { crmLeadId = await crearOportunidadDePlan(id, rep); if (crmLeadId) rep.crmLeadId = crmLeadId; } catch (e) {}
     const datas = Buffer.from(JSON.stringify(rep), "utf8").toString("base64");
     await executeKw("ir.attachment", "write", [[found[0].id], { datas }]);
 
@@ -78,7 +84,7 @@ export default async (req) => {
       }
     } catch (e) { /* Field Service no instalado o sin permisos: la aprobación no se afecta */ }
 
-    return json({ ok: true, action, status: "approved", fieldService });
+    return json({ ok: true, action, status: "approved", fieldService, crmLeadId });
   } catch (e) {
     return json({ ok: false, error: String(e.message || e) }, 500);
   }
