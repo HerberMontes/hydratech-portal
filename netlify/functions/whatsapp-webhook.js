@@ -80,6 +80,18 @@ async function ordenesAbiertas() {
   const orders = await executeKw("sale.order", "search_read", [domain],
     { fields: ["id", "name", "partner_id", "date_order"], limit: 20, order: "date_order desc" });
   const ids = orders.map((o) => o.id);
+  // Nota de servicio de cada orden (primera línea tipo "nota"), para que el
+  // técnico sepa DE QUÉ es cada orden, igual que en el portal.
+  const notaMap = {};
+  if (ids.length) {
+    const notas = await executeKw("sale.order.line", "search_read",
+      [[["order_id", "in", ids], ["display_type", "=", "line_note"]]],
+      { fields: ["order_id", "name", "sequence"], order: "sequence asc" }).catch(() => []);
+    for (const n of notas) {
+      const oid = Array.isArray(n.order_id) ? n.order_id[0] : n.order_id;
+      if (notaMap[oid] === undefined) notaMap[oid] = (n.name || "").trim();
+    }
+  }
   const ocultas = {};
   if (ids.length) {
     const atts = await executeKw("ir.attachment", "search_read",
@@ -93,7 +105,8 @@ async function ordenesAbiertas() {
     }
   }
   return orders.filter((o) => !ocultas[o.id]).slice(0, 10)
-    .map((o) => ({ id: o.id, name: o.name, partner: Array.isArray(o.partner_id) ? o.partner_id[1] : "", date: (o.date_order || "").slice(0, 10) }));
+    .map((o) => ({ id: o.id, name: o.name, partner: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
+      nota: notaMap[o.id] || "", date: (o.date_order || "").slice(0, 10) }));
 }
 
 /* ============ Guardar/leer el reporte en la orden (mismo adjunto del portal) ============ */
@@ -164,6 +177,13 @@ async function atender(msg) {
   const texto = (msg.texto || "").trim();
   const cmd = texto.toLowerCase();
 
+  /* Deduplicar reintentos de Meta: cuando la respuesta tarda (p. ej. audios
+     largos), Meta reenvía el MISMO mensaje y eso descarrilaba el flujo. */
+  const st = await leerEstado(tel);
+  if (msg.id && st.lastMsgId === msg.id) return;
+  st.lastMsgId = msg.id;
+  await guardarEstado(tel, st);
+
   /* ---- Botones de validación del ADMIN ---- */
   if (tel === ADMIN && msg.botonId && /^(ap|re)_\d+$/.test(msg.botonId)) {
     const [accion, idStr] = msg.botonId.split("_");
@@ -195,24 +215,23 @@ async function atender(msg) {
   /* ---- Comandos globales ---- */
   if (["menu", "menú", "hola", "cancelar", "inicio"].includes(cmd)) {
     await borrarEstado(tel);
-    await guardarEstado(tel, { paso: "MENU" });
+    await guardarEstado(tel, { paso: "MENU", lastMsgId: msg.id });
     await mandarMenu(tel, nombreTecnico(tel) || msg.nombre);
     return;
   }
-
-  const st = await leerEstado(tel);
 
   /* ---- Selección del menú ---- */
   if (msg.botonId === "op_reporte" || (st.paso === "MENU" && cmd === "1")) {
     const ords = await ordenesAbiertas();
     if (!ords.length) { await enviarTexto(tel, "No hay órdenes de servicio abiertas sin reporte. Escribe *menu* para volver."); return; }
-    await guardarEstado(tel, { paso: "ORDEN", ordenes: ords });
+    await guardarEstado(tel, { paso: "ORDEN", ordenes: ords, lastMsgId: msg.id });
     await enviarLista(tel, "¿De qué *orden de venta* es el reporte?", "Elegir orden",
-      ords.map((o) => ({ id: "ord_" + o.id, titulo: o.name, desc: `${o.partner} · ${o.date}` })));
+      ords.map((o) => ({ id: "ord_" + o.id, titulo: o.name,
+        desc: o.nota ? `${o.nota} · ${o.partner}` : `${o.partner} · ${o.date}` })));
     return;
   }
   if (msg.botonId === "op_voz" || (st.paso === "MENU" && cmd === "2")) {
-    await guardarEstado(tel, { paso: "VOZ_BUSCA" });
+    await guardarEstado(tel, { paso: "VOZ_BUSCA", lastMsgId: msg.id });
     await enviarTexto(tel, T.voz);
     return;
   }
@@ -221,8 +240,8 @@ async function atender(msg) {
   if (st.paso === "ORDEN" && msg.botonId && msg.botonId.startsWith("ord_")) {
     const id = parseInt(msg.botonId.slice(4), 10);
     const o = (st.ordenes || []).find((x) => x.id === id) || { id, name: "", partner: "" };
-    await guardarEstado(tel, { paso: "MARCA", orden: o, notas: { h: "", a: "", p: "" }, fotos: [], portada: null, brand: "hydratech" });
-    await enviarBotones(tel, `Orden *${o.name}* — ${o.partner}.\n\n¿A nombre de qué *empresa* va el reporte?`, [
+    await guardarEstado(tel, { paso: "MARCA", orden: o, notas: { h: "", a: "", p: "" }, fotos: [], portada: null, brand: "hydratech", lastMsgId: msg.id });
+    await enviarBotones(tel, `Orden *${o.name}* — ${o.partner}${o.nota ? "\n📝 " + o.nota : ""}\n\n¿A nombre de qué *empresa* va el reporte?`, [
       { id: "br_hydratech", titulo: "HydraTech Group" },
       { id: "br_tubemac", titulo: "Tube-Mac" },
     ]);
@@ -314,7 +333,7 @@ async function atender(msg) {
       const cid = parseInt(msg.botonId.slice(3), 10);
       cliente = (st.clientes || []).find((c) => c.id === cid) || { id: cid, name: msg.texto || "" };
     }
-    await guardarEstado(tel, { paso: "VOZ_AUDIO", cliente, ref: cliente ? cliente.name : (st.busqueda || ""), tx: "", fotos: [] });
+    await guardarEstado(tel, { paso: "VOZ_AUDIO", cliente, ref: cliente ? cliente.name : (st.busqueda || ""), tx: "", fotos: [], lastMsgId: msg.id });
     await enviarTexto(tel, `Cliente: *${cliente ? cliente.name : st.busqueda || "por identificar"}*.\n\n` + T.vozAudio);
     return;
   }
@@ -362,8 +381,24 @@ async function atender(msg) {
   }
 
   /* ---- Cualquier otra cosa ---- */
+  if (st.paso && st.paso !== "MENU") {
+    // A MITAD DE UN FLUJO: nunca reiniciar. Recordar el paso y seguir.
+    const pista = {
+      ORDEN: "elige la orden en la lista que te mandé",
+      MARCA: "elige la empresa con los botones (HydraTech o Tube-Mac)",
+      PORTADA: "mándame la *foto de portada* o escribe *OMITIR*",
+      S1: "vamos en *HALLAZGOS*: manda nota de voz, fotos, o escribe *LISTO*",
+      S2: "vamos en *ACTIVIDADES*: manda nota de voz, fotos, o escribe *LISTO*",
+      S3: "vamos en *PLAN DE ACCIÓN*: manda nota de voz, fotos, o escribe *LISTO*",
+      VOZ_BUSCA: "escríbeme el *nombre del cliente* para buscarlo",
+      VOZ_AUDIO: "mándame la *nota de voz*, fotos, o escribe *LISTO*",
+      VOZ_CONF: "elige con los botones: ✅ Guardar o 🎤 Agregar más",
+    }[st.paso] || "sigamos donde íbamos";
+    await enviarTexto(tel, "🤖 Seguimos en el mismo trámite: " + pista + "\n\n(Solo entiendo notas de voz, fotos y texto. Para empezar de cero escribe *cancelar*)");
+    return;
+  }
   await mandarMenu(tel, nombreTecnico(tel) || msg.nombre);
-  await guardarEstado(tel, { paso: "MENU" });
+  await guardarEstado(tel, { paso: "MENU", lastMsgId: msg.id });
 }
 
 /* ============ Voz del cliente: guardar y rutear ============ */
