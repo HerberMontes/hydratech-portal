@@ -197,6 +197,14 @@ function OrientPicker({ label, value, onChange }) {
     )
   );
 }
+function newLine() {
+  return { id: _id++, len: 1, pres: 3e3, A: defSide(), B: defSide() };
+}
+function mkConnName(c) {
+  return `PRE.${c.sys} ${describe(c)} (esp. ${DASH[c.hd]}")`;
+}
+var selCls = "w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-[13px] text-slate-800 focus:border-blue-500 focus:outline-none";
+var numCls = "w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-[13px] font-semibold text-slate-800 focus:border-blue-500 focus:outline-none";
 function SideCells({ side, onChange, borderStart }) {
   const fams = useMemo(() => famsAll(), []);
   const ests = useMemo(() => estFor(side.g), [side.g]);
@@ -246,6 +254,61 @@ function SideCells({ side, onChange, borderStart }) {
       }
     ) })
   ] });
+}
+// ---- Vista móvil: cada manguera es una tarjeta apilada hacia abajo ----
+function SideStack({ label, side, onChange }) {
+  const h = React.createElement;
+  const fams = famsAll();
+  const ests = estFor(side.g);
+  const meds = medFor(side.g, side.sk);
+  const angs = angFor(side.g, side.sk, side.th);
+  const keep = (s) => ({ ...s, or: side.or || 0 });
+  const F = (txt, sel) => h("label", { className: "block" },
+    h("span", { className: "text-[11px] font-bold text-slate-500" }, txt), sel);
+  return h("div", { className: "rounded-lg border border-slate-200 bg-slate-50 p-2.5" },
+    h("div", { className: "mb-1.5 text-[12px] font-bold uppercase tracking-wide text-slate-600" }, "Extremo " + label),
+    h("div", { className: "grid grid-cols-2 gap-2" },
+      F("Familia", h("select", { value: side.g, className: selCls, onChange: (e) => onChange(keep(validSide({ g: e.target.value, sk: side.sk, th: side.th, ak: side.ak }))) },
+        fams.map((f) => h("option", { key: f.g, value: f.g }, f.label)))),
+      F("Est\xE1ndar", h("select", { value: side.sk, className: selCls, onChange: (e) => onChange(keep(validSide({ g: side.g, sk: e.target.value, th: side.th, ak: side.ak }))) },
+        ests.map((e2) => h("option", { key: e2.sk, value: e2.sk }, e2.sl)))),
+      F("Medida", h("select", { value: side.th, className: selCls, onChange: (e) => onChange(keep(validSide({ g: side.g, sk: side.sk, th: e.target.value, ak: side.ak }))) },
+        meds.map((m) => h("option", { key: m.th, value: m.th }, m.ml)))),
+      F("\xC1ngulo", h("select", { value: side.ak, className: selCls, onChange: (e) => onChange({ ...side, ak: e.target.value, or: side.or || 0 }) },
+        angs.map((a) => h("option", { key: a[0], value: a[0] }, a[1]))))
+    ),
+    side.ak !== "R" && h("div", { className: "mt-2 flex justify-center" },
+      h(OrientPicker, { label, value: side.or || 0, onChange: (or) => onChange({ ...side, or }) }))
+  );
+}
+function MobileLine({ line, i, res, onPatch, onDup, onRemove, canRemove }) {
+  const h = React.createElement;
+  const v = res.error ? res.soft || null : res;
+  return h("div", { className: "rounded-xl border border-slate-200 bg-white p-3 shadow-sm" },
+    h("div", { className: "mb-2 flex items-center justify-between" },
+      h("span", { className: "text-sm font-extrabold text-slate-700" }, "Manguera " + (i + 1)),
+      h("div", { className: "flex gap-1.5" },
+        h("button", { onClick: onDup, className: "rounded border border-slate-300 px-2.5 py-1 text-[12px] font-bold text-slate-600" }, "Duplicar"),
+        h("button", { onClick: onRemove, disabled: !canRemove, className: "rounded border border-red-200 px-2.5 py-1 text-[12px] font-bold text-red-600 disabled:opacity-30" }, "Quitar"))),
+    h("div", { className: "mb-2 grid grid-cols-2 gap-2" },
+      h("label", { className: "block" },
+        h("span", { className: "text-[11px] font-bold text-slate-500" }, "Largo total (m)"),
+        h("input", { type: "number", min: "0", step: "0.1", value: line.len, className: numCls, onChange: (e) => onPatch({ len: e.target.value }) })),
+      h("label", { className: "block" },
+        h("span", { className: "text-[11px] font-bold text-slate-500" }, "Presi\xF3n (PSI)"),
+        h("input", { type: "number", min: "0", value: line.pres, className: numCls, onChange: (e) => onPatch({ pres: e.target.value }) }))),
+    h("div", { className: "space-y-2" },
+      h(SideStack, { label: "A", side: line.A, onChange: (A) => onPatch({ A }) }),
+      h(SideStack, { label: "B", side: line.B, onChange: (B) => onPatch({ B }) })),
+    line.A.ak !== "R" && line.B.ak !== "R" && h("div", { className: "mt-2 rounded bg-amber-50 px-2 py-1.5 text-center text-[12px] font-bold text-amber-900" },
+      "Desfase entre codos A \u2192 B: " + ((((line.B.or || 0) - (line.A.or || 0)) % 360 + 360) % 360) + "\xB0"),
+    res.error && !res.soft
+      ? h("div", { className: "mt-2 rounded bg-amber-50 px-2 py-1.5 text-[12px] font-medium text-amber-700" }, "\u26A0 " + res.error)
+      : v && h("div", { className: "mt-2 rounded bg-slate-50 px-2 py-1.5 text-[12px] text-slate-600" },
+          h("span", { className: "rounded px-1 py-0.5 text-[9px] font-bold uppercase text-white", style: { background: SYS_COLOR[v.sys] } }, v.sys),
+          h("b", { className: "ml-1.5" }, "\u2300" + DASH[v.hose.dash] + '"'), " \xB7 " + v.hose.name +
+          " \xB7 cortar " + v.hoseM + " m" + (v.cutKnown ? "" : " (descuento pendiente)"))
+  );
 }
 function App() {
   const [lines, setLines] = useState([]);
@@ -479,23 +542,23 @@ function App() {
     ] }) }),
     /* @__PURE__ */ jsxs("main", { className: "mx-auto max-w-[1560px] px-3 py-4", children: [
       /* @__PURE__ */ jsxs("div", { className: "mb-3 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm", children: [
-        /* @__PURE__ */ jsxs("label", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400", children: [
+        /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
           "Cliente *",
-          /* @__PURE__ */ jsxs("select", { value: clienteId, onChange: (e) => setClienteId(e.target.value), className: "mt-0.5 block rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800", style: { minWidth: 220 }, children: [
+          /* @__PURE__ */ jsxs("select", { value: clienteId, onChange: (e) => setClienteId(e.target.value), className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto", style: { minWidth: 220 }, children: [
             /* @__PURE__ */ jsx("option", { value: "", children: clientes.length ? "Elige cliente\u2026" : "Cargando clientes\u2026" }),
             ...clientes.map((c) => /* @__PURE__ */ jsx("option", { value: c.id, children: c.name }, c.id))
           ] })
         ] }),
-        /* @__PURE__ */ jsxs("label", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400", children: [
+        /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
           "\xC1rea *",
-          /* @__PURE__ */ jsxs("select", { value: areaId, disabled: !clienteId, onChange: (e) => { setAreaId(e.target.value); setEquipoId(""); }, className: "mt-0.5 block rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 disabled:bg-slate-100", style: { minWidth: 180 }, children: [
+          /* @__PURE__ */ jsxs("select", { value: areaId, disabled: !clienteId, onChange: (e) => { setAreaId(e.target.value); setEquipoId(""); }, className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 180 }, children: [
             /* @__PURE__ */ jsx("option", { value: "", children: !clienteId ? "Primero el cliente" : cargandoAreas ? "Cargando\u2026" : areasDoc.areas.length ? "Elige \xE1rea\u2026" : "Sin \xE1reas dadas de alta" }),
             ...areasDoc.areas.map((a) => /* @__PURE__ */ jsx("option", { value: a.id, children: a.nombre }, a.id))
           ] })
         ] }),
-        /* @__PURE__ */ jsxs("label", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400", children: [
+        /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
           "Equipo *",
-          /* @__PURE__ */ jsxs("select", { value: equipoId, disabled: !areaId, onChange: (e) => setEquipoId(e.target.value), className: "mt-0.5 block rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 disabled:bg-slate-100", style: { minWidth: 200 }, children: [
+          /* @__PURE__ */ jsxs("select", { value: equipoId, disabled: !areaId, onChange: (e) => setEquipoId(e.target.value), className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 200 }, children: [
             /* @__PURE__ */ jsx("option", { value: "", children: !areaId ? "Primero el \xE1rea" : (areaSel && areaSel.equipos && areaSel.equipos.length) ? "Elige equipo\u2026" : "Sin equipos en esta \xE1rea" }),
             ...(areaSel && areaSel.equipos || []).map((e2) => /* @__PURE__ */ jsx("option", { value: e2.id, children: e2.nombre }, e2.id))
           ] })
@@ -505,7 +568,8 @@ function App() {
           /* @__PURE__ */ jsx("a", { href: "mangueras.html", className: "font-bold underline", children: "Dalos de alta aqu\xED" })
         ] })
       ] }),
-      /* @__PURE__ */ jsx("div", { className: "overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm", children: /* @__PURE__ */ jsxs("table", { className: "w-full border-collapse text-sm", style: { minWidth: 1240 }, children: [
+      /* @__PURE__ */ jsx("div", { className: "space-y-3 md:hidden", children: lines.map((line, i) => /* @__PURE__ */ jsx(MobileLine, { line, i, res: results[i], onPatch: (pp) => patch(line.id, pp), onDup: () => dupLine(line.id), onRemove: () => removeLine(line.id), canRemove: lines.length > 1 }, line.id)) }),
+      /* @__PURE__ */ jsx("div", { className: "hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block", children: /* @__PURE__ */ jsxs("table", { className: "w-full border-collapse text-sm", style: { minWidth: 1240 }, children: [
         /* @__PURE__ */ jsxs("thead", { children: [
           /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-200 bg-slate-50", children: [
             /* @__PURE__ */ jsx("th", { className: th, rowSpan: 2, style: { width: 30 }, children: "#" }),
