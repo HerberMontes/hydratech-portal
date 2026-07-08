@@ -122,79 +122,142 @@ var _id = 1;
 function defSide(w) {
   return { ...validSide(w || { ak: "R", g: "M", sk: "npt", th: "08" }), or: w && w.or || 0 };
 }
-// Selector de orientación del codo. Se muestra en una fila propia debajo de la
-// manguera (pensado para móvil: los controles se apilan hacia abajo).
-// Cómo leerlo: estás viendo la manguera DE FRENTE por ese extremo. El tubo gris
-// que se curva hacia arriba es la curva natural del rollo: hacia allá es 0°.
-// El codo (pieza azul) se gira a donde apunta en la realidad, en pasos de 15°.
-function OrientPicker({ label, value, onChange }) {
+// ===================== Orientación de codos (diseño aprobado) =====================
+// Vista de la manguera completa (curva hacia arriba) con la "L" del codo girando
+// en la punta: la PUNTA ROJA marca hacia dónde queda la salida del conector.
+// 0° = hacia adentro (al hueco de la curva). Medidor grande para girar con el dedo.
+var NOR = (x) => ((Math.round(x) % 360) + 360) % 360;
+var VUN = (v) => { const l = Math.hypot(v.x, v.y) || 1; return { x: v.x / l, y: v.y / l }; };
+
+function VistaManguera({ line, lado }) {
   const h = React.createElement;
-  const S = 200, C = S / 2, R = 74;
-  const a = ((Math.round(value || 0) % 360) + 360) % 360;
-  const snap = (x) => ((Math.round(x / 15) * 15) % 360 + 360) % 360;
-  const setFrom = (clientX, clientY, el) => {
-    const r = el.getBoundingClientRect();
-    const x = clientX - r.left - r.width / 2;
-    const y = clientY - r.top - r.height / 2;
-    onChange(snap(Math.atan2(x, -y) * 180 / Math.PI));
+  const P0 = { x: 86, y: 206 }, P1 = { x: 200, y: 26 }, P2 = { x: 440, y: 26 }, P3 = { x: 554, y: 206 };
+  const tA = VUN({ x: P0.x - P1.x, y: P0.y - P1.y });
+  const tB = VUN({ x: P3.x - P2.x, y: P3.y - P2.y });
+  const ruta = "M " + P0.x + " " + P0.y + " C " + P1.x + " " + P1.y + ", " + P2.x + " " + P2.y + ", " + P3.x + " " + P3.y;
+  const punta = (cual, P, t) => {
+    const s = line[cual], activo = lado === cual, out = [];
+    out.push(h("line", { key: "f", x1: P.x - t.x * 6, y1: P.y - t.y * 6, x2: P.x + t.x * 26, y2: P.y + t.y * 26, stroke: "url(#ht-metal)", strokeWidth: 32, strokeLinecap: "round" }));
+    out.push(h("line", { key: "n", x1: P.x + t.x * 26, y1: P.y + t.y * 26, x2: P.x + t.x * 44, y2: P.y + t.y * 44, stroke: "url(#ht-metal)", strokeWidth: 40 }));
+    if (s.ak === "R") {
+      out.push(h("line", { key: "r", x1: P.x + t.x * 44, y1: P.y + t.y * 44, x2: P.x + t.x * 74, y2: P.y + t.y * 74, stroke: "url(#ht-metal)", strokeWidth: 20, strokeLinecap: "round" }));
+    } else {
+      const cod = { x: P.x + t.x * 80, y: P.y + t.y * 80 };
+      out.push(h("line", { key: "b", x1: P.x + t.x * 44, y1: P.y + t.y * 44, x2: cod.x, y2: cod.y, stroke: activo ? "#94a3b8" : "#cbd5e1", strokeWidth: 18, strokeLinecap: "round" }));
+      const hueco = { x: 320, y: 128 };
+      let nIn = { x: hueco.x - cod.x, y: hueco.y - cod.y };
+      const dp = nIn.x * t.x + nIn.y * t.y;
+      nIn = VUN({ x: nIn.x - dp * t.x, y: nIn.y - dp * t.y });
+      const kd = VUN({ x: -t.x * 0.3, y: 0.95 });
+      const a = NOR(s.or || 0) * Math.PI / 180;
+      const dir = VUN({ x: nIn.x * Math.cos(a) + kd.x * Math.sin(a), y: nIn.y * Math.cos(a) + kd.y * Math.sin(a) });
+      const tip = { x: cod.x + dir.x * 36, y: cod.y + dir.y * 36 };
+      const col = activo ? "#ef4444" : "#fca5a5";
+      out.push(h("line", { key: "L", x1: cod.x, y1: cod.y, x2: tip.x, y2: tip.y, stroke: col, strokeWidth: 16, strokeLinecap: "round" }));
+      out.push(h("circle", { key: "m1", cx: tip.x, cy: tip.y, r: 10, fill: "#fff", stroke: col, strokeWidth: 4 }));
+      out.push(h("circle", { key: "m2", cx: tip.x, cy: tip.y, r: 4, fill: col }));
+      out.push(h("circle", { key: "j", cx: cod.x, cy: cod.y, r: 8, fill: activo ? "#64748b" : "#cbd5e1" }));
+      const gx = Math.min(614, Math.max(26, tip.x + dir.x * 20));
+      const gy = Math.min(330, Math.max(18, tip.y + dir.y * 20 + 4));
+      out.push(h("text", { key: "g", x: gx, y: gy, textAnchor: "middle", fontSize: 13, fontWeight: 800, fill: activo ? "#b91c1c" : "#fca5a5" }, NOR(s.or || 0) + "\xB0"));
+    }
+    const c2 = { x: cual === "A" ? 30 : 610, y: 132 };
+    out.push(h("circle", { key: "e1", cx: c2.x, cy: c2.y, r: 18, fill: activo ? "#2563eb" : "#e2e8f0", stroke: activo ? "#1d4ed8" : "#94a3b8", strokeWidth: 2 }));
+    out.push(h("text", { key: "e2", x: c2.x, y: c2.y + 6, textAnchor: "middle", fontSize: 16, fontWeight: 800, fill: activo ? "#fff" : "#475569" }, cual));
+    return out;
   };
-  const press = (e) => { const pt = e.touches ? e.touches[0] : e; setFrom(pt.clientX, pt.clientY, e.currentTarget); if (e.touches) e.preventDefault(); };
-  const move = (e) => { if (!e.touches && e.buttons !== 1) return; press(e); };
-  const reloj = Math.round(a / 30) % 12 || 12;
-  const rad = a * Math.PI / 180;
-  const sin = Math.sin(rad), cos = Math.cos(rad);
-  // Codo dibujado como codo real: tubo corto que sale del centro y da vuelta.
-  const l1 = 34;
-  const ex = C + l1 * sin, ey = C - l1 * cos;          // fin del primer tramo
-  const px2 = ex + 20 * cos, py2 = ey + 20 * sin;       // tramo perpendicular (la "vuelta" del codo)
+  return h("svg", { viewBox: "0 0 640 340", style: { width: "100%", display: "block", userSelect: "none" } },
+    h("defs", null,
+      h("linearGradient", { id: "ht-tubo", x1: "0", y1: "0", x2: "0", y2: "1" },
+        h("stop", { offset: "0", stopColor: "#3a3f47" }), h("stop", { offset: ".45", stopColor: "#14171c" }), h("stop", { offset: "1", stopColor: "#2c3138" })),
+      h("linearGradient", { id: "ht-metal", x1: "0", y1: "0", x2: "0", y2: "1" },
+        h("stop", { offset: "0", stopColor: "#f3f4f6" }), h("stop", { offset: ".5", stopColor: "#9aa3ad" }), h("stop", { offset: "1", stopColor: "#e5e7eb" }))),
+    h("path", { d: ruta, fill: "none", stroke: "rgba(15,23,42,.12)", strokeWidth: 34, strokeLinecap: "round", transform: "translate(0,8)" }),
+    h("path", { d: ruta, fill: "none", stroke: "url(#ht-tubo)", strokeWidth: 30, strokeLinecap: "round" }),
+    h("path", { d: ruta, fill: "none", stroke: "rgba(255,255,255,.16)", strokeWidth: 7, strokeLinecap: "round", transform: "translate(0,-6)" }),
+    h("text", { x: 320, y: 188, textAnchor: "middle", fontSize: 13, fontWeight: 800, fill: "#b45309" }, "hueco de la curva (hacia adentro)"),
+    h("path", { d: "M 320 144 Q 320 118 320 104", fill: "none", stroke: "#f59e0b", strokeWidth: 4, strokeLinecap: "round" }),
+    h("polygon", { points: "320,96 313,110 327,110", fill: "#f59e0b" }),
+    punta("A", P0, tA), punta("B", P3, tB)
+  );
+}
+
+function MedidorOrientacion({ value, onChange }) {
+  const h = React.createElement;
+  const cx = 240, cy = 235, R = 150;
+  const a = NOR(value || 0), rad = a * Math.PI / 180;
+  const drag = React.useRef(false);
+  const desde = (ev) => {
+    const el2 = ev.currentTarget, r = el2.getBoundingClientRect();
+    const pt = ev.touches ? ev.touches[0] : ev;
+    const q = { x: (pt.clientX - r.left) * 480 / r.width, y: (pt.clientY - r.top) * 440 / r.height };
+    onChange(NOR(Math.round(Math.atan2(q.x - cx, -(q.y - cy)) * 180 / Math.PI / 15) * 15));
+  };
+  const press = (ev) => { drag.current = true; desde(ev); if (ev.touches) ev.preventDefault(); };
+  const move = (ev) => { if (!drag.current) return; desde(ev); if (ev.touches) ev.preventDefault(); };
+  const fin = () => { drag.current = false; };
   const marcas = [];
-  for (let t = 0; t < 360; t += 15) {
-    const big = t % 45 === 0;
-    const r2 = t * Math.PI / 180;
-    marcas.push(h("line", { key: t, x1: C + (R - (big ? 9 : 4)) * Math.sin(r2), y1: C - (R - (big ? 9 : 4)) * Math.cos(r2), x2: C + R * Math.sin(r2), y2: C - R * Math.cos(r2), stroke: big ? "#64748b" : "#d7dee8", strokeWidth: big ? 2 : 1 }));
+  for (let d = 0; d < 360; d += 15) {
+    const big = d % 45 === 0, r2 = d * Math.PI / 180;
+    marcas.push(h("line", { key: "t" + d, x1: cx + (R - (big ? 16 : 8)) * Math.sin(r2), y1: cy - (R - (big ? 16 : 8)) * Math.cos(r2), x2: cx + (R - 2) * Math.sin(r2), y2: cy - (R - 2) * Math.cos(r2), stroke: big ? "#475569" : "#d7dee8", strokeWidth: big ? 2.5 : 1.2 }));
+    if (big && d !== 0) marcas.push(h("text", { key: "n" + d, x: cx + (R - 32) * Math.sin(r2), y: cy - (R - 32) * Math.cos(r2) + 4.5, textAnchor: "middle", fontSize: 13, fontWeight: 700, fill: "#64748b" }, d + "\xB0"));
   }
-  const presets = [0, 45, 90, 135, 180, 225, 270, 315];
-  return h("div", { className: "flex w-full max-w-[420px] flex-col items-center rounded-xl border border-slate-200 bg-white p-3" },
-    h("div", { className: "mb-1 text-[12px] font-bold uppercase tracking-wide text-slate-600" }, "Codo del extremo " + label),
-    h("svg", { width: S, height: S, viewBox: "0 0 " + S + " " + S, style: { touchAction: "none", cursor: "pointer", maxWidth: "100%" }, onMouseDown: press, onMouseMove: move, onTouchStart: press, onTouchMove: move },
-      // La manguera curv\xE1ndose hacia arriba (curva natural) — llega al centro desde abajo
-      h("path", { d: "M " + C + " " + (S - 6) + " C " + C + " " + (S - 40) + ", " + (C - 34) + " " + (C + 40) + ", " + (C - 44) + " " + (C - 26) + " ", fill: "none", stroke: "#cbd5e1", strokeWidth: 20, strokeLinecap: "round", opacity: 0.55 }),
-      h("path", { d: "M " + C + " " + (S - 6) + " L " + C + " " + (C + 20), fill: "none", stroke: "#94a3b8", strokeWidth: 22, strokeLinecap: "round" }),
-      // Aro del cuadrante
-      h("circle", { cx: C, cy: C, r: R, fill: "rgba(255,255,255,0.85)", stroke: "#e2e8f0", strokeWidth: 2 }),
-      marcas,
-      // Flecha/banda de la curva natural (0\xB0, arriba)
-      h("path", { d: "M " + (C - 16) + " " + (C - R - 6) + " Q " + C + " " + (C - R - 16) + " " + (C + 16) + " " + (C - R - 6), fill: "none", stroke: "#f59e0b", strokeWidth: 5, strokeLinecap: "round" }),
-      h("text", { x: C, y: C - R - 20, textAnchor: "middle", fontSize: 10, fontWeight: 800, fill: "#b45309" }, "LA CURVA APUNTA AQU\xCD (0\xB0)"),
-      h("text", { x: C + R + 12, y: C + 4, textAnchor: "start", fontSize: 10, fill: "#94a3b8" }, "90\xB0"),
-      h("text", { x: C, y: C + R + 16, textAnchor: "middle", fontSize: 10, fill: "#94a3b8" }, "180\xB0"),
-      h("text", { x: C - R - 12, y: C + 4, textAnchor: "end", fontSize: 10, fill: "#94a3b8" }, "270\xB0"),
-      // Extremo de la manguera (vista de frente)
-      h("circle", { cx: C, cy: C, r: 17, fill: "#e2e8f0", stroke: "#64748b", strokeWidth: 3 }),
-      h("circle", { cx: C, cy: C, r: 7, fill: "#f8fafc", stroke: "#94a3b8", strokeWidth: 2 }),
-      // El codo (azul), dibujado como codo con su vuelta
-      h("line", { x1: C, y1: C, x2: ex, y2: ey, stroke: "#2563eb", strokeWidth: 13, strokeLinecap: "round" }),
-      h("line", { x1: ex, y1: ey, x2: px2, y2: py2, stroke: "#2563eb", strokeWidth: 13, strokeLinecap: "round" }),
-      h("circle", { cx: ex, cy: ey, r: 6.5, fill: "#1d4ed8" })
-    ),
-    // Lectura grande y equivalencia de reloj
-    h("div", { className: "mt-1 flex items-baseline gap-2" },
-      h("span", { className: "text-2xl font-extrabold tabular-nums text-blue-700" }, a + "\xB0"),
-      h("span", { className: "text-[12px] text-slate-400" }, "\u2248 a las " + reloj + " del reloj")
-    ),
-    // Posiciones r\xE1pidas (bot\xF3n por cada 45\xB0) + ajuste fino
-    h("div", { className: "mt-2 grid w-full grid-cols-4 gap-1.5" },
-      presets.map((pv) => h("button", {
-        key: pv, type: "button",
-        className: "rounded-lg border px-1 py-1.5 text-[12px] font-bold " + (a === pv ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"),
-        onClick: () => onChange(pv)
-      }, pv + "\xB0"))
-    ),
-    h("div", { className: "mt-1.5 flex items-center gap-2" },
-      h("button", { type: "button", className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50", onClick: () => onChange(snap(a - 15)) }, "\u221215\xB0"),
+  const hex = [];
+  for (let i = 0; i < 6; i++) { const t2 = (i * 60 - 30) * Math.PI / 180; hex.push((cx + 34 * Math.cos(t2)) + "," + (cy + 34 * Math.sin(t2))); }
+  const L = R - 44;
+  const mx = cx + L * 0.45 * Math.sin(rad), my = cy - L * 0.45 * Math.cos(rad);
+  const ex = cx + L * Math.sin(rad), ey = cy - L * Math.cos(rad);
+  const guia = { 0: "la punta roja apunta HACIA ADENTRO de la curva", 90: "la punta roja apunta a la derecha", 180: "la punta roja apunta HACIA AFUERA de la curva", 270: "la punta roja apunta a la izquierda" }[a];
+  return h("svg", { viewBox: "0 0 480 440", style: { width: "100%", maxWidth: 430, display: "block", touchAction: "none", cursor: "pointer", userSelect: "none" },
+    onMouseDown: press, onMouseMove: move, onMouseUp: fin, onMouseLeave: fin, onTouchStart: press, onTouchMove: move, onTouchEnd: fin },
+    h("path", { d: "M " + cx + " " + cy + " C " + (cx + 40) + " " + (cy + 150) + ", " + (cx + 250) + " " + (cy + 120) + ", " + (cx + 280) + " " + (cy - 120), fill: "none", stroke: "#cbd5e1", strokeWidth: 34, strokeLinecap: "round", opacity: 0.5 }),
+    h("circle", { cx, cy, r: R, fill: "rgba(255,255,255,.94)", stroke: "#2563eb", strokeWidth: 3 }),
+    marcas,
+    h("path", { d: "M " + (cx - 34) + " " + (cy - R - 8) + " Q " + cx + " " + (cy - R - 26) + " " + (cx + 34) + " " + (cy - R - 8), fill: "none", stroke: "#f59e0b", strokeWidth: 8, strokeLinecap: "round" }),
+    h("polygon", { points: cx + "," + (cy - R + 26) + " " + (cx - 11) + "," + (cy - R + 6) + " " + (cx + 11) + "," + (cy - R + 6), fill: "#f59e0b" }),
+    h("text", { x: cx, y: cy - R - 34, textAnchor: "middle", fontSize: 15, fontWeight: 800, fill: "#b45309" }, "0\xB0 = HACIA ADENTRO"),
+    h("text", { x: cx, y: cy - R + 44, textAnchor: "middle", fontSize: 11.5, fontWeight: 700, fill: "#b45309" }, "hueco de la curva"),
+    h("polygon", { points: hex.join(" "), fill: "#e5e7eb", stroke: "#64748b", strokeWidth: 3 }),
+    h("circle", { cx, cy, r: 15, fill: "#f8fafc", stroke: "#94a3b8", strokeWidth: 3 }),
+    h("line", { x1: cx, y1: cy, x2: mx, y2: my, stroke: "#94a3b8", strokeWidth: 18, strokeLinecap: "round" }),
+    h("line", { x1: mx, y1: my, x2: ex, y2: ey, stroke: "#ef4444", strokeWidth: 18, strokeLinecap: "round" }),
+    h("circle", { cx: ex, cy: ey, r: 21, fill: "#fff", stroke: "#ef4444", strokeWidth: 5 }),
+    h("circle", { cx: ex, cy: ey, r: 8, fill: "#ef4444" }),
+    h("text", { x: cx, y: cy + R - 34, textAnchor: "middle", fontSize: 44, fontWeight: 800, fill: "#1d4ed8" }, a + "\xB0"),
+    guia && h("text", { x: cx, y: cy + R + 26, textAnchor: "middle", fontSize: 13.5, fontWeight: 700, fill: "#475569" }, guia)
+  );
+}
+
+function OrientacionCodo({ line, onPatch }) {
+  const h = React.createElement;
+  const codoA = line.A.ak !== "R", codoB = line.B.ak !== "R";
+  const lados = [codoA ? "A" : null, codoB ? "B" : null].filter(Boolean);
+  const [sel, setSel] = useState(lados[0]);
+  const lado = lados.indexOf(sel) >= 0 ? sel : lados[0];
+  if (!lado) return null;
+  const s = line[lado];
+  const a = NOR(s.or || 0);
+  const setG = (v) => onPatch({ [lado]: { ...line[lado], or: NOR(v) } });
+  const btn = "rounded-lg border-2 px-2 py-2 text-[14px] font-extrabold ";
+  return h("div", { className: "mx-auto w-full max-w-[560px]" },
+    h(VistaManguera, { line, lado }),
+    lados.length > 1 && h("div", { className: "mt-1 flex gap-2" },
+      lados.map((l) => h("button", { key: l, type: "button", onClick: () => setSel(l),
+        className: "flex-1 rounded-lg border-2 px-2 py-2 text-[14px] font-extrabold " + (lado === l ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600") },
+        "Extremo " + l + " \xB7 " + NOR(line[l].or || 0) + "\xB0"))),
+    h("div", { className: "mt-2 flex justify-center" }, h(MedidorOrientacion, { value: a, onChange: setG })),
+    h("div", { className: "mt-1 grid grid-cols-4 gap-1.5" },
+      [0, 45, 90, 135, 180, 225, 270, 315].map((pv) => h("button", { key: pv, type: "button", onClick: () => setG(pv),
+        className: btn + (a === pv ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600") }, pv + "\xB0"))),
+    h("div", { className: "mt-1.5 flex items-center justify-center gap-3" },
+      h("button", { type: "button", onClick: () => setG(a - 15), className: "rounded-lg border-2 border-slate-300 bg-white px-4 py-2 text-[15px] font-extrabold text-slate-600" }, "\u221215\xB0"),
       h("span", { className: "text-[11px] text-slate-400" }, "ajuste fino"),
-      h("button", { type: "button", className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50", onClick: () => onChange(snap(a + 15)) }, "+15\xB0")
-    )
+      h("button", { type: "button", onClick: () => setG(a + 15), className: "rounded-lg border-2 border-slate-300 bg-white px-4 py-2 text-[15px] font-extrabold text-slate-600" }, "+15\xB0")),
+    codoA && codoB && h("div", { className: "mt-2 rounded-lg bg-amber-100 px-3 py-2 text-center text-[13px] font-extrabold text-amber-900" },
+      "Desfase entre codos A \u2192 B: " + NOR((line.B.or || 0) - (line.A.or || 0)) + "\xB0"),
+    h("div", { className: "mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900" },
+      h("b", null, "Regla de campo: "), "la ", h("b", { style: { color: "#dc2626" } }, "punta roja"),
+      " es la salida del conector. Si apunta hacia adentro (al hueco de la curva) son 0\xB0; hacia afuera, 180\xB0. Gira en sentido de las manecillas viendo la punta de frente.")
   );
 }
 function newLine() {
@@ -277,8 +340,7 @@ function SideStack({ label, side, onChange }) {
       F("\xC1ngulo", h("select", { value: side.ak, className: selCls, onChange: (e) => onChange({ ...side, ak: e.target.value, or: side.or || 0 }) },
         angs.map((a) => h("option", { key: a[0], value: a[0] }, a[1]))))
     ),
-    side.ak !== "R" && h("div", { className: "mt-2 flex justify-center" },
-      h(OrientPicker, { label, value: side.or || 0, onChange: (or) => onChange({ ...side, or }) }))
+    null
   );
 }
 function MobileLine({ line, i, res, onPatch, onDup, onRemove, canRemove }) {
@@ -300,8 +362,8 @@ function MobileLine({ line, i, res, onPatch, onDup, onRemove, canRemove }) {
     h("div", { className: "space-y-2" },
       h(SideStack, { label: "A", side: line.A, onChange: (A) => onPatch({ A }) }),
       h(SideStack, { label: "B", side: line.B, onChange: (B) => onPatch({ B }) })),
-    line.A.ak !== "R" && line.B.ak !== "R" && h("div", { className: "mt-2 rounded bg-amber-50 px-2 py-1.5 text-center text-[12px] font-bold text-amber-900" },
-      "Desfase entre codos A \u2192 B: " + ((((line.B.or || 0) - (line.A.or || 0)) % 360 + 360) % 360) + "\xB0"),
+    (line.A.ak !== "R" || line.B.ak !== "R") && h("div", { className: "mt-2 rounded-lg bg-amber-50/70 p-2" },
+      h(OrientacionCodo, { line, onPatch })),
     res.error && !res.soft
       ? h("div", { className: "mt-2 rounded bg-amber-50 px-2 py-1.5 text-[12px] font-medium text-amber-700" }, "\u26A0 " + res.error)
       : v && h("div", { className: "mt-2 rounded bg-slate-50 px-2 py-1.5 text-[12px] text-slate-600" },
@@ -597,18 +659,8 @@ function App() {
           const v = norm(res);
           const codoA = line.A.ak !== "R", codoB = line.B.ak !== "R";
           const filaOrient = (codoA || codoB) && /* @__PURE__ */ jsx("tr", { className: "border-b-2 border-slate-200 bg-amber-50/50", children: /* @__PURE__ */ jsxs("td", { colSpan: 13, className: "px-3 py-3", children: [
-            /* @__PURE__ */ jsxs("div", { className: "mb-2 text-[12px] text-amber-900", children: [
-              /* @__PURE__ */ jsxs("b", { children: ["Orientaci\xF3n de codos \u2014 manguera ", i + 1, ". "] }),
-              "Imagina que ves la manguera de frente por ese extremo: el tubo gris se curva hacia arriba (la curva natural del rollo). Gira el codo azul hasta donde apunta en la realidad."
-            ] }),
-            /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-start justify-center gap-3", children: [
-              codoA && /* @__PURE__ */ jsx(OrientPicker, { label: "A", value: line.A.or || 0, onChange: (or) => patch(line.id, { A: { ...line.A, or } }) }),
-              codoB && /* @__PURE__ */ jsx(OrientPicker, { label: "B", value: line.B.or || 0, onChange: (or) => patch(line.id, { B: { ...line.B, or } }) })
-            ] }),
-            codoA && codoB && /* @__PURE__ */ jsxs("div", { className: "mt-2 text-center text-[13px] font-bold text-amber-900", children: [
-              "Desfase entre codos A \u2192 B: ",
-              /* @__PURE__ */ jsxs("span", { className: "text-blue-700", children: [(((line.B.or || 0) - (line.A.or || 0)) % 360 + 360) % 360, "\xB0"] })
-            ] })
+            /* @__PURE__ */ jsxs("div", { className: "mb-2 text-center text-[12px] font-bold text-amber-900", children: ["Orientaci\xF3n de codos \u2014 manguera ", i + 1] }),
+            /* @__PURE__ */ jsx(OrientacionCodo, { line, onPatch: (pp) => patch(line.id, pp) })
           ] }) }, line.id + "-or");
           const filaPrincipal = /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-100 align-middle hover:bg-slate-50/60", children: [
             /* @__PURE__ */ jsx("td", { className: "px-1 text-center text-xs font-bold text-slate-400", children: i + 1 }),
