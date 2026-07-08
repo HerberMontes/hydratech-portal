@@ -550,5 +550,18 @@ function TabBtn({ on, onClick, children }) {
 }
 var Configurador_default = App;
 export {
-  Configurador_default as default
+  Configurador_default as default,
+  // Catálogo y utilidades compartidas con el módulo de censo de mangueras
+  DATA,
+  DASH,
+  FAMS,
+  FAM_LABEL,
+  famsAll,
+  estFor,
+  medFor,
+  angFor,
+  validSide,
+  connsForSide,
+  describe,
+  quoteLine
 };
