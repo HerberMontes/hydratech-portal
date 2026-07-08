@@ -161,6 +161,13 @@ export default async (req) => {
         return json({ ok:true, sigId });
       }
 
+      // --- agendar una actividad suelta (ej. Paso 1 de la cadencia al crear prospecto) ---
+      if (b.action === "agendar" && b.leadId && b.sig && b.sig.fecha) {
+        const id = await crearSiguientePaso(b.leadId, b.sig).catch(()=>null);
+        await ligarLeadAVendedor(b.leadId, b.email);
+        return json({ ok:true, id });
+      }
+
       // --- mover de etapa (arrastre en el kanban) ---
       // La etapa llega por su nombre EN PANTALLA (español); se resuelve por el
       // diccionario multi-idioma comparando contra el nombre display.
