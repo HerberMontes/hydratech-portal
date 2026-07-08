@@ -32,6 +32,21 @@
 </script>
   <script>window.REQUIRE_ROLE="cotizador";</script>
   <script defer src="auth-gate.js"></script>
+  <script>
+    // Salida consciente: si hay mangueras sin guardar, confirma antes de regresar al menú.
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest('a[href="acceso.html"]');
+      if (!a) return;
+      if (window.__ht_dirty && !window.confirm("Tienes mangueras capturadas sin guardar.\nSi sales se perderán. ¿Salir de todos modos?")) {
+        e.preventDefault();
+      }
+    }, true);
+    // Inicio siempre en limpio: si el navegador restaura la página desde caché
+    // (regresar con el gesto/atrás), se recarga para no mostrar trabajo a medias.
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted) location.reload();
+    });
+  </script>
 </head>
 <body>
   <!-- Barra superior HydraTech -->

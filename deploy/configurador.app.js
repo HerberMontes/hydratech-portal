@@ -188,6 +188,7 @@ function App() {
   const [cotizando, setCotizando] = useState(false);
   const [cotMsg, setCotMsg] = useState(null);
   const [saved, setSaved] = useState([]);
+  const [editandoId, setEditandoId] = useState(null);
   const results = useMemo(() => lines.map(quoteLine), [lines]);
   useEffect(() => {
     fetch("/api/odoo-clientes").then((r) => r.json()).then((d) => {
@@ -198,6 +199,14 @@ function App() {
       if (raw) setSaved(JSON.parse(raw));
     } catch (e) {}
   }, []);
+  // Aviso al salir con trabajo sin guardar. La captura vive solo en memoria:
+  // si la app se cierra, la siguiente vez SIEMPRE inicia en limpio.
+  useEffect(() => {
+    window.__ht_dirty = lines.length > 0;
+    const warn = (e) => { if (lines.length > 0) { e.preventDefault(); e.returnValue = ""; } };
+    window.addEventListener("beforeunload", warn);
+    return () => { window.__ht_dirty = false; window.removeEventListener("beforeunload", warn); };
+  }, [lines]);
   const cotizar = async () => {
     setCotMsg(null);
     if (!clienteId) { setCotMsg({ err: "Elige un cliente primero." }); return; }
@@ -234,22 +243,59 @@ function App() {
   const persistSaved = (arr) => { try { localStorage.setItem("ht_configs_v1", JSON.stringify(arr)); } catch (e) {} };
   const guardar = () => {
     if (lines.length === 0) return;
+    if (editandoId) {
+      const it = saved.find((s) => s.id === editandoId);
+      if (!it) { setEditandoId(null); return; }
+      if (!window.confirm(`\u00BFActualizar la configuraci\u00F3n guardada "${it.nombre}" con estos cambios?`)) return;
+      const arr = saved.map((s) => s.id === editandoId ? { ...s, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId } : s);
+      setSaved(arr); persistSaved(arr); setEditandoId(null);
+      setLines([]); setClienteId(""); setCotMsg(null); setTab("guardados");
+      return;
+    }
     const nombre = (window.prompt("Nombre para guardar esta configuraci\xF3n:") || "").trim();
     if (!nombre) return;
     const item = { id: Date.now(), nombre, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId };
     const arr = [item, ...saved];
     setSaved(arr); persistSaved(arr);
   };
+  const limpiar = () => {
+    if (lines.length && !window.confirm("Se borrar\u00E1n las mangueras capturadas sin guardar. \u00BFEmpezar una cotizaci\u00F3n nueva en limpio?")) return;
+    setLines([]); setClienteId(""); setEditandoId(null); setCotMsg(null);
+  };
+  const cancelarEdicion = () => {
+    if (!window.confirm("\u00BFDescartar los cambios de esta edici\u00F3n? La configuraci\u00F3n guardada queda como estaba.")) return;
+    setLines([]); setClienteId(""); setEditandoId(null); setCotMsg(null); setTab("guardados");
+  };
   const cargarGuardado = (id) => {
     const it = saved.find((s) => s.id === id);
     if (!it) return;
     setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
     if (it.clienteId !== void 0) setClienteId(it.clienteId);
+    setEditandoId(null);
     setTab("cotizacion");
   };
+  const editarGuardado = (id) => {
+    const it = saved.find((s) => s.id === id);
+    if (!it) return;
+    setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
+    if (it.clienteId !== void 0) setClienteId(it.clienteId);
+    setEditandoId(id);
+    setTab("cotizacion");
+  };
+  const renombrarGuardado = (id) => {
+    const it = saved.find((s) => s.id === id);
+    if (!it) return;
+    const n = (window.prompt("Nuevo nombre para la configuraci\u00F3n:", it.nombre) || "").trim();
+    if (!n) return;
+    const arr = saved.map((s) => s.id === id ? { ...s, nombre: n } : s);
+    setSaved(arr); persistSaved(arr);
+  };
   const borrarGuardado = (id) => {
+    const it = saved.find((s) => s.id === id);
+    if (it && !window.confirm(`\u00BFEliminar la configuraci\u00F3n guardada "${it.nombre}"? Esta acci\u00F3n no se puede deshacer.`)) return;
     const arr = saved.filter((s) => s.id !== id);
     setSaved(arr); persistSaved(arr);
+    if (editandoId === id) setEditandoId(null);
   };
   const norm = (r) => r.error ? r.soft || null : r;
   const customerTotal = results.reduce((s, r) => s + (norm(r)?.customer || 0), 0);
@@ -432,7 +478,15 @@ function App() {
           ]
         }
       ),
-      lines.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-2 flex justify-end", children: /* @__PURE__ */ jsx("button", { onClick: guardar, className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-700 hover:bg-slate-50", children: "\uD83D\uDCBE Guardar configuraci\xF3n" }) }),
+      lines.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mt-2 flex flex-wrap items-center justify-end gap-2", children: [
+        editandoId && /* @__PURE__ */ jsxs("span", { className: "rounded-lg bg-amber-50 px-3 py-1.5 text-[12px] font-bold text-amber-800", children: [
+          "Editando: ",
+          (saved.find((s) => s.id === editandoId) || {}).nombre || ""
+        ] }),
+        editandoId && /* @__PURE__ */ jsx("button", { onClick: cancelarEdicion, className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-500 hover:bg-slate-50", children: "Cancelar edici\xF3n" }),
+        /* @__PURE__ */ jsx("button", { onClick: limpiar, className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-500 hover:bg-slate-50", children: "Nueva cotizaci\xF3n (limpiar)" }),
+        /* @__PURE__ */ jsx("button", { onClick: guardar, className: "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-700 hover:bg-slate-50", children: editandoId ? "\uD83D\uDCBE Actualizar guardado" : "\uD83D\uDCBE Guardar configuraci\xF3n" })
+      ] }),
       /* @__PURE__ */ jsxs("div", { className: "mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm", children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-slate-200 bg-slate-50 pr-3", children: [
           /* @__PURE__ */ jsxs("div", { className: "flex", children: [
@@ -484,6 +538,8 @@ function App() {
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "flex shrink-0 items-center gap-2", children: [
             /* @__PURE__ */ jsx("button", { onClick: () => cargarGuardado(s.id), className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700", children: "Cargar" }),
+            /* @__PURE__ */ jsx("button", { onClick: () => editarGuardado(s.id), className: "rounded border border-slate-300 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50", children: "Editar" }),
+            /* @__PURE__ */ jsx("button", { onClick: () => renombrarGuardado(s.id), className: "rounded border border-slate-300 px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:bg-slate-50", children: "Renombrar" }),
             /* @__PURE__ */ jsx("button", { onClick: () => borrarGuardado(s.id), className: "rounded border border-red-200 px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-50", children: "Eliminar" })
           ] })
         ] }, s.id)) }) }) : /* @__PURE__ */ jsx("div", { className: "overflow-x-auto p-3", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", style: { minWidth: 820 }, children: [
