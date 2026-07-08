@@ -48,6 +48,24 @@
       "mail": "Ing. {nombre}:\n\nMe reporto para dar seguimiento a [LO PENDIENTE] que quedamos. En cuanto lo tenga, avanzamos con el siguiente paso.\n\nQuedo atento y a sus órdenes.\n\n{vendedor}"
     },
     {
+      "id": "caso",
+      "titulo": "Caso de impacto (cadencia)",
+      "desc": "Paso 4 de la cadencia: un caso real que despierte curiosidad.",
+      "etapas": [],
+      "wa": "Ing. {nombre}, un dato rápido: la tecnología que le comenté está instalada en las esclusas nuevas del Canal de Panamá y en simuladores de BMW y Porsche — donde una fuga no es opción. En plantas como {empresa}, una reparación que con soldadura toma un turno completo (permiso de fuego incluido), en frío se hace en minutos. ¿Le muestro cómo en 15 min esta semana?",
+      "sub": "Cómo reparan líneas hidráulicas sin parar la planta — caso real",
+      "mail": "Ing. {nombre}:\n\nUn caso que le puede sonar familiar: una prensa parada por fuga hidráulica, y la reparación tradicional exige vaciar la línea, permiso de trabajo en caliente, soldador certificado y radiografía — un turno completo perdido, mínimo.\n\nCon el sistema Pyplok esa misma unión se prensa en frío, en minutos, y se verifica con un calibrador pasa/no-pasa. Por eso está instalado en las esclusas nuevas del Canal de Panamá y en los simuladores de BMW, Porsche y Audi.\n\n¿Le muestro la herramienta funcionando en su planta? Son 15 minutos.\n\n{vendedor}"
+    },
+    {
+      "id": "cierre",
+      "titulo": "Mensaje de cierre (última cadencia)",
+      "desc": "Paso 7: cerrar el expediente con elegancia — el mensaje con mayor tasa de respuesta.",
+      "etapas": [],
+      "wa": "Ing. {nombre}, he intentado contactarle un par de semanas sin suerte, así que no le insisto más: cierro su expediente por ahora. Si más adelante una fuga o un paro de línea vuelve el tema urgente, aquí tiene mi contacto directo — con gusto lo retomamos. ¡Éxito!",
+      "sub": "Cierro su expediente — {empresa}",
+      "mail": "Ing. {nombre}:\n\nHe intentado contactarle durante las últimas dos semanas sin éxito, así que no le insisto más: cierro su expediente por ahora.\n\nSi más adelante una fuga recurrente o un paro de línea vuelve urgente el tema de la tubería sin soldadura, este correo es mi contacto directo — con gusto lo retomamos donde lo dejamos.\n\nLe deseo éxito.\n\n{vendedor}"
+    },
+    {
       "id": "react",
       "titulo": "Reactivación (se enfrió)",
       "desc": "Semanas sin respuesta — reabrir la conversación sin presionar.",

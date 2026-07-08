@@ -1,0 +1,19 @@
+{
+  "_ayuda": "CADENCIA DE PROSPECCIÓN TUBE-MAC — editable sin tocar código. 'pasos' corre en la etapa 'Por contactar': espera=días hábiles después del paso anterior; canal=call/whatsapp/email; plantilla=id de plantillas.json (o vacío); ventana=texto guía para el vendedor. Las llamadas caen solo en los días de 'diasLlamada' (1=lun … 5=vie) y rotan de día entre intentos. 'nurtureDias' = a cuántos días se agenda la reactivación si el prospecto nunca respondió. 'porEtapa' define el seguimiento sugerido en las demás etapas del embudo.",
+  "diasLlamada": [2, 3, 4],
+  "nurtureDias": 40,
+  "pasos": [
+    { "n": 1, "espera": 0, "canal": "call",     "plantilla": "",      "instruccion": "Llamada 1 — preséntate y pide 15 min", "ventana": "10:30–12:00" },
+    { "n": 2, "espera": 1, "canal": "whatsapp", "plantilla": "info",  "instruccion": "WhatsApp de presentación con la info", "ventana": "" },
+    { "n": 3, "espera": 2, "canal": "call",     "plantilla": "info",  "instruccion": "Llamada 2 — si no contesta, manda el correo de info", "ventana": "10:30–12:00" },
+    { "n": 4, "espera": 2, "canal": "whatsapp", "plantilla": "caso",  "instruccion": "WhatsApp con caso de impacto", "ventana": "" },
+    { "n": 5, "espera": 3, "canal": "call",     "plantilla": "",      "instruccion": "Llamada 3 — ventana alterna de la tarde", "ventana": "14:30–16:00" },
+    { "n": 6, "espera": 3, "canal": "email",    "plantilla": "cot",   "instruccion": "Correo con ángulo nuevo: el costo del paro", "ventana": "" },
+    { "n": 7, "espera": 3, "canal": "whatsapp", "plantilla": "cierre","instruccion": "Mensaje de cierre — el de mayor respuesta", "ventana": "" }
+  ],
+  "porEtapa": {
+    "Cita agendada":   { "espera": 1, "canal": "whatsapp", "plantilla": "cita", "instruccion": "Confirmar la cita un día antes" },
+    "Presentado":      { "espera": 3, "canal": "whatsapp", "plantilla": "pend", "instruccion": "Insistir por los documentos del alta" },
+    "Alta en proceso": { "espera": 5, "canal": "call",     "plantilla": "",     "instruccion": "Verificar el estado del alta con el cliente" }
+  }
+}

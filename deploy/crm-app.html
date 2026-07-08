@@ -297,6 +297,9 @@
       <div><div class="lbl" style="margin-bottom:8px">¿Qué hiciste?</div>
         <div class="pills" id="t-tipo">
           <button data-v="call">Llamada</button><button data-v="whatsapp">WhatsApp</button><button data-v="email">Correo</button><button data-v="visit">Visita</button><button data-v="meeting">Reunión</button>
+        </div>
+        <div id="t-enviar-row" style="display:none;margin-top:9px">
+          <button onclick="toqueEnviarPlantilla()" style="border:1.5px dashed var(--gold);background:var(--gold-bg);color:var(--gold-d);font-weight:600;font-size:12.5px;padding:9px 14px;border-radius:10px;cursor:pointer;width:100%">📤 ¿Aún no lo envías? Enviar plantilla ahora →</button>
         </div></div>
       <div><div class="lbl" style="margin-bottom:8px">¿Qué pasó? *</div>
         <div class="pills" id="t-res">
@@ -396,6 +399,44 @@ const SUGERENCIA={
 };
 const T_ICON={call:"📞",whatsapp:"💬",email:"✉️",meeting:"👥",visit:"🚗",todo:"✔"};
 
+/* ================= MOTOR DE CADENCIA · prospección Tube-Mac =================
+   Config editable en deploy/cadencia.json (respaldo embebido abajo).
+   El motor vive aquí: al crear un prospecto agenda el Paso 1; cada "no contestó"
+   agenda el paso siguiente con su día, canal, instrucción y plantilla. */
+const DEFAULT_CAD={
+ diasLlamada:[2,3,4], nurtureDias:40,
+ pasos:[
+  {n:1,espera:0,canal:"call",plantilla:"",instruccion:"Llamada 1 — preséntate y pide 15 min",ventana:"10:30–12:00"},
+  {n:2,espera:1,canal:"whatsapp",plantilla:"info",instruccion:"WhatsApp de presentación con la info",ventana:""},
+  {n:3,espera:2,canal:"call",plantilla:"info",instruccion:"Llamada 2 — si no contesta, manda el correo de info",ventana:"10:30–12:00"},
+  {n:4,espera:2,canal:"whatsapp",plantilla:"caso",instruccion:"WhatsApp con caso de impacto",ventana:""},
+  {n:5,espera:3,canal:"call",plantilla:"",instruccion:"Llamada 3 — ventana alterna de la tarde",ventana:"14:30–16:00"},
+  {n:6,espera:3,canal:"email",plantilla:"cot",instruccion:"Correo con ángulo nuevo: el costo del paro",ventana:""},
+  {n:7,espera:3,canal:"whatsapp",plantilla:"cierre",instruccion:"Mensaje de cierre — el de mayor respuesta",ventana:""}
+ ],
+ porEtapa:{
+  "Cita agendada":{espera:1,canal:"whatsapp",plantilla:"cita",instruccion:"Confirmar la cita un día antes"},
+  "Presentado":{espera:3,canal:"whatsapp",plantilla:"pend",instruccion:"Insistir por los documentos del alta"},
+  "Alta en proceso":{espera:5,canal:"call",plantilla:"",instruccion:"Verificar el estado del alta con el cliente"}
+ }};
+let CAD=DEFAULT_CAD;
+fetch("cadencia.json").then(r=>r.ok?r.json():null).then(d=>{if(d&&Array.isArray(d.pasos)&&d.pasos.length)CAD=d;}).catch(()=>{});
+/* fecha del siguiente paso: suma días hábiles; si es llamada, cae en día de
+   llamada (mar/mié/jue) DISTINTO al del intento fallido (rotación) */
+function fechaPaso(espera,canal,evitarDow){
+  const d=new Date();let sum=0;
+  while(sum<espera){d.setDate(d.getDate()+1);const w=d.getDay();if(w>=1&&w<=5)sum++;}
+  if(canal==="call"){
+    const ok=CAD.diasLlamada||[2,3,4];
+    let tries=0;
+    while(tries<10&&(!ok.includes(d.getDay())||(evitarDow!=null&&d.getDay()===evitarDow&&ok.length>1))){d.setDate(d.getDate()+1);tries++;}
+  } else { while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1); }
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+const pasoDe=(txt)=>{const m=String(txt||"").match(/Paso (\d+)\/(\d+)/);return m?Number(m[1]):0;};
+const notaPaso=(p)=>"Paso "+p.n+"/"+(CAD.pasos.length)+" · "+p.instruccion+(p.ventana?(" ("+p.ventana+")"):"");
+const CANAL_TIPO={call:"call",whatsapp:"whatsapp",email:"email"};
+
 /* ================= BIBLIOTECA DE PLANTILLAS · Tube-Mac =================
    FUENTE EDITABLE: deploy/plantillas.json — ahí se corrigen textos, se dan de
    alta documentos y se cambia el enlace {link} SIN tocar este código.
@@ -430,6 +471,16 @@ const DEFAULT_TPL={
    wa:"Ing. {nombre}, sin prisa — solo me reporto para saber si ya hubo respuesta de [LO PENDIENTE]. Quedo atento para el siguiente paso. Saludos.",
    sub:"Seguimiento — [LO PENDIENTE]",
    mail:"Ing. {nombre}:\n\nMe reporto para dar seguimiento a [LO PENDIENTE] que quedamos. En cuanto lo tenga, avanzamos con el siguiente paso.\n\nQuedo atento y a sus órdenes.\n\n{vendedor}"},
+  {id:"caso", titulo:"Caso de impacto (cadencia)", desc:"Paso 4 de la cadencia: un caso real que despierte curiosidad.",
+   etapas:[],
+   wa:"Ing. {nombre}, un dato rápido: la tecnología que le comenté está instalada en las esclusas nuevas del Canal de Panamá y en simuladores de BMW y Porsche — donde una fuga no es opción. En plantas como {empresa}, una reparación que con soldadura toma un turno completo (permiso de fuego incluido), en frío se hace en minutos. ¿Le muestro cómo en 15 min esta semana?",
+   sub:"Cómo reparan líneas hidráulicas sin parar la planta — caso real",
+   mail:"Ing. {nombre}:\n\nUn caso que le puede sonar familiar: una prensa parada por fuga hidráulica, y la reparación tradicional exige vaciar la línea, permiso de trabajo en caliente, soldador certificado y radiografía — un turno completo perdido, mínimo.\n\nCon el sistema Pyplok esa misma unión se prensa en frío, en minutos, y se verifica con un calibrador pasa/no-pasa. Por eso está instalado en las esclusas nuevas del Canal de Panamá y en los simuladores de BMW, Porsche y Audi.\n\n¿Le muestro la herramienta funcionando en su planta? Son 15 minutos.\n\n{vendedor}"},
+  {id:"cierre", titulo:"Mensaje de cierre (última cadencia)", desc:"Paso 7: cerrar el expediente con elegancia — el mensaje con mayor tasa de respuesta.",
+   etapas:[],
+   wa:"Ing. {nombre}, he intentado contactarle un par de semanas sin suerte, así que no le insisto más: cierro su expediente por ahora. Si más adelante una fuga o un paro de línea vuelve el tema urgente, aquí tiene mi contacto directo — con gusto lo retomamos. ¡Éxito!",
+   sub:"Cierro su expediente — {empresa}",
+   mail:"Ing. {nombre}:\n\nHe intentado contactarle durante las últimas dos semanas sin éxito, así que no le insisto más: cierro su expediente por ahora.\n\nSi más adelante una fuga recurrente o un paro de línea vuelve urgente el tema de la tubería sin soldadura, este correo es mi contacto directo — con gusto lo retomamos donde lo dejamos.\n\nLe deseo éxito.\n\n{vendedor}"},
   {id:"react", titulo:"Reactivación (se enfrió)", desc:"Semanas sin respuesta — reabrir la conversación sin presionar.",
    etapas:[],
    wa:"Ing. {nombre}, hace unas semanas platicamos sobre resolver [SU APLICACIÓN] sin soldadura. Entiendo que las prioridades cambian — ¿sigue vigente el tema o lo retomamos más adelante? Cualquier ajuste a la propuesta, dígamelo con confianza.",
@@ -682,9 +733,9 @@ function renderMaterial(){
 }
 
 /* ================= SELECTOR DE PLANTILLA ================= */
-let tplCanal="wa", tplSit="info", tplManual=false, tplLead=null, tplEnviado=false;
-function abrirTpl(sitId,canal,lead){
-  tplLead=lead||null; tplManual=false; tplEnviado=false;
+let tplCanal="wa", tplSit="info", tplManual=false, tplLead=null, tplEnviado=false, tplDesdeToque=false;
+function abrirTpl(sitId,canal,lead,desdeToque){
+  tplLead=lead||null; tplManual=false; tplEnviado=false; tplDesdeToque=!!desdeToque;
   // CORRECCIÓN 1: si viene de un lead, el sistema elige la plantilla por su etapa.
   let motivo="";
   if(lead&&!sitId){const s=tplSugerida(lead);sitId=s.id;motivo=s.motivo;}
@@ -741,6 +792,18 @@ function tplConfirmUI(on){
 }
 async function tplRegistrarEnvio(){
   const p=tplActual();
+  // DESDE EL REGISTRO: no se escribe nada aquí (evita doble registro). Se regresa
+  // al formulario con tipo ya elegido, resultado "Pendiente de ellos" y la nota
+  // del envío — el ÚNICO registro es "Guardar y agendar".
+  if(tplDesdeToque){
+    cerrarModal("m-tpl");
+    const nota=document.getElementById("t-nota");
+    const linea="Plantilla enviada: "+(p?p.titulo:tplSit);
+    if(!nota.value.includes(linea))nota.value=(nota.value?nota.value+"\n":"")+linea;
+    aplicarResultado("waiting");
+    toast("Enviado ✔ Completa el resultado y guarda — un solo registro.");
+    return;
+  }
   const btns=document.getElementById("tpl-confirm").querySelectorAll("button");btns.forEach(b=>b.disabled=true);
   // Bitácora automática. Si el lead NO tiene siguiente paso, se agenda uno solo
   // (+3 días) para no romper la regla de oro; si ya tiene, no se duplica.
@@ -767,30 +830,90 @@ function enviarInfo(){
 }
 
 /* ================= TOQUE ================= */
-let tTipo="call",tRes=null,tSigTipo=null,tSigFecha=null,tManual=false;
+let tTipo="call",tRes=null,tSigTipo=null,tSigFecha=null,tManual=false,toqueInfo=null;
+function buscarLead(leadId){
+  return COLA.find(x=>x.leadId===leadId)||(DIA&&(DIA.tablero||[]).find(x=>x.leadId===leadId))||(DIA&&(DIA.proximas||[]).find(x=>x.leadId===leadId))||((fichaActual&&fichaActual.leadId===leadId)?fichaActual:null);
+}
 function abrirToque(leadId,nombre,activityId,actTipo,desdeFocus){
   if(bloq())return;
   toqueCtx={leadId,activityId:activityId||null};toqueDesdeFocus=!!desdeFocus;
+  const it=buscarLead(leadId);
+  toqueInfo=it?{flujo:it.flujo,etapa:it.etapa,resumen:it.resumen||(it.sig&&it.sig.resumen)||"",dow:new Date().getDay()}:null;
   tTipo=({call:"call",whatsapp:"whatsapp",email:"email",meeting:"meeting",visit:"visit"})[actTipo]||"call";
   tRes=null;tSigTipo=null;tSigFecha=null;tManual=false;
   document.getElementById("t-sub").textContent=nombre||"";
   document.getElementById("t-nota").value="";document.getElementById("t-sig-nota").value="";document.getElementById("t-sig-fecha").value="";
   marcar("t-tipo",tTipo);marcar("t-res",null);marcar("t-sig-tipo",null);marcar("t-sig-cuando",null,"data-d");
+  toqueEnviarRow();
   document.getElementById("t-hint").textContent="Elige el resultado y te sugiero el siguiente paso.";
   tValidar();
   document.getElementById("ovl").classList.add("show");
   document.getElementById("m-toque").classList.add("show");
 }
-document.getElementById("t-tipo").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tTipo=b.dataset.v;marcar("t-tipo",tTipo);});
-document.getElementById("t-res").addEventListener("click",e=>{
-  const b=e.target.closest("button");if(!b)return;tRes=b.dataset.v;marcar("t-res",tRes);
-  const s=SUGERENCIA[tRes];
-  if(s&&!tManual){tSigTipo=s.tipo;tSigFecha=isoMas(s.dias);marcar("t-sig-tipo",tSigTipo);marcar("t-sig-cuando",s.dias,"data-d");
-    document.getElementById("t-sig-fecha").value=tSigFecha;
-    const n=document.getElementById("t-sig-nota");if(!n.value.trim())n.value=s.nota;
-    document.getElementById("t-hint").textContent="Sugerido según el resultado — ajústalo si quieres.";}
+document.getElementById("t-tipo").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tTipo=b.dataset.v;marcar("t-tipo",tTipo);toqueEnviarRow();});
+function toqueEnviarRow(){document.getElementById("t-enviar-row").style.display=(tTipo==="whatsapp"||tTipo==="email")?"":"none";}
+/* aplica un resultado (desde clic o desde el envío de plantilla) con su sugerencia.
+   LA CADENCIA MANDA: en prospectos, el siguiente paso lo dicta cadencia.json. */
+function aplicarResultado(val){
+  tRes=val;marcar("t-res",tRes);
+  if(!tManual){
+    let sug=null, hint="";
+    const esProspecto=toqueInfo&&toqueInfo.flujo==="prospecto";
+    const enContactar=esProspecto&&String(toqueInfo.etapa||"").toLowerCase()==="por contactar";
+    if(enContactar&&(val==="noresp"||val==="cooled")){
+      const actual=pasoDe(toqueInfo.resumen);
+      const sig=(CAD.pasos||[]).find(p=>p.n===actual+1);
+      if(sig){
+        sug={tipo:CANAL_TIPO[sig.canal]||"call",dias:null,fecha:fechaPaso(sig.espera,sig.canal,toqueInfo.dow),nota:notaPaso(sig)};
+        hint="⚡ Cadencia Tube-Mac: paso "+sig.n+" de "+CAD.pasos.length+(sig.ventana?(" · ventana "+sig.ventana):"");
+      }else{
+        sug={tipo:"call",dias:null,fecha:isoMas(CAD.nurtureDias||40),nota:"💤 Nurture · Reactivar con ángulo nuevo"};
+        hint="Cadencia terminada sin respuesta → pasa a maduración ("+(CAD.nurtureDias||40)+" días).";
+      }
+    }else if(enContactar&&(val==="contacted"||val==="advanced")){
+      sug={tipo:"meeting",dias:null,fecha:isoMas(2),nota:"Realizar cita / visita de presentación"};
+      hint="🎉 ¡Contactó! Agenda la cita y muévelo a «Cita agendada» en Pipeline.";
+    }else if(esProspecto&&CAD.porEtapa&&CAD.porEtapa[toqueInfo.etapa]&&(val==="noresp"||val==="waiting")){
+      const pe=CAD.porEtapa[toqueInfo.etapa];
+      sug={tipo:CANAL_TIPO[pe.canal]||"call",dias:null,fecha:fechaPaso(pe.espera,pe.canal,null),nota:pe.instruccion};
+      hint="Seguimiento de la etapa «"+toqueInfo.etapa+"».";
+    }
+    if(sug){
+      tSigTipo=sug.tipo;tSigFecha=sug.fecha;
+      marcar("t-sig-tipo",tSigTipo);marcar("t-sig-cuando",null,"data-d");
+      document.getElementById("t-sig-fecha").value=tSigFecha;
+      document.getElementById("t-sig-nota").value=sug.nota;
+      document.getElementById("t-hint").textContent=hint;
+      tValidar();return;
+    }
+    const s=SUGERENCIA[tRes];
+    if(s){tSigTipo=s.tipo;tSigFecha=isoMas(s.dias);marcar("t-sig-tipo",tSigTipo);marcar("t-sig-cuando",s.dias,"data-d");
+      document.getElementById("t-sig-fecha").value=tSigFecha;
+      const n=document.getElementById("t-sig-nota");if(!n.value.trim())n.value=s.nota;
+      document.getElementById("t-hint").textContent="Sugerido según el resultado — ajústalo si quieres.";}
+  }
   tValidar();
+}
+document.getElementById("t-res").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;aplicarResultado(b.dataset.v);
 });
+/* EL PUENTE: enviar la plantilla EN ESTE MOMENTO, desde el registro.
+   La confirmación NO escribe en bitácora (evita doble registro): solo regresa
+   al formulario con tipo, resultado "Pendiente de ellos" y nota pre-llenados.
+   El ÚNICO registro es "Guardar y agendar". */
+async function toqueEnviarPlantilla(){
+  if(bloq())return;
+  let lead=(fichaActual&&fichaActual.leadId===toqueCtx.leadId)?fichaActual:null;
+  if(!lead){
+    try{const r=await fetch(API+"?ficha="+toqueCtx.leadId+"&email="+encodeURIComponent(repEmail||""));const d=await r.json();if(d&&d.ok)lead=d.ficha;}catch(e){}
+  }
+  if(!lead){toast("No se pudieron cargar los datos del cliente.");return;}
+  // Si la actividad es un paso de la cadencia, se abre SU plantilla asignada.
+  let sit=null;
+  const n=pasoDe(toqueInfo&&toqueInfo.resumen);
+  if(n){const p=(CAD.pasos||[]).find(x=>x.n===n);if(p&&p.plantilla)sit=p.plantilla;}
+  abrirTpl(sit, tTipo==="whatsapp"?"wa":"mail", lead, true);
+}
 document.getElementById("t-sig-tipo").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tSigTipo=b.dataset.v;marcar("t-sig-tipo",tSigTipo);tValidar();});
 document.getElementById("t-sig-cuando").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=Number(b.dataset.d);tSigFecha=isoMas(d);tManual=true;marcar("t-sig-cuando",d,"data-d");document.getElementById("t-sig-fecha").value=tSigFecha;tValidar();});
 function tFechaManual(){tSigFecha=document.getElementById("t-sig-fecha").value||null;tManual=true;marcar("t-sig-cuando",null,"data-d");tValidar();}
@@ -886,7 +1009,15 @@ async function guardarNuevo(tipo){
     const r=await fetch("/api/odoo-crm-lead",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
     const d=await r.json();
     if(!d||!d.ok){toast("⚠ No se pudo crear: "+((d&&d.error)||"error"));return;}
-    cerrarTodo();toast(tipo==="lead"?"Prospecto creado en «Por contactar» ✔":"Oportunidad creada en «Nuevo» ✔");
+    // ARRANQUE DE LA CADENCIA: el prospecto nace con su Paso 1 agendado PARA HOY
+    // (la velocidad de respuesta multiplica la conversión).
+    if(tipo==="lead"&&d.id){
+      const p1=(CAD.pasos||[])[0];
+      if(p1) await post({action:"agendar",leadId:d.id,email:repEmail,
+        sig:{tipo:CANAL_TIPO[p1.canal]||"call",fecha:isoHoy(),nota:notaPaso(p1)}});
+    }
+    cerrarTodo();
+    toast(tipo==="lead"?"Prospecto creado ✔ Paso 1 de la cadencia agendado para HOY":"Oportunidad creada en «Nuevo» ✔");
     ["p-empresa","p-contacto","p-puesto","p-tel","p-mail","p-nota","o-cliente","o-nombre","o-monto","o-fecha"].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
     clienteSel=null;cargar();
   }catch(e){toast("⚠ Sin conexión — no se guardó.");}
