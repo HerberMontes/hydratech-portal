@@ -492,7 +492,8 @@ async function generarYEnviar(tel, st) {
 
   await enviarTexto(tel, `✅ *Reporte generado y enviado a validación.*\n\n${resumenReporte(report)}\n\nEn cuanto lo validen te llega aquí mismo el *link de firma* para el cliente.`);
   if (ADMIN) {
-    await enviarTexto(ADMIN, `🔔 *Reporte nuevo por validar*\n\n${resumenReporte(report)}`);
+    const linkVer = `${SITE}/firma.html?id=${o.id}&t=${firmaToken(o.id)}`;
+    await enviarTexto(ADMIN, `🔔 *Reporte nuevo por validar*\n\n${resumenReporte(report)}\n\n👁 Ver el reporte con diseño:\n${linkVer}`);
     await enviarBotones(ADMIN, `¿Validar el reporte de *${report.folio}*?`, [
       { id: "ap_" + o.id, titulo: "✅ Aprobar" },
       { id: "re_" + o.id, titulo: "↩️ Rechazar" },

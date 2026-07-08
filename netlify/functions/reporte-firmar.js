@@ -10,6 +10,7 @@ import { enviarTexto } from "./lib/whatsapp.js";
 const ATT_NAME = "portal_reporte.json";
 const SECRET = process.env.FIRMA_SECRET || process.env.PORTAL_TOKEN || "hydratech";
 const ADMIN = (process.env.ADMIN_WHATSAPP || "").replace(/\D/g, "");
+const SITE = (process.env.URL || "").replace(/\/+$/, "");
 const tokenDe = (id) => crypto.createHmac("sha256", SECRET).update(String(id)).digest("hex").slice(0, 24);
 
 async function attDe(id) {
@@ -32,8 +33,9 @@ export default async (req) => {
       const r = await attDe(id);
       if (!r || !r.rep) return json({ ok: false, error: "No hay reporte en esta orden." }, 404);
       if (r.rep.status === "approved") return json({ ok: true, yaFirmado: true, report: r.rep });
-      if (r.rep.status !== "validated") return json({ ok: false, error: "El reporte aún no está validado para firma." }, 409);
-      return json({ ok: true, report: r.rep });
+      // Se puede VER en cualquier estado (el admin revisa el diseño antes de aprobar);
+      // FIRMAR solo se habilita cuando status === "validated" (lo decide el frontend).
+      return json({ ok: true, report: r.rep, puedeFirmar: r.rep.status === "validated" });
     }
 
     if (req.method !== "POST") return json({ ok: false, error: "Método no permitido." }, 405);
@@ -46,6 +48,7 @@ export default async (req) => {
     if (!r || !r.rep) return json({ ok: false, error: "No hay reporte en esta orden." }, 404);
     if (r.rep.status === "approved") return json({ ok: true, yaFirmado: true });
 
+    if (r.rep.status !== "validated") return json({ ok: false, error: "El reporte aún no está validado para firma." }, 409);
     const rep = r.rep;
     rep.firma = { imagen: body.firma, firmante: (body.firmante || "").slice(0, 120), fecha: new Date().toISOString() };
     rep.status = "approved"; rep.approvedAt = rep.firma.fecha;
@@ -80,7 +83,8 @@ export default async (req) => {
     } catch (e) {}
 
     // Avisos por WhatsApp
-    const aviso = `✍️ *${rep.folio || id}* firmado por ${rep.firma.firmante || "el cliente"} y archivado en Odoo. ✅`;
+    const linkPdf = SITE ? `\nVer / descargar PDF: ${SITE}/firma.html?id=${id}&t=${tokenDe(id)}` : "";
+    const aviso = `✍️ *${rep.folio || id}* firmado por ${rep.firma.firmante || "el cliente"} y archivado en Odoo. ✅${linkPdf}`;
     if (ADMIN) enviarTexto(ADMIN, aviso).catch(() => {});
     if (rep.waTecnico) enviarTexto(rep.waTecnico, aviso + "\n¡Buen trabajo! Escribe *menu* para otro reporte.").catch(() => {});
 
