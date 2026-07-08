@@ -186,6 +186,7 @@
     </div>
   </div>
 
+<script src="reporte-render.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const tok = () => { var e = $("tok"); return e ? e.value.trim() : ""; };
@@ -193,68 +194,6 @@ const headers = (extra) => { const h = Object.assign({}, extra||{}); const t = t
 const esc = (s) => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 let images = [], coverPhoto = null, lastContent = null, selectedOrder = null, empleados = [], allOrders = [];
 
-const BRANDS = {
-  hydratech: { name:"HydraTech Group",
-    coverGrad:"linear-gradient(160deg,#161c33 0%,#1b2138 55%,#222a47 100%)", glow:"rgba(58,82,168,0.45)",
-    metaBg:"#1b2138", metaLabel:"#7e8cc4", folioColor:"#9db0e8", accent:"#3a52a8", rule:"#263370",
-    logoWhite:"assets/hydratech-icon-white.png", logoWhiteH:48, logoDark:"assets/hydratech-icon.png",
-    footL:"SOLUTIONS THROUGH INNOVATION", footR:"hidratechgroup.mx", phone:"81 2904 9481", email:"ventas@hydratechgroup.mx" },
-  tubemac: { name:"Tube-Mac",
-    coverGrad:"linear-gradient(160deg,#2a1850 0%,#341e60 55%,#3f2470 100%)", glow:"rgba(207,10,115,0.36)",
-    metaBg:"#341e60", metaLabel:"#b78ab0", folioColor:"#d488b6", accent:"#cf0a73", rule:"#341e60",
-    logoWhite:"assets/tubemac/tubemac-logo-white.png", logoWhiteH:52, logoDark:"assets/tubemac/tubemac-logo.png",
-    footL:"TUBE-MAC® · PIPING TECHNOLOGIES", footR:"hidratechgroup.mx · distribuidor Tube-Mac®", phone:"81 2904 9481", email:"ventas@hydratechgroup.mx" },
-};
-const SEV = { critica:{dot:"#dc2626",bg:"#fdeaea",col:"#c0271f",lab:"SEVERIDAD CRÍTICA"}, atencion:{dot:"#e8a317",bg:"#fdf3e3",col:"#a96a09",lab:"REQUIERE ATENCIÓN"}, normal:{dot:"#16a34a",bg:"#e8f4ec",col:"#15803d",lab:"OBSERVACIÓN"} };
-const EST = { definitivo:{bg:"#e8f4ec",col:"#15803d",lab:"✓ DEFINITIVO"}, provisional:{bg:"#fdf3e3",col:"#a96a09",lab:"PROVISIONAL"} };
-const PRIO = { alta:{dot:"#dc2626",bg:"#fdeaea",col:"#c0271f",border:"#f0c9c9",lab:"PRIORIDAD ALTA"}, media:{dot:"#e8a317",bg:"#fdf3e3",col:"#a96a09",border:"#f0e2c4",lab:"PRIORIDAD MEDIA"}, baja:{dot:"#16a34a",bg:"#e8f4ec",col:"#15803d",border:"#cfe7d6",lab:"PRIORIDAD BAJA"} };
-const MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-function fechaLarga(s){ if(!s) return ""; const d=new Date(s+"T00:00:00"); if(isNaN(d)) return s; return d.getDate()+" de "+MES[d.getMonth()]+" de "+d.getFullYear(); }
-function gallery(imgs){ if(!imgs.length) return ""; return '<div class="gal">'+imgs.map((im,i)=>'<figure><img src="'+im.dataURL+'" alt=""><figcaption>'+String(i+1).padStart(2,"0")+' · '+esc(im.cap||"Evidencia")+'</figcaption></figure>').join("")+'</div>'; }
-function metaCell(b,label,val){ return '<div style="background:'+b.metaBg+'; padding:16px 18px;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:10px; letter-spacing:0.12em; color:'+b.metaLabel+';">'+label+'</div><div style="font-weight:700; font-size:15px; margin-top:5px; line-height:1.3; color:#fff;">'+esc(val||"—")+'</div></div>'; }
-
-function renderReport(brandKey, d, c, imgs){
-  const b = BRANDS[brandKey];
-  const heroImg = coverPhoto || (imgs[0] && imgs[0].dataURL) || "assets/reporte/banco-bomba.jpg";
-  const hallImgs = imgs.filter(x=>x.sec==="hallazgos");
-  const actImgs  = imgs.filter(x=>x.sec==="actividades");
-  const planImgs = imgs.filter(x=>x.sec==="plan");
-
-  const hallCards = (c.hallazgos||[]).map(h=>{ const s=SEV[h.severidad]||SEV.normal;
-    return '<div style="margin-top:20px;"><div class="avoid" style="display:flex; align-items:flex-start; gap:12px;"><span style="width:10px; height:10px; border-radius:50%; background:'+s.dot+'; margin-top:6px; flex-shrink:0;"></span><div style="flex:1;"><div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><h3 style="font-family:\'Archivo\',sans-serif; font-weight:700; font-size:18px; color:#1b2138; margin:0;">'+esc(h.titulo)+'</h3><span style="background:'+s.bg+'; color:'+s.col+'; font-family:\'IBM Plex Mono\',monospace; font-size:10px; font-weight:600; letter-spacing:0.08em; padding:4px 10px; border-radius:20px;">'+s.lab+'</span></div><p style="font-size:13.5px; line-height:1.6; color:#46506a; margin:8px 0 0;">'+esc(h.descripcion)+'</p></div></div></div>'; }).join("");
-
-  const actCards = (c.actividades||[]).map(a=>{ const e=EST[a.estado]||EST.definitivo;
-    return '<div style="margin-top:20px;"><div class="avoid" style="display:flex; align-items:flex-start; gap:12px;"><span style="width:10px; height:10px; border-radius:50%; background:#16a34a; margin-top:6px; flex-shrink:0;"></span><div style="flex:1;"><div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><h3 style="font-family:\'Archivo\',sans-serif; font-weight:700; font-size:18px; color:#1b2138; margin:0;">'+esc(a.titulo)+'</h3><span style="background:'+e.bg+'; color:'+e.col+'; font-family:\'IBM Plex Mono\',monospace; font-size:10px; font-weight:600; letter-spacing:0.08em; padding:4px 10px; border-radius:20px;">'+e.lab+'</span></div><p style="font-size:13.5px; line-height:1.6; color:#46506a; margin:8px 0 0;">'+esc(a.descripcion)+'</p></div></div></div>'; }).join("");
-
-  const planCards = (c.plan||[]).map((p,i)=>{ const pr=PRIO[p.prioridad]||PRIO.media;
-    return '<div class="avoid" style="display:flex; margin-top:12px; border:1px solid '+pr.border+'; border-radius:12px; overflow:hidden; background:#fff;"><div style="width:7px; background:'+pr.dot+'; flex-shrink:0;"></div><div style="padding:18px 20px; flex:1;"><div style="display:flex; align-items:center; gap:13px;"><div style="width:38px; height:38px; border-radius:9px; background:'+pr.bg+'; color:'+pr.col+'; font-family:\'Archivo\',sans-serif; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">'+(i+1)+'</div><div><h3 style="font-family:\'Archivo\',sans-serif; font-weight:700; font-size:17px; color:#1b2138; margin:0;">'+esc(p.titulo)+'</h3><div style="font-size:13.5px; color:#46506a; margin-top:4px; line-height:1.5;">'+esc(p.descripcion)+'</div></div></div><div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;"><span style="display:inline-flex; align-items:center; gap:6px; background:'+pr.bg+'; color:'+pr.col+'; font-family:\'IBM Plex Mono\',monospace; font-size:10px; font-weight:600; letter-spacing:0.08em; padding:5px 11px; border-radius:20px;"><span style="width:7px; height:7px; border-radius:50%; background:'+pr.dot+';"></span>'+pr.lab+'</span>'+(p.urgencia?'<span style="background:#f3f5f9; color:#46506a; font-family:\'IBM Plex Mono\',monospace; font-size:10px; font-weight:600; letter-spacing:0.06em; padding:5px 11px; border-radius:20px;">URGENCIA: '+esc(p.urgencia)+'</span>':"")+'</div></div></div>'; }).join("");
-
-  const tecs = (d.tecnicos||[]).join(", ");
-  const cover = '<section class="sheet cover" style="position:relative; width:8.5in; max-width:100%; min-height:11in; margin:0; background:'+b.coverGrad+'; color:#fff; overflow:hidden; box-shadow:0 12px 40px -12px rgba(20,24,41,0.5); display:flex; flex-direction:column;">'+
-    '<div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size:46px 46px; pointer-events:none;"></div>'+
-    '<div style="position:absolute; top:-150px; right:-120px; width:460px; height:460px; background:radial-gradient(circle, '+b.glow+', transparent 68%); pointer-events:none;"></div>'+
-    '<div style="position:relative; padding:0.85in 0.85in 0; display:flex; justify-content:space-between; align-items:flex-start;"><img src="'+b.logoWhite+'" alt="'+esc(b.name)+'" style="height:'+b.logoWhiteH+'px; display:block;"><div style="text-align:right;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.folioColor+';">FOLIO</div><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:20px; margin-top:3px;">'+esc(d.folio||"—")+'</div></div></div>'+
-    '<div style="position:relative; padding:0 0.85in; margin-top:0.7in;"><div style="display:inline-flex; align-items:center; gap:9px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); padding:8px 14px; border-radius:7px;"><span style="width:8px; height:8px; border-radius:50%; background:#1f9d55; box-shadow:0 0 0 4px rgba(31,157,85,0.2);"></span><span style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; font-weight:600; letter-spacing:0.14em; color:#cdd6ef;">SERVICIO CONCLUIDO</span></div>'+
-    '<h1 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:50px; line-height:1.02; letter-spacing:-0.025em; margin:24px 0 0;">Reporte de<br>Servicio Técnico</h1><p style="font-size:17px; line-height:1.5; color:#aeb6d4; max-width:5.2in; margin:18px 0 0;">Diagnóstico, reparación y plan de seguimiento del equipo hidráulico intervenido.</p></div>'+
-    '<div style="position:relative; margin-top:0.4in; padding:0 0.85in;"><div style="border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); height:3.7in;"><img src="'+heroImg+'" alt="" style="width:100%; height:100%; object-fit:cover; object-position:center 42%; display:block;"></div></div>'+
-    '<div style="position:relative; margin-top:auto; padding:0.45in 0.85in 0.85in;"><div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.12); border-radius:12px; overflow:hidden;">'+
-      metaCell(b,"CLIENTE",d.cliente)+metaCell(b,"PLANTA / UBICACIÓN",d.planta)+metaCell(b,"FECHA DE SERVICIO",fechaLarga(d.fecha))+
-      metaCell(b,"TIPO DE SERVICIO",d.tipo)+metaCell(b,"TÉCNICOS",tecs)+metaCell(b,"N° DE ORDEN",d.folio)+'</div>'+
-      '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.1em; color:'+b.metaLabel+';"><span>'+esc(b.footL)+'</span><span>'+esc(b.footR)+'</span></div></div></section>';
-
-  const content = '<main class="doc sheet" style="width:8.5in; max-width:100%; margin:0; background:#fff; box-shadow:0 12px 40px -12px rgba(20,24,41,0.3); padding:0.7in 0.75in 0.9in;">'+
-    '<div class="avoid" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:14px; border-bottom:2px solid '+b.rule+'; margin-bottom:30px;"><img src="'+b.logoDark+'" alt="'+esc(b.name)+'" style="height:30px; display:block;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.1em; color:#8893ad;">REPORTE '+esc(d.folio||"")+'</div></div>'+
-    '<div class="avoid" style="display:flex; align-items:flex-start; gap:16px; margin-top:6px;"><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:42px; line-height:0.9; color:#dfe4ee;">01</div><div style="flex:1;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.accent+';">DIAGNÓSTICO</div><h2 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:27px; letter-spacing:-0.02em; color:#1b2138; margin:4px 0 0;">Hallazgos</h2></div></div>'+
-    (hallCards || '<p style="font-size:14px; color:#8a93a8; margin-top:14px;">Sin hallazgos.</p>')+gallery(hallImgs)+
-    '<div class="pbreak avoid" style="display:flex; align-items:flex-start; gap:16px; margin-top:40px;"><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:42px; line-height:0.9; color:#dfe4ee;">02</div><div style="flex:1;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.accent+';">REPARACIÓN</div><h2 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:27px; letter-spacing:-0.02em; color:#1b2138; margin:4px 0 0;">Actividades y evidencias</h2></div></div>'+
-    (actCards || '<p style="font-size:14px; color:#8a93a8; margin-top:14px;">Sin actividades.</p>')+gallery(actImgs)+
-    '<div class="pbreak avoid" style="display:flex; align-items:flex-start; gap:16px; margin-top:40px;"><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:42px; line-height:0.9; color:#dfe4ee;">03</div><div style="flex:1;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.accent+';">SEGUIMIENTO</div><h2 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:27px; letter-spacing:-0.02em; color:#1b2138; margin:4px 0 0;">Plan de acciones</h2></div></div>'+
-    '<div style="margin-top:16px;">'+(planCards || '<p style="font-size:14px; color:#8a93a8;">Sin acciones.</p>')+'</div>'+gallery(planImgs)+
-    '<div class="avoid" style="position:relative; margin-top:24px; border-radius:14px; overflow:hidden; background:linear-gradient(135deg,'+b.metaBg+','+b.accent+');"><div style="position:relative; padding:24px 26px; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;"><div style="flex:1; min-width:3in;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.14em; color:#dfe3f5;">SIGUIENTE PASO RECOMENDADO</div><h3 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:21px; color:#fff; margin:8px 0 0; line-height:1.2;">'+esc(c.cta_titulo)+'</h3><p style="font-size:13.5px; line-height:1.55; color:#e7eaf5; margin:8px 0 0; max-width:4.2in;">'+esc(c.cta_texto)+'</p></div><div style="display:flex; flex-direction:column; gap:9px;"><div style="display:inline-flex; align-items:center; gap:9px; background:#fff; color:#16a34a; font-size:14px; font-weight:700; padding:12px 18px; border-radius:8px; border:1.5px solid #16a34a;">'+esc(b.phone)+'</div><div style="text-align:center; font-family:\'IBM Plex Mono\',monospace; font-size:11px; color:#e7eaf5;">'+esc(b.email)+'</div></div></div></div>'+
-    '<div class="avoid" style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:38px; padding-top:22px; border-top:1px solid #e7eaf1;"><div><div style="height:42px; border-bottom:1px solid #b9c2d6;"></div><div style="font-family:\'IBM Plex Mono\',monospace; font-size:10px; letter-spacing:0.1em; color:#8893ad; margin-top:8px;">TÉCNICO RESPONSABLE</div><div style="font-weight:700; font-size:14px; color:#1b2138; margin-top:2px;">'+esc((d.tecnicos||[])[0]||"")+'</div></div><div><div style="height:42px; border-bottom:1px solid #b9c2d6;"></div><div style="font-family:\'IBM Plex Mono\',monospace; font-size:10px; letter-spacing:0.1em; color:#8893ad; margin-top:8px;">RECIBIDO POR (CLIENTE)</div><div style="font-weight:700; font-size:14px; color:#1b2138; margin-top:2px;">Nombre y firma</div></div></div></main>';
-
-  return cover + content;
-}
 
 /* ===== Órdenes (carga automática) ===== */
 async function cargarOrdenes(){
@@ -506,7 +445,7 @@ function fitPreview(){
   if(avail<W){ const s=avail/W; pv.style.transformOrigin="top left"; pv.style.transform="scale("+s+")"; pv.style.margin="0"; stage.style.overflow="hidden"; stage.style.height=(pv.scrollHeight*s)+"px"; }
   else { stage.style.height=""; stage.style.overflow=""; }
 }
-function rerender(){ if(!lastContent) return; $("preview").innerHTML=renderReport($("brand").value, gatherData(), lastContent, images); fitPreview(); }
+function rerender(){ if(!lastContent) return; $("preview").innerHTML=renderReport($("brand").value, gatherData(), lastContent, images, coverPhoto, null); fitPreview(); }
 let _rsz; window.addEventListener("resize", ()=>{ clearTimeout(_rsz); _rsz=setTimeout(fitPreview,120); });
 
 ["brand","planta","tipo"].forEach(id=>$(id).addEventListener("input", rerender));
