@@ -150,7 +150,7 @@ function VistaManguera({ line, lado }) {
       nIn = VUN({ x: nIn.x - dp * t.x, y: nIn.y - dp * t.y });
       const kd = VUN({ x: -t.x * 0.3, y: 0.95 });
       const a = NOR(s.or || 0) * Math.PI / 180;
-      const dir = VUN({ x: nIn.x * Math.cos(a) + kd.x * Math.sin(a), y: nIn.y * Math.cos(a) + kd.y * Math.sin(a) });
+      const dir = VUN({ x: nIn.x * Math.cos(a) - kd.x * Math.sin(a), y: nIn.y * Math.cos(a) - kd.y * Math.sin(a) });
       const tip = { x: cod.x + dir.x * 36, y: cod.y + dir.y * 36 };
       const col = activo ? "#ef4444" : "#fca5a5";
       out.push(h("line", { key: "L", x1: cod.x, y1: cod.y, x2: tip.x, y2: tip.y, stroke: col, strokeWidth: 16, strokeLinecap: "round" }));
@@ -175,7 +175,7 @@ function VistaManguera({ line, lado }) {
     h("path", { d: ruta, fill: "none", stroke: "rgba(15,23,42,.12)", strokeWidth: 34, strokeLinecap: "round", transform: "translate(0,8)" }),
     h("path", { d: ruta, fill: "none", stroke: "url(#ht-tubo)", strokeWidth: 30, strokeLinecap: "round" }),
     h("path", { d: ruta, fill: "none", stroke: "rgba(255,255,255,.16)", strokeWidth: 7, strokeLinecap: "round", transform: "translate(0,-6)" }),
-    h("text", { x: 320, y: 188, textAnchor: "middle", fontSize: 13, fontWeight: 800, fill: "#b45309" }, "hueco de la curva (hacia adentro)"),
+    h("text", { x: 320, y: 188, textAnchor: "middle", fontSize: 13, fontWeight: 800, fill: "#b45309" }, "0\xB0 = apuntando hacia la manguera"),
     h("path", { d: "M 320 144 Q 320 118 320 104", fill: "none", stroke: "#f59e0b", strokeWidth: 4, strokeLinecap: "round" }),
     h("polygon", { points: "320,96 313,110 327,110", fill: "#f59e0b" }),
     punta("A", P0, tA), punta("B", P3, tB)
@@ -191,7 +191,7 @@ function MedidorOrientacion({ value, onChange }) {
     const el2 = ev.currentTarget, r = el2.getBoundingClientRect();
     const pt = ev.touches ? ev.touches[0] : ev;
     const q = { x: (pt.clientX - r.left) * 480 / r.width, y: (pt.clientY - r.top) * 440 / r.height };
-    onChange(NOR(Math.round(Math.atan2(q.x - cx, -(q.y - cy)) * 180 / Math.PI / 15) * 15));
+    onChange(NOR(Math.round(Math.atan2(-(q.x - cx), -(q.y - cy)) * 180 / Math.PI / 15) * 15));
   };
   const press = (ev) => { drag.current = true; desde(ev); if (ev.touches) ev.preventDefault(); };
   const move = (ev) => { if (!drag.current) return; desde(ev); if (ev.touches) ev.preventDefault(); };
@@ -199,15 +199,15 @@ function MedidorOrientacion({ value, onChange }) {
   const marcas = [];
   for (let d = 0; d < 360; d += 15) {
     const big = d % 45 === 0, r2 = d * Math.PI / 180;
-    marcas.push(h("line", { key: "t" + d, x1: cx + (R - (big ? 16 : 8)) * Math.sin(r2), y1: cy - (R - (big ? 16 : 8)) * Math.cos(r2), x2: cx + (R - 2) * Math.sin(r2), y2: cy - (R - 2) * Math.cos(r2), stroke: big ? "#475569" : "#d7dee8", strokeWidth: big ? 2.5 : 1.2 }));
-    if (big && d !== 0) marcas.push(h("text", { key: "n" + d, x: cx + (R - 32) * Math.sin(r2), y: cy - (R - 32) * Math.cos(r2) + 4.5, textAnchor: "middle", fontSize: 13, fontWeight: 700, fill: "#64748b" }, d + "\xB0"));
+    marcas.push(h("line", { key: "t" + d, x1: cx - (R - (big ? 16 : 8)) * Math.sin(r2), y1: cy - (R - (big ? 16 : 8)) * Math.cos(r2), x2: cx - (R - 2) * Math.sin(r2), y2: cy - (R - 2) * Math.cos(r2), stroke: big ? "#475569" : "#d7dee8", strokeWidth: big ? 2.5 : 1.2 }));
+    if (big && d !== 0) marcas.push(h("text", { key: "n" + d, x: cx - (R - 32) * Math.sin(r2), y: cy - (R - 32) * Math.cos(r2) + 4.5, textAnchor: "middle", fontSize: 13, fontWeight: 700, fill: "#64748b" }, d + "\xB0"));
   }
   const hex = [];
   for (let i = 0; i < 6; i++) { const t2 = (i * 60 - 30) * Math.PI / 180; hex.push((cx + 34 * Math.cos(t2)) + "," + (cy + 34 * Math.sin(t2))); }
   const L = R - 44;
-  const mx = cx + L * 0.45 * Math.sin(rad), my = cy - L * 0.45 * Math.cos(rad);
-  const ex = cx + L * Math.sin(rad), ey = cy - L * Math.cos(rad);
-  const guia = { 0: "la punta roja apunta HACIA ADENTRO de la curva", 90: "la punta roja apunta a la derecha", 180: "la punta roja apunta HACIA AFUERA de la curva", 270: "la punta roja apunta a la izquierda" }[a];
+  const mx = cx - L * 0.45 * Math.sin(rad), my = cy - L * 0.45 * Math.cos(rad);
+  const ex = cx - L * Math.sin(rad), ey = cy - L * Math.cos(rad);
+  const guia = { 0: "la punta roja apunta HACIA LA MANGUERA", 90: "la punta roja apunta a la izquierda (antihorario)", 180: "la punta roja apunta HACIA AFUERA, lejos de la manguera", 270: "la punta roja apunta a la derecha (antihorario)" }[a];
   return h("svg", { viewBox: "0 0 480 440", style: { width: "100%", maxWidth: 430, display: "block", touchAction: "none", cursor: "pointer", userSelect: "none" },
     onMouseDown: press, onMouseMove: move, onMouseUp: fin, onMouseLeave: fin, onTouchStart: press, onTouchMove: move, onTouchEnd: fin },
     h("path", { d: "M " + cx + " " + cy + " C " + (cx + 40) + " " + (cy + 150) + ", " + (cx + 250) + " " + (cy + 120) + ", " + (cx + 280) + " " + (cy - 120), fill: "none", stroke: "#cbd5e1", strokeWidth: 34, strokeLinecap: "round", opacity: 0.5 }),
@@ -215,8 +215,8 @@ function MedidorOrientacion({ value, onChange }) {
     marcas,
     h("path", { d: "M " + (cx - 34) + " " + (cy - R - 8) + " Q " + cx + " " + (cy - R - 26) + " " + (cx + 34) + " " + (cy - R - 8), fill: "none", stroke: "#f59e0b", strokeWidth: 8, strokeLinecap: "round" }),
     h("polygon", { points: cx + "," + (cy - R + 26) + " " + (cx - 11) + "," + (cy - R + 6) + " " + (cx + 11) + "," + (cy - R + 6), fill: "#f59e0b" }),
-    h("text", { x: cx, y: cy - R - 34, textAnchor: "middle", fontSize: 15, fontWeight: 800, fill: "#b45309" }, "0\xB0 = HACIA ADENTRO"),
-    h("text", { x: cx, y: cy - R + 44, textAnchor: "middle", fontSize: 11.5, fontWeight: 700, fill: "#b45309" }, "hueco de la curva"),
+    h("text", { x: cx, y: cy - R - 34, textAnchor: "middle", fontSize: 15, fontWeight: 800, fill: "#b45309" }, "0\xB0 = HACIA LA MANGUERA"),
+    h("text", { x: cx, y: cy - R + 44, textAnchor: "middle", fontSize: 11.5, fontWeight: 700, fill: "#b45309" }, "grados en ANTIHORARIO"),
     h("polygon", { points: hex.join(" "), fill: "#e5e7eb", stroke: "#64748b", strokeWidth: 3 }),
     h("circle", { cx, cy, r: 15, fill: "#f8fafc", stroke: "#94a3b8", strokeWidth: 3 }),
     h("line", { x1: cx, y1: cy, x2: mx, y2: my, stroke: "#94a3b8", strokeWidth: 18, strokeLinecap: "round" }),
@@ -257,7 +257,7 @@ function OrientacionCodo({ line, onPatch }) {
       "Desfase entre codos A \u2192 B: " + NOR((line.B.or || 0) - (line.A.or || 0)) + "\xB0"),
     h("div", { className: "mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900" },
       h("b", null, "Regla de campo: "), "la ", h("b", { style: { color: "#dc2626" } }, "punta roja"),
-      " es la salida del conector. Si apunta hacia adentro (al hueco de la curva) son 0\xB0; hacia afuera, 180\xB0. Gira en sentido de las manecillas viendo la punta de frente.")
+      " es la salida del conector. REGLA HYDRATECH: 0\xB0 = la salida apunta HACIA LA MANGUERA; los grados corren EN CONTRA de las manecillas del reloj, viendo la punta de frente. Hacia afuera = 180\xB0.")
   );
 }
 function newLine() {
@@ -419,7 +419,7 @@ function App() {
     if (l.A.ak !== "R") p.push(`A ${(l.A.or || 0)}\xB0`);
     if (l.B.ak !== "R") p.push(`B ${(l.B.or || 0)}\xB0`);
     if (l.A.ak !== "R" && l.B.ak !== "R") p.push(`desfase ${(((l.B.or || 0) - (l.A.or || 0)) % 360 + 360) % 360}\xB0`);
-    return p.length ? ` \u2014 Orientaci\xF3n: ${p.join(" \xB7 ")} (ref. curva)` : "";
+    return p.length ? ` \u2014 Orientaci\xF3n: ${p.join(" \xB7 ")} (0\xB0=hacia la manguera, antihorario)` : "";
   };
   const validaObligatorios = () => {
     if (!clienteId) return "Elige el cliente.";
