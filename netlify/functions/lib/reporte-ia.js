@@ -67,6 +67,41 @@ Reglas:
  "cta_texto": "una frase breve invitando a agendar/cotizar"
 }`;
 
+/* Llama a Gemini con reintentos automáticos cuando está saturado (503/429/high demand). */
+async function geminiJSON(body) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  let ultimo = null;
+  for (let intento = 1; intento <= 3; intento++) {
+    const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    const msg = data.error && (data.error.message || "");
+    const saturado = res.status === 503 || res.status === 429 || /high demand|overloaded|unavailable|resource.*exhausted/i.test(msg || "");
+    if (!data.error) return data;
+    ultimo = new Error(msg || `Gemini HTTP ${res.status}`);
+    if (!saturado) throw ultimo;                    // error real: no reintentar
+    if (intento < 3) await new Promise((r) => setTimeout(r, intento * 1800)); // 1.8s, 3.6s
+  }
+  ultimo.saturado = true;
+  throw ultimo;
+}
+
+/* Plan B: si Gemini sigue caído y hay GROQ_API_KEY, generar con Llama en Groq
+   (solo texto: las fotos igual se adjuntan al reporte, la IA no las describe). */
+async function groqJSON(system, userText) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", Authorization: `Bearer ${GROQ_API_KEY}` },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile", temperature: 0.3,
+      response_format: { type: "json_object" },
+      messages: [{ role: "system", content: system }, { role: "user", content: userText }],
+    }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || "Error de Groq");
+  return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+}
+
 function cleanJson(text) {
   let t = (text || "").replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
   try { return JSON.parse(t); }
@@ -95,18 +130,21 @@ export async function generarReporteIA({ contexto, notas, images }) {
     const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(im.dataURL || im || "");
     if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
   }
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-  const res = await fetch(url, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({
+  try {
+    const data = await geminiJSON({
       systemInstruction: { parts: [{ text: SYSTEM }] },
       contents: [{ role: "user", parts }],
       generationConfig: { temperature: 0.3, maxOutputTokens: 2200, responseMimeType: "application/json" },
-    }),
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "Error de Gemini");
-  return normalize(cleanJson((data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("")));
+    });
+    return normalize(cleanJson((data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("")));
+  } catch (e) {
+    if (e.saturado && GROQ_API_KEY) {
+      // Gemini saturado -> Plan B con Groq (solo texto)
+      const txt = await groqJSON(SYSTEM, userText);
+      return normalize(cleanJson(txt));
+    }
+    throw e;
+  }
 }
 
 /* ============ ESTRUCTURAR "VOZ DEL CLIENTE" ============ */
@@ -124,18 +162,19 @@ Estructura la información. Responde SOLO con JSON válido, sin markdown:
 
 export async function estructurarVozCliente(transcripcion) {
   if (!GEMINI_API_KEY) throw new Error("Falta GEMINI_API_KEY.");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-  const res = await fetch(url, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({
+  let raw = "";
+  try {
+    const data = await geminiJSON({
       systemInstruction: { parts: [{ text: SYSTEM_VOZ }] },
       contents: [{ role: "user", parts: [{ text: transcripcion }] }],
       generationConfig: { temperature: 0.2, maxOutputTokens: 1500, responseMimeType: "application/json" },
-    }),
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "Error de Gemini");
-  const r = cleanJson((data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("")) || {};
+    });
+    raw = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+  } catch (e) {
+    if (e.saturado && GROQ_API_KEY) raw = await groqJSON(SYSTEM_VOZ, transcripcion);
+    else throw e;
+  }
+  const r = cleanJson(raw) || {};
   return {
     cliente: r.cliente || "", resumen: r.resumen || "",
     comentarios_cliente: Array.isArray(r.comentarios_cliente) ? r.comentarios_cliente : [],
