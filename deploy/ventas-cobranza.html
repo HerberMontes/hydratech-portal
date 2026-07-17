@@ -54,6 +54,23 @@
   .filters button.on{background:var(--blue);border-color:var(--blue);color:#fff}
   .filters .count{opacity:.7;font-weight:500}
 
+  /* directorio de cobranza inline */
+  .dir-alert{display:flex;align-items:center;gap:10px;background:rgba(229,72,77,.07);border:1px dashed rgba(229,72,77,.45);border-radius:10px;padding:9px 12px;margin-top:10px;font-size:13px;color:#b4232a;font-weight:600}
+  .dir-alert button{margin-left:auto;border:0;border-radius:8px;background:#e5484d;color:#fff;font:700 12.5px 'IBM Plex Sans',sans-serif;padding:8px 13px;cursor:pointer}
+  .dir-ok{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:#157f3b;background:rgba(22,163,74,.1);border-radius:999px;padding:3px 9px;margin-top:10px;cursor:pointer}
+  .dir-editor{background:#f7f9fc;border:1px solid var(--line2);border-radius:12px;padding:12px;margin-top:10px}
+  .dir-editor .fila{display:grid;grid-template-columns:1.1fr 1.4fr 1fr .9fr 34px;gap:7px;margin-bottom:7px}
+  .dir-editor input,.dir-editor select{font:inherit;font-size:12.5px;border:1px solid var(--line2);border-radius:8px;padding:7px 9px;background:#fff;width:100%}
+  .dir-editor .fila.n-supervisor input,.dir-editor .fila.n-supervisor select{background:#fdf6e7}
+  .dir-editor .fila.n-cxp input,.dir-editor .fila.n-cxp select{background:#fdecec}
+  .dir-editor .del{border:0;background:#fdeaea;color:#b4232a;border-radius:8px;cursor:pointer;font-weight:700}
+  .dir-editor .pie{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+  .dir-editor .pie .mini{font:600 12px 'IBM Plex Sans',sans-serif;border:1.5px solid var(--line2);background:#fff;color:var(--body);border-radius:8px;padding:7px 12px;cursor:pointer}
+  .dir-editor .pie .save{font:700 12.5px 'IBM Plex Sans',sans-serif;border:0;background:var(--blue);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer}
+  .dir-editor .leyenda{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.5}
+  .dir-st{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-left:6px}
+  @media(max-width:640px){.dir-editor .fila{grid-template-columns:1fr 1fr;grid-auto-rows:auto}}
+
   /* tarjeta de venta */
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin-bottom:13px;position:relative;overflow:hidden}
   .card .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green)}
@@ -272,6 +289,66 @@
     }).join("")+'</div>';
   }
 
+  /* ====== DIRECTORIO DE COBRANZA (captura inline en la misma tarjeta) ====== */
+  const DIR_ABIERTO = {};   // partnerId -> contactos en edición
+  function dirBloque(v){
+    if(v.archivada || !v.partnerId) return "";
+    const editor = DIR_ABIERTO[v.partnerId] !== undefined && DIR_ABIERTO._en === v.id ? dirEditor(v) : "";
+    if((v.contactosCobranza||0) > 0 && !editor)
+      return '<div class="dir-ok" data-dir="'+v.id+'" data-pid="'+v.partnerId+'" title="Editar contactos de cobranza">✉ '+v.contactosCobranza+' contacto'+(v.contactosCobranza>1?'s':'')+' de cobranza</div>';
+    if(!editor)
+      return '<div class="dir-alert">⚠️ Este cliente entró a cobranza SIN contactos de correo/WhatsApp'+
+             '<button data-dir="'+v.id+'" data-pid="'+v.partnerId+'">Capturar contactos</button></div>';
+    return editor;
+  }
+  function dirEditor(v){
+    const cs = DIR_ABIERTO[v.partnerId] || [];
+    const filas = cs.map((c,i)=>'<div class="fila n-'+(c.nivel||'raso')+'">'+
+      '<input placeholder="Nombre" value="'+esc(c.nombre||'')+'" data-dk="nombre" data-di="'+i+'">'+
+      '<input placeholder="correo@cliente.com" value="'+esc(c.correo||'')+'" data-dk="correo" data-di="'+i+'">'+
+      '<input placeholder="WhatsApp 521…" value="'+esc(c.whatsapp||'')+'" data-dk="whatsapp" data-di="'+i+'">'+
+      '<select data-dk="nivel" data-di="'+i+'"><option value="raso"'+(c.nivel==='raso'?' selected':'')+'>Raso</option><option value="supervisor"'+(c.nivel==='supervisor'?' selected':'')+'>Supervisor</option><option value="cxp"'+(c.nivel==='cxp'?' selected':'')+'>Ctas. pagar</option></select>'+
+      '<button class="del" data-ddel="'+i+'" title="Quitar">✕</button></div>').join('');
+    return '<div class="dir-editor" data-pid="'+v.partnerId+'" data-vid="'+v.id+'">'+
+      '<div style="font:700 12px IBM Plex Mono,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:8px">Contactos de cobranza · '+esc(v.cliente)+'</div>'+
+      filas+
+      '<div class="pie"><button class="mini" data-dadd="1">+ Agregar</button>'+
+      '<button class="save" data-dsave="1">Guardar</button><span class="dir-st" id="dirst-'+v.partnerId+'"></span></div>'+
+      '<div class="leyenda">🟦 Raso recibe todo · 🟨 Supervisor entra desde la etapa de OC · 🟥 Ctas. por pagar entra en la etapa de pago. Aplica a TODAS las órdenes de este cliente.</div></div>';
+  }
+  document.addEventListener("click", async (e)=>{
+    const abre = e.target.closest("[data-dir]");
+    if(abre){
+      const pid=+abre.dataset.pid, vid=+abre.dataset.dir;
+      let cs=[{nombre:"",correo:"",whatsapp:"",nivel:"raso"}];
+      try{ const r=await fetch("/api/cobranza-contactos?partnerId="+pid).then(r=>r.json());
+        if(r.contactos&&r.contactos.length) cs=r.contactos; }catch(err){}
+      DIR_ABIERTO[pid]=cs; DIR_ABIERTO._en=vid; render(); return;
+    }
+    const ed = e.target.closest(".dir-editor");
+    if(!ed) return;
+    const pid=+ed.dataset.pid;
+    if(e.target.closest("[data-dadd]")){ DIR_ABIERTO[pid].push({nombre:"",correo:"",whatsapp:"",nivel:"raso"}); render(); return; }
+    const del=e.target.closest("[data-ddel]");
+    if(del){ DIR_ABIERTO[pid].splice(+del.dataset.ddel,1); render(); return; }
+    if(e.target.closest("[data-dsave]")){
+      const st=document.getElementById("dirst-"+pid); st.textContent="Guardando…"; st.style.color="var(--muted)";
+      try{
+        const r=await fetch("/api/cobranza-contactos",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({partnerId:pid,contactos:DIR_ABIERTO[pid]})}).then(r=>r.json());
+        if(!r.ok) throw new Error(r.error||"Error");
+        VENTAS.forEach(x=>{ if(x.partnerId===pid) x.contactosCobranza=r.guardados; });
+        delete DIR_ABIERTO[pid]; delete DIR_ABIERTO._en; render();
+      }catch(err){ st.textContent="✗ "+(err.message||err); st.style.color="var(--red)"; }
+      return;
+    }
+  });
+  document.addEventListener("input",(e)=>{
+    const el=e.target.closest(".dir-editor input,.dir-editor select"); if(!el) return;
+    const ed=el.closest(".dir-editor"); const pid=+ed.dataset.pid;
+    DIR_ABIERTO[pid][+el.dataset.di][el.dataset.dk]=el.value;
+  });
+
   function card(v){
     const st=statusDe(v);
     const s=STEPS[v.paso];
@@ -337,6 +414,7 @@
       '<div class="chips">'+chips+'</div>'+
       stepper(v)+
       '<div class="statusbar">'+statusHtml+'</div>'+
+      dirBloque(v)+
       (actions?'<div class="actions">'+actions+'</div>':'')+
     '</div></div>';
   }
