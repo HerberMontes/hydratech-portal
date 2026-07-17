@@ -232,7 +232,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
   /* 6) PLANTILLA 1 — falta SolPed (por orden) */
   for (const s of solpedList) {
     const d = destinatarios(s.partnerId, "solped");
-    const item = { folio: s.folio, cliente: s.cliente, dias: s.dias, correo: d.correos.join(", ") || "—",
+    const item = { folio: s.folio, cliente: s.cliente, dias: s.dias, monto: s.monto, correo: d.correos.join(", ") || "—",
       whatsapps: d.whats.length, seEnvia: s.toca && (d.correos.length > 0 || d.whats.length > 0),
       omitido: !s.toca ? "aún no toca (cadencia día 3, luego cada 4)" : (!d.correos.length && !d.whats.length ? "SIN CORREO ni WhatsApp (directorio y Odoo vacíos)" : undefined) };
     resultado.solped.push(item);
@@ -250,7 +250,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
   /* 7) PLANTILLA 2 — falta OC (por orden) */
   for (const s of ocList) {
     const d = destinatarios(s.partnerId, "oc");
-    const item = { folio: s.folio, cliente: s.cliente, solped: s.solped, dias: s.dias, correo: d.correos.join(", ") || "—",
+    const item = { folio: s.folio, cliente: s.cliente, solped: s.solped, dias: s.dias, monto: s.monto, correo: d.correos.join(", ") || "—",
       whatsapps: d.whats.length, seEnvia: s.toca && (d.correos.length > 0 || d.whats.length > 0),
       omitido: !s.toca ? "aún no toca (cadencia día 5, luego cada 5)" : (!d.correos.length && !d.whats.length ? "SIN CORREO ni WhatsApp" : undefined) };
     resultado.oc.push(item);
@@ -287,7 +287,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
       peorDias: peor.diasParaPago, hito: hitoFinal || "—", nivel: nivel || "—",
       seEnvia: !!hitoFinal && (!!correo || d.whats.length > 0),
       omitido: !hitoFinal ? (h && yaHito ? `hito ${h.hito} ya enviado` : "sin hito hoy") : (!correo && !d.whats.length ? "SIN CORREO ni WhatsApp" : undefined),
-      ordenes: c.ordenes.map((o) => ({ folio: o.folio, vence: o.fechaPago, dias: o.diasParaPago, monto: o.monto })) };
+      ordenes: c.ordenes.map((o) => ({ folio: o.folio, factura: o.factura || "", vence: o.fechaPago, dias: o.diasParaPago, monto: o.monto })) };
     resultado.clientes.push(item);
     const forzar = manual && Number(manual.partnerId) === c.partnerId;
     if ((enviar && item.seEnvia) || forzar) {
