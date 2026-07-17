@@ -182,6 +182,7 @@ export default async (req) => {
       ventas.push({
         id: o.id,
         folio: o.name,
+        partnerId: Array.isArray(o.partner_id) ? o.partner_id[0] : 0,
         cliente: Array.isArray(o.partner_id) ? o.partner_id[1] : "",
         monto: facturadoPorOrden[o.id] != null ? facturadoPorOrden[o.id] : (o.amount_total || 0),
         montoDeFactura: facturadoPorOrden[o.id] != null,
@@ -202,6 +203,22 @@ export default async (req) => {
 
     // orden: foco rojo primero, luego más días atorado
     ventas.sort((a, b) => (b.focoRojo - a.focoRojo) || (b.dias - a.dias));
+    /* Directorio de cobranza: ¿cada cliente ya tiene contactos capturados? */
+    try {
+      const pids = [...new Set(ventas.map((v) => v.partnerId).filter(Boolean))];
+      if (pids.length) {
+        const dirs = await executeKw("ir.attachment", "search_read",
+          [[["res_model", "=", "res.partner"], ["res_id", "in", pids], ["name", "=", "portal_cobranza_contactos.json"]]],
+          { fields: ["res_id", "datas"], limit: 500 });
+        const nBy = {};
+        for (const d of dirs) {
+          try { const j = JSON.parse(Buffer.from(d.datas || "", "base64").toString("utf8"));
+            nBy[d.res_id] = Array.isArray(j.contactos) ? j.contactos.length : 0; } catch (e) {}
+        }
+        ventas.forEach((v) => { v.contactosCobranza = nBy[v.partnerId] || 0; });
+      }
+    } catch (e) {}
+
 
     return json({ ok: true, desde: DESDE || null, count: ventas.length, ventas });
   } catch (e) {
