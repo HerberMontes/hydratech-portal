@@ -18,6 +18,7 @@
 import { executeKw } from "./odoo.js";
 import { P_SOLPED, P_OC, plantilla3Nivel, llenar, filaVencida, filaPorVencer } from "./cobranza-plantillas.js";
 import { enviarTexto } from "./whatsapp.js";
+import { urlEdocta } from "../edocta.js";
 
 const DESDE = process.env.REPORTES_DESDE || "";
 const EXTRA = (process.env.COBRANZA_EXTRA || "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -240,7 +241,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
   /* 6) PLANTILLA 1 — falta SolPed (por orden) */
   for (const s of solpedList) {
     const d = destinatarios(s.partnerId, "solped");
-    const item = { folio: s.folio, cliente: s.cliente, dias: s.dias, monto: s.monto, correo: d.correos.join(", ") || "—",
+    const item = { folio: s.folio, cliente: s.cliente, partnerId: s.partnerId, servicio: s.descripcion, entregado: s.evidFecha || "", dias: s.dias, monto: s.monto, correo: d.correos.join(", ") || "—",
       whatsapps: d.whats.length, seEnvia: s.toca && (d.correos.length > 0 || d.whats.length > 0),
       omitido: !s.toca ? "aún no toca (cadencia día 3, luego cada 4)" : (!d.correos.length && !d.whats.length ? "SIN CORREO ni WhatsApp (directorio y Odoo vacíos)" : undefined) };
     resultado.solped.push(item);
@@ -248,7 +249,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
       const html = llenar(P_SOLPED, { ...VARS_FIJAS, CLIENTE: esc(s.cliente), CONTACTO: esc(d.nombreRaso || nombreDe[s.partnerId] || s.cliente),
         FOLIO: s.folio, DESCRIPCION: esc(s.descripcion), FECHA_EVIDENCIA: fmtF(s.evidFecha), MONTO: mxn(s.monto), DIAS: s.dias, FECHA: fmtF(hoy) });
       if (d.correos.length) await enviarCorreo({ asunto: `Servicio entregado — pendiente su SolPed · ${s.folio}`, html, destino: CORREO_PRUEBA || d.correos.join(",") });
-      const nWA = await avisarWhats(d.whats, `🔔 *HydraTech* · ${s.cliente}\nEl servicio *${s.folio}* (${s.descripcion}) está entregado y firmado desde hace *${s.dias} días* y aún no tenemos su SolPed. ¿Nos apoya generándola? Le enviamos el detalle por correo. ¡Gracias!`);
+      const nWA = await avisarWhats(d.whats, `🔔 *HydraTech* · ${s.cliente}\nEl servicio *${s.folio}* (${s.descripcion}) está entregado y firmado desde hace *${s.dias} días* y aún no tenemos su SolPed. ¿Nos apoya generándola? Su estado de cuenta: ${urlEdocta(s.partnerId)}`);
       await executeKw("sale.order", "message_post", [[s.id]], { body: `Recordatorio de SOLPED enviado (día ${s.dias}) → correo: ${CORREO_PRUEBA || d.correos.join(", ") || "—"} · WhatsApp: ${nWA}.` }).catch(() => {});
       await registrarAviso(s, "solped");
       resultado.enviados.push({ tipo: "solped", folio: s.folio });
@@ -258,7 +259,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
   /* 7) PLANTILLA 2 — falta OC (por orden) */
   for (const s of ocList) {
     const d = destinatarios(s.partnerId, "oc");
-    const item = { folio: s.folio, cliente: s.cliente, solped: s.solped, dias: s.dias, monto: s.monto, correo: d.correos.join(", ") || "—",
+    const item = { folio: s.folio, cliente: s.cliente, partnerId: s.partnerId, servicio: s.descripcion, entregado: (s._cob && s._cob.evidenciaFecha) || "", solped: s.solped, dias: s.dias, monto: s.monto, correo: d.correos.join(", ") || "—",
       whatsapps: d.whats.length, seEnvia: s.toca && (d.correos.length > 0 || d.whats.length > 0),
       omitido: !s.toca ? "aún no toca (cadencia día 5, luego cada 5)" : (!d.correos.length && !d.whats.length ? "SIN CORREO ni WhatsApp" : undefined) };
     resultado.oc.push(item);
@@ -267,7 +268,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
         FOLIO: s.folio, DESCRIPCION: esc(s.descripcion), FECHA_EVIDENCIA: fmtF(s._cob.evidenciaFecha || ""), MONTO: mxn(s.monto),
         DIAS: s.dias, SOLPED: esc(s.solped), POSICION: esc(s.posicion || "—"), FECHA_SOLPED: fmtF(s.fechaSolped), FECHA: fmtF(hoy) });
       if (d.correos.length) await enviarCorreo({ asunto: `SolPed ${s.solped} pendiente de OC — ${s.dias} días · ${s.folio}`, html, destino: CORREO_PRUEBA || d.correos.join(",") });
-      const nWA = await avisarWhats(d.whats, `🔔 *HydraTech* · ${s.cliente}\nLa SolPed *${s.solped}* lleva *${s.dias} días* sin convertirse en orden de compra (servicio ${s.folio}, ya entregado). Sin la OC no podemos facturar. Detalle en su correo. ¡Gracias!`);
+      const nWA = await avisarWhats(d.whats, `🔔 *HydraTech* · ${s.cliente}\nLa SolPed *${s.solped}* lleva *${s.dias} días* sin convertirse en orden de compra (servicio ${s.folio}, ya entregado). Sin la OC no podemos facturar. Su estado de cuenta: ${urlEdocta(s.partnerId)}`);
       await executeKw("sale.order", "message_post", [[s.id]], { body: `Recordatorio de OC (SolPed ${s.solped}, día ${s.dias}) → correo: ${CORREO_PRUEBA || d.correos.join(", ") || "—"} · WhatsApp: ${nWA}.` }).catch(() => {});
       await registrarAviso(s, "oc");
       resultado.enviados.push({ tipo: "oc", folio: s.folio });
@@ -291,17 +292,19 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
     const correo = d.correos.join(",");
     const venc = c.ordenes.filter((o) => o.vencida), porv = c.ordenes.filter((o) => !o.vencida);
     const totV = venc.reduce((a, o) => a + o.monto, 0), totT = c.ordenes.reduce((a, o) => a + o.monto, 0);
-    const item = { cliente: c.cliente, correo: correo || "—", totalVencido: totV, totalGeneral: totT,
+    const item = { cliente: c.cliente, partnerId: c.partnerId, correo: correo || "—", totalVencido: totV, totalGeneral: totT,
       peorDias: peor.diasParaPago, hito: hitoFinal || "—", nivel: nivel || "—",
       seEnvia: !!hitoFinal && (!!correo || d.whats.length > 0),
       omitido: !hitoFinal ? (h && yaHito ? `hito ${h.hito} ya enviado` : "sin hito hoy") : (!correo && !d.whats.length ? "SIN CORREO ni WhatsApp" : undefined),
-      ordenes: c.ordenes.map((o) => ({ folio: o.folio, factura: o.factura || "", vence: o.fechaPago, dias: o.diasParaPago, monto: o.monto })) };
+      ordenes: c.ordenes.map((o) => ({ folio: o.folio, factura: o.factura || "", servicio: o.descripcion || "", vence: o.fechaPago, dias: o.diasParaPago, monto: o.monto, comprobante: !!(o._cob && o._cob.comprobante && !o._cob.pago) })) };
     resultado.clientes.push(item);
     const forzar = manual && Number(manual.partnerId) === c.partnerId;
     if ((enviar && item.seEnvia) || forzar) {
       const destinoReal = forzar ? String(manual.correo || correo).trim() : correo;
       const nivelUso = nivel || (peor.diasParaPago < 0 ? (-peor.diasParaPago >= 15 ? "critica" : "vencida") : (peor.diasParaPago === 0 ? "hoy" : "porvencer"));
-      const tpl = plantilla3Nivel(nivelUso);
+      let tpl = plantilla3Nivel(nivelUso);
+      // El CTA de comprobante deja el mailto y abre la página viva del cliente
+      tpl = tpl.split("mailto:{{CORREO_CONTACTO}}?subject=Comprobante%20de%20pago%20-%20{{CLIENTE}}").join(urlEdocta(c.partnerId));
       const html = llenar(tpl, { ...VARS_FIJAS, CLIENTE: esc(c.cliente), CONTACTO: esc(d.nombreRaso || nombreDe[c.partnerId] || c.cliente), FECHA: fmtF(hoy),
         DIAS_PARA: Math.max(0, peor.diasParaPago), DIAS_VENCIDO: Math.max(0, -peor.diasParaPago),
         TABLA_VENCIDO: venc.map((o) => filaVencida({ folio: o.folio, factura: esc(o.factura), entrega: fmtF(o.entrega), vence: fmtF(o.fechaPago), dias: -o.diasParaPago, monto: mxn(o.monto) })).join("") || filaVencida({ folio: "—", factura: "", entrega: "—", vence: "—", dias: 0, monto: mxn(0) }),
@@ -313,10 +316,10 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
       if (CORREO_PRUEBA || destinoReal) await enviarCorreo({ asunto, html, destino: CORREO_PRUEBA || destinoReal, ccExtra: ["d7","d15"].includes(hitoFinal) || String(hitoFinal).startsWith("w") || String(hitoFinal).startsWith("q") ? DIRECCION : "" });
       const totVtx = mxn(totV);
       const nWA = await avisarWhats(d.whats, nivelUso === "porvencer"
-        ? `🔔 *HydraTech* · ${c.cliente}\nSu factura vence en *${Math.max(0, peor.diasParaPago)} días*. Le enviamos el estado de cuenta por correo. Datos de pago incluidos.`
+        ? `🔔 *HydraTech* · ${c.cliente}\nSu factura vence en *${Math.max(0, peor.diasParaPago)} días*. Su estado de cuenta y datos de pago: ${urlEdocta(c.partnerId)}`
         : nivelUso === "hoy"
-        ? `🔔 *HydraTech* · ${c.cliente}\nSu factura *vence HOY*. Estado de cuenta y datos de pago en su correo. ¿Nos confirma la programación del pago?`
-        : `🔴 *HydraTech — Requerimiento de pago* · ${c.cliente}\n*${totVtx}* con *${Math.max(0, -peor.diasParaPago)} días* de vencido. Estado de cuenta en su correo. Agradecemos programar el pago o indicarnos fecha compromiso.`);
+        ? `🔔 *HydraTech* · ${c.cliente}\nSu factura *vence HOY*. Su estado de cuenta y datos de pago: ${urlEdocta(c.partnerId)} ¿Nos confirma la programación del pago?`
+        : `🔴 *HydraTech — Requerimiento de pago* · ${c.cliente}\n*${totVtx}* con *${Math.max(0, -peor.diasParaPago)} días* de vencido. Su estado de cuenta: ${urlEdocta(c.partnerId)} — agradecemos programar el pago o indicarnos fecha compromiso.`);
       for (const o of c.ordenes) {
         await executeKw("sale.order", "message_post", [[o.id]], { body: `Estado de cuenta (${nivelUso}, hito ${hitoFinal || "manual"}) → correo: ${CORREO_PRUEBA || destinoReal || "—"} · WhatsApp: ${nWA}.` }).catch(() => {});
         await registrarAviso(o, "pago", hitoFinal || ("manual-" + hoy));
