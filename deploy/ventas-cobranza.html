@@ -163,6 +163,7 @@
 
   <div class="kpis" id="kpis"></div>
   <div style="display:flex;justify-content:flex-end;margin:14px 0 -6px">
+    <a href="/api/score-pagador" target="_blank" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:600 13px 'IBM Plex Sans',sans-serif;color:#263370;border:1.5px solid #d8deea;background:#fff;border-radius:9px;padding:9px 15px;margin-right:8px">📊 Comportamiento de pago</a>
     <a href="/api/cobranza-recordatorios?ver=1" target="_blank" onclick="var c=(document.getElementById('f-cliente')||{}).value||'';this.href='/api/cobranza-recordatorios?ver=1'+(c?'&cliente='+encodeURIComponent(c):'')" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font:600 13px 'IBM Plex Sans',sans-serif;color:#263370;border:1.5px solid #d8deea;background:#fff;border-radius:9px;padding:9px 15px">
       &#9993; Ver recordatorios de pago (antes de enviar)
     </a>
@@ -343,6 +344,16 @@
       return;
     }
   });
+  /* ====== SCORE DE PAGADOR (chips por cliente) ====== */
+  let SCORES = {};
+  fetch("/api/score-pagador?json=1").then(r=>r.json()).then(r=>{ if(r&&r.porPartner){ SCORES=r.porPartner; render(); } }).catch(()=>{});
+  function chipScore(pid){
+    const s = SCORES[pid]; if(!s) return "";
+    return '<span title="Comportamiento de pago: OC '+s.oc+'d · Pago '+s.pago+'d vs término" style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 3px;background:#fff;border:1px solid #e6e9f0;border-radius:11px;margin-left:8px;vertical-align:middle">'+
+      '<span style="width:16px;height:16px;border-radius:50%;background:'+s.color+';color:#fff;font-family:Archivo,sans-serif;font-weight:700;font-size:10px;display:inline-flex;align-items:center;justify-content:center">'+s.letra+'</span>'+
+      '<span style="font-family:IBM Plex Mono,monospace;font-size:10.5px;color:#1b2138">OC '+s.oc+'d · Pago '+s.pago+'d</span></span>';
+  }
+
   document.addEventListener("input",(e)=>{
     const el=e.target.closest(".dir-editor input,.dir-editor select"); if(!el) return;
     const ed=el.closest(".dir-editor"); const pid=+ed.dataset.pid;
@@ -410,7 +421,7 @@
     }
 
     return '<div class="card '+st+(v.archivada?' archived':'')+'"><div class="bar"></div><div class="card-in">'+
-      '<div class="crow"><span class="cliente">'+esc(v.cliente)+'</span><span class="folio">'+esc(v.folio)+'</span><span class="monto">'+money(v.monto)+(v.montoDeFactura?' <span style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#157f3b;font-weight:500"> facturado</span>':'')+'</span></div>'+
+      '<div class="crow"><span class="cliente">'+esc(v.cliente)+chipScore(v.partnerId)+'</span><span class="folio">'+esc(v.folio)+'</span><span class="monto">'+money(v.monto)+(v.montoDeFactura?' <span style="font-family:IBM Plex Mono,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#157f3b;font-weight:500"> facturado</span>':'')+'</span></div>'+
       '<div class="chips">'+chips+'</div>'+
       stepper(v)+
       '<div class="statusbar">'+statusHtml+'</div>'+
