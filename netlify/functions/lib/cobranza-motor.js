@@ -17,6 +17,7 @@
 // y como constancia en el chatter. Respeta COBRANZA_CORREO_PRUEBA y CC.
 import { executeKw } from "./odoo.js";
 import { P_SOLPED, P_OC, plantilla3Nivel, llenar, filaVencida, filaPorVencer } from "./cobranza-plantillas.js";
+import { enviarTexto } from "./whatsapp.js";
 
 const DESDE = process.env.REPORTES_DESDE || "";
 const EXTRA = (process.env.COBRANZA_EXTRA || "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -191,19 +192,56 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
     pidsTodos.forEach((id) => { if (!emailDe[id] && padreDe[id] && eP[padreDe[id]]) emailDe[id] = eP[padreDe[id]]; });
   }
 
+  /* 5b) DIRECTORIO DE COBRANZA por cliente (contactos propios por nivel) */
+  const DIR_NOMBRE = "portal_cobranza_contactos.json";
+  const dirBy = {};
+  if (pidsTodos.length) {
+    const dirs = await executeKw("ir.attachment", "search_read",
+      [[["res_model", "=", "res.partner"], ["res_id", "in", pidsTodos], ["name", "=", DIR_NOMBRE]]],
+      { fields: ["res_id", "datas"], limit: 500 }).catch(() => []);
+    for (const d of dirs) {
+      try { const j = JSON.parse(Buffer.from(d.datas || "", "base64").toString("utf8"));
+        if (j && Array.isArray(j.contactos)) dirBy[d.res_id] = j.contactos; } catch (e) {}
+    }
+  }
+  const NIVELES_POR_TIPO = { solped: ["raso"], oc: ["raso", "supervisor"], pago: ["raso", "supervisor", "cxp"] };
+  /* Destinatarios de un cliente para un tipo de recordatorio:
+     correos y whatsapps del directorio en los niveles que tocan; si el
+     directorio no tiene correos para ese cliente, respaldo = correo de Odoo. */
+  function destinatarios(pid, tipo) {
+    const niveles = NIVELES_POR_TIPO[tipo] || ["raso"];
+    const dir = (dirBy[pid] || []).filter((c) => niveles.includes(c.nivel));
+    const correos = [...new Set(dir.map((c) => (c.correo || "").trim()).filter(Boolean))];
+    const whats = [...new Set(dir.map((c) => (c.whatsapp || "").replace(/\D/g, "")).filter((w) => w.length >= 12))];
+    const nombreRaso = (dir.find((c) => c.nivel === "raso") || dir[0] || {}).nombre || "";
+    if (!correos.length && emailDe[pid]) correos.push(emailDe[pid]);
+    return { correos, whats, nombreRaso };
+  }
+  const WA_ACTIVO = !!process.env.WHATSAPP_TOKEN && !!process.env.WHATSAPP_PHONE_ID;
+  const WA_PRUEBA = CORREO_PRUEBA ? (process.env.ADMIN_WHATSAPP || "").replace(/\D/g, "") : "";
+  async function avisarWhats(whats, texto) {
+    if (!WA_ACTIVO || !whats.length) return 0;
+    const lista = WA_PRUEBA ? [WA_PRUEBA] : whats; // en modo prueba, solo a ti
+    let n = 0;
+    for (const w of lista) { try { await enviarTexto(w, texto); n++; } catch (e) {} }
+    return n;
+  }
+
   const resultado = { ok: true, hoy, enviados: [], solped: [], oc: [], clientes: [] };
 
   /* 6) PLANTILLA 1 — falta SolPed (por orden) */
   for (const s of solpedList) {
-    const correo = emailDe[s.partnerId] || "";
-    const item = { folio: s.folio, cliente: s.cliente, dias: s.dias, correo: correo || "—", seEnvia: s.toca && !!correo,
-      omitido: !s.toca ? "aún no toca (cadencia día 3, luego cada 4)" : (!correo ? "SIN CORREO en Odoo" : undefined) };
+    const d = destinatarios(s.partnerId, "solped");
+    const item = { folio: s.folio, cliente: s.cliente, dias: s.dias, correo: d.correos.join(", ") || "—",
+      whatsapps: d.whats.length, seEnvia: s.toca && (d.correos.length > 0 || d.whats.length > 0),
+      omitido: !s.toca ? "aún no toca (cadencia día 3, luego cada 4)" : (!d.correos.length && !d.whats.length ? "SIN CORREO ni WhatsApp (directorio y Odoo vacíos)" : undefined) };
     resultado.solped.push(item);
     if (enviar && item.seEnvia) {
-      const html = llenar(P_SOLPED, { ...VARS_FIJAS, CLIENTE: esc(s.cliente), CONTACTO: esc(nombreDe[s.partnerId] || s.cliente),
+      const html = llenar(P_SOLPED, { ...VARS_FIJAS, CLIENTE: esc(s.cliente), CONTACTO: esc(d.nombreRaso || nombreDe[s.partnerId] || s.cliente),
         FOLIO: s.folio, DESCRIPCION: esc(s.descripcion), FECHA_EVIDENCIA: fmtF(s.evidFecha), MONTO: mxn(s.monto), DIAS: s.dias, FECHA: fmtF(hoy) });
-      await enviarCorreo({ asunto: `Servicio entregado — pendiente su SolPed · ${s.folio}`, html, destino: CORREO_PRUEBA || correo });
-      await executeKw("sale.order", "message_post", [[s.id]], { body: `Recordatorio de SOLPED enviado a ${CORREO_PRUEBA || correo} (día ${s.dias}).` }).catch(() => {});
+      if (d.correos.length) await enviarCorreo({ asunto: `Servicio entregado — pendiente su SolPed · ${s.folio}`, html, destino: CORREO_PRUEBA || d.correos.join(",") });
+      const nWA = await avisarWhats(d.whats, `🔔 *HydraTech* · ${s.cliente}\nEl servicio *${s.folio}* (${s.descripcion}) está entregado y firmado desde hace *${s.dias} días* y aún no tenemos su SolPed. ¿Nos apoya generándola? Le enviamos el detalle por correo. ¡Gracias!`);
+      await executeKw("sale.order", "message_post", [[s.id]], { body: `Recordatorio de SOLPED enviado (día ${s.dias}) → correo: ${CORREO_PRUEBA || d.correos.join(", ") || "—"} · WhatsApp: ${nWA}.` }).catch(() => {});
       await registrarAviso(s, "solped");
       resultado.enviados.push({ tipo: "solped", folio: s.folio });
     }
@@ -211,16 +249,18 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
 
   /* 7) PLANTILLA 2 — falta OC (por orden) */
   for (const s of ocList) {
-    const correo = emailDe[s.partnerId] || "";
-    const item = { folio: s.folio, cliente: s.cliente, solped: s.solped, dias: s.dias, correo: correo || "—", seEnvia: s.toca && !!correo,
-      omitido: !s.toca ? "aún no toca (cadencia día 5, luego cada 5)" : (!correo ? "SIN CORREO en Odoo" : undefined) };
+    const d = destinatarios(s.partnerId, "oc");
+    const item = { folio: s.folio, cliente: s.cliente, solped: s.solped, dias: s.dias, correo: d.correos.join(", ") || "—",
+      whatsapps: d.whats.length, seEnvia: s.toca && (d.correos.length > 0 || d.whats.length > 0),
+      omitido: !s.toca ? "aún no toca (cadencia día 5, luego cada 5)" : (!d.correos.length && !d.whats.length ? "SIN CORREO ni WhatsApp" : undefined) };
     resultado.oc.push(item);
     if (enviar && item.seEnvia) {
-      const html = llenar(P_OC, { ...VARS_FIJAS, CLIENTE: esc(s.cliente), CONTACTO: esc(nombreDe[s.partnerId] || s.cliente),
+      const html = llenar(P_OC, { ...VARS_FIJAS, CLIENTE: esc(s.cliente), CONTACTO: esc(d.nombreRaso || nombreDe[s.partnerId] || s.cliente),
         FOLIO: s.folio, DESCRIPCION: esc(s.descripcion), FECHA_EVIDENCIA: fmtF(s._cob.evidenciaFecha || ""), MONTO: mxn(s.monto),
         DIAS: s.dias, SOLPED: esc(s.solped), POSICION: esc(s.posicion || "—"), FECHA_SOLPED: fmtF(s.fechaSolped), FECHA: fmtF(hoy) });
-      await enviarCorreo({ asunto: `SolPed ${s.solped} pendiente de OC — ${s.dias} días · ${s.folio}`, html, destino: CORREO_PRUEBA || correo });
-      await executeKw("sale.order", "message_post", [[s.id]], { body: `Recordatorio de OC (SolPed ${s.solped}) enviado a ${CORREO_PRUEBA || correo} (día ${s.dias}).` }).catch(() => {});
+      if (d.correos.length) await enviarCorreo({ asunto: `SolPed ${s.solped} pendiente de OC — ${s.dias} días · ${s.folio}`, html, destino: CORREO_PRUEBA || d.correos.join(",") });
+      const nWA = await avisarWhats(d.whats, `🔔 *HydraTech* · ${s.cliente}\nLa SolPed *${s.solped}* lleva *${s.dias} días* sin convertirse en orden de compra (servicio ${s.folio}, ya entregado). Sin la OC no podemos facturar. Detalle en su correo. ¡Gracias!`);
+      await executeKw("sale.order", "message_post", [[s.id]], { body: `Recordatorio de OC (SolPed ${s.solped}, día ${s.dias}) → correo: ${CORREO_PRUEBA || d.correos.join(", ") || "—"} · WhatsApp: ${nWA}.` }).catch(() => {});
       await registrarAviso(s, "oc");
       resultado.enviados.push({ tipo: "oc", folio: s.folio });
     }
@@ -239,13 +279,14 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
     let hitoFinal = null, nivel = null;
     if (h && !yaHito) { hitoFinal = h.hito; nivel = h.nivel; }
     else if (esDia1 && !yaMensual) { hitoFinal = mensualKey; nivel = peor.diasParaPago < 0 ? (-peor.diasParaPago >= 15 ? "critica" : "vencida") : "porvencer"; }
-    const correo = emailDe[c.partnerId] || "";
+    const d = destinatarios(c.partnerId, "pago");
+    const correo = d.correos.join(",");
     const venc = c.ordenes.filter((o) => o.vencida), porv = c.ordenes.filter((o) => !o.vencida);
     const totV = venc.reduce((a, o) => a + o.monto, 0), totT = c.ordenes.reduce((a, o) => a + o.monto, 0);
     const item = { cliente: c.cliente, correo: correo || "—", totalVencido: totV, totalGeneral: totT,
       peorDias: peor.diasParaPago, hito: hitoFinal || "—", nivel: nivel || "—",
-      seEnvia: !!hitoFinal && !!correo,
-      omitido: !hitoFinal ? (h && yaHito ? `hito ${h.hito} ya enviado` : "sin hito hoy") : (!correo ? "SIN CORREO en Odoo" : undefined),
+      seEnvia: !!hitoFinal && (!!correo || d.whats.length > 0),
+      omitido: !hitoFinal ? (h && yaHito ? `hito ${h.hito} ya enviado` : "sin hito hoy") : (!correo && !d.whats.length ? "SIN CORREO ni WhatsApp" : undefined),
       ordenes: c.ordenes.map((o) => ({ folio: o.folio, vence: o.fechaPago, dias: o.diasParaPago, monto: o.monto })) };
     resultado.clientes.push(item);
     const forzar = manual && Number(manual.partnerId) === c.partnerId;
@@ -253,7 +294,7 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
       const destinoReal = forzar ? String(manual.correo || correo).trim() : correo;
       const nivelUso = nivel || (peor.diasParaPago < 0 ? (-peor.diasParaPago >= 15 ? "critica" : "vencida") : (peor.diasParaPago === 0 ? "hoy" : "porvencer"));
       const tpl = plantilla3Nivel(nivelUso);
-      const html = llenar(tpl, { ...VARS_FIJAS, CLIENTE: esc(c.cliente), CONTACTO: esc(nombreDe[c.partnerId] || c.cliente), FECHA: fmtF(hoy),
+      const html = llenar(tpl, { ...VARS_FIJAS, CLIENTE: esc(c.cliente), CONTACTO: esc(d.nombreRaso || nombreDe[c.partnerId] || c.cliente), FECHA: fmtF(hoy),
         DIAS_PARA: Math.max(0, peor.diasParaPago), DIAS_VENCIDO: Math.max(0, -peor.diasParaPago),
         TABLA_VENCIDO: venc.map((o) => filaVencida({ folio: o.folio, factura: esc(o.factura), entrega: fmtF(o.entrega), vence: fmtF(o.fechaPago), dias: -o.diasParaPago, monto: mxn(o.monto) })).join("") || filaVencida({ folio: "—", factura: "", entrega: "—", vence: "—", dias: 0, monto: mxn(0) }),
         TABLA_POR_VENCER: porv.map((o) => filaPorVencer({ folio: o.folio, factura: esc(o.factura), entrega: fmtF(o.entrega), vence: fmtF(o.fechaPago), dias: o.diasParaPago, monto: mxn(o.monto) })).join("") || filaPorVencer({ folio: "—", factura: "", entrega: "—", vence: "—", dias: 0, monto: mxn(0) }),
@@ -261,9 +302,15 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
       const asunto = nivelUso === "porvencer" ? `Estado de cuenta — factura próxima a vencer · ${c.cliente}`
         : nivelUso === "hoy" ? `Su factura vence HOY · ${c.cliente}`
         : `REQUERIMIENTO DE PAGO — ${Math.max(0, -peor.diasParaPago)} días de vencida · ${c.cliente}`;
-      await enviarCorreo({ asunto, html, destino: CORREO_PRUEBA || destinoReal, ccExtra: ["d7","d15"].includes(hitoFinal) || String(hitoFinal).startsWith("w") || String(hitoFinal).startsWith("q") ? DIRECCION : "" });
+      if (CORREO_PRUEBA || destinoReal) await enviarCorreo({ asunto, html, destino: CORREO_PRUEBA || destinoReal, ccExtra: ["d7","d15"].includes(hitoFinal) || String(hitoFinal).startsWith("w") || String(hitoFinal).startsWith("q") ? DIRECCION : "" });
+      const totVtx = mxn(totV);
+      const nWA = await avisarWhats(d.whats, nivelUso === "porvencer"
+        ? `🔔 *HydraTech* · ${c.cliente}\nSu factura vence en *${Math.max(0, peor.diasParaPago)} días*. Le enviamos el estado de cuenta por correo. Datos de pago incluidos.`
+        : nivelUso === "hoy"
+        ? `🔔 *HydraTech* · ${c.cliente}\nSu factura *vence HOY*. Estado de cuenta y datos de pago en su correo. ¿Nos confirma la programación del pago?`
+        : `🔴 *HydraTech — Requerimiento de pago* · ${c.cliente}\n*${totVtx}* con *${Math.max(0, -peor.diasParaPago)} días* de vencido. Estado de cuenta en su correo. Agradecemos programar el pago o indicarnos fecha compromiso.`);
       for (const o of c.ordenes) {
-        await executeKw("sale.order", "message_post", [[o.id]], { body: `Estado de cuenta (${nivelUso}, hito ${hitoFinal || "manual"}) enviado a ${CORREO_PRUEBA || destinoReal}.` }).catch(() => {});
+        await executeKw("sale.order", "message_post", [[o.id]], { body: `Estado de cuenta (${nivelUso}, hito ${hitoFinal || "manual"}) → correo: ${CORREO_PRUEBA || destinoReal || "—"} · WhatsApp: ${nWA}.` }).catch(() => {});
         await registrarAviso(o, "pago", hitoFinal || ("manual-" + hoy));
       }
       // Escalamiento humano: al hito d15 se crea la actividad LLAMAR
