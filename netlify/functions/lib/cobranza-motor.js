@@ -117,19 +117,23 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
     for (const l of (lines || [])) { const tid = Array.isArray(l.payment_id) ? l.payment_id[0] : l.payment_id; const d = Number(l.nb_days != null ? l.nb_days : l.days) || 0; daysByTerm[tid] = Math.max(daysByTerm[tid] || 0, d); }
   }
   const facIds = [...new Set(orders.flatMap((o) => Array.isArray(o.invoice_ids) ? o.invoice_ids : []))];
-  const factBy = {}, folioFacBy = {};
+  const factBy = {}, folioFacBy = {}, saldoBy = {};
   if (facIds.length) {
     const moves = await executeKw("account.move", "search_read",
       [[["id", "in", facIds], ["state", "=", "posted"], ["move_type", "in", ["out_invoice", "out_refund"]]]],
-      { fields: ["id", "amount_total", "move_type", "name", "invoice_origin"], limit: 1000 }).catch(() => []);
+      { fields: ["id", "amount_total", "amount_residual", "move_type", "name", "invoice_origin"], limit: 1000 }).catch(() => []);
     for (const o of orders) {
-      let t = 0, folios = [];
+      let t = 0, saldo = 0, hayFactura = false, folios = [];
       for (const mid of (Array.isArray(o.invoice_ids) ? o.invoice_ids : [])) {
         const m = moves.find((x) => x.id === mid); if (!m) continue;
-        t += (m.move_type === "out_refund" ? -1 : 1) * (m.amount_total || 0);
-        if (m.move_type === "out_invoice") folios.push(m.name);
+        const sig = m.move_type === "out_refund" ? -1 : 1;
+        t += sig * (m.amount_total || 0);
+        saldo += sig * (m.amount_residual != null ? m.amount_residual : m.amount_total || 0);
+        if (m.move_type === "out_invoice") { folios.push(m.name); hayFactura = true; }
       }
       if (t > 0) factBy[o.id] = t;
+      // SALDO REAL POR COBRAR según Odoo (descuenta pagos y abonos registrados en contabilidad)
+      if (hayFactura) saldoBy[o.id] = Math.max(0, saldo);
       folioFacBy[o.id] = folios.join(", ");
     }
   }
@@ -156,13 +160,17 @@ export async function correrCobranza({ enviar = false, manual = null } = {}) {
       descripcion: notaBy[o.id] || o.name, _cob: cob, _attId: cobAtt[o.id] || null };
 
     if (tieneAcuse) {
+      // Si Odoo reporta la factura saldada, se considera PAGADA aunque el
+      // portal no tenga el pago capturado (la contabilidad manda).
+      if (saldoBy[o.id] === 0) continue;
       const termId = Array.isArray(o.payment_term_id) ? o.payment_term_id[0] : null;
       const plazo = termId != null && daysByTerm[termId] != null ? daysByTerm[termId] : CREDITO_DEFAULT;
       const fechaPago = addDays(cob.acuseFecha, plazo);
       const fp = parseDate(fechaPago); if (fp == null) continue;
       const dp = Math.round((fp - now) / DAY);
+      const montoPend = saldoBy[o.id] != null ? saldoBy[o.id] : base.monto;
       (porCliente[pid] = porCliente[pid] || { partnerId: pid, cliente: pname, ordenes: [] }).ordenes.push({
-        ...base, fechaPago, diasParaPago: dp, vencida: dp < 0,
+        ...base, monto: montoPend, fechaPago, diasParaPago: dp, vencida: dp < 0,
         factura: folioFacBy[o.id] || "", entrega: cob.evidenciaFecha || repOkBy[o.id] || "" });
     } else if (solped && !ocRef) {
       const dias = daysSince(cob.solpedFecha || cob.updatedAt, now) || 0;
