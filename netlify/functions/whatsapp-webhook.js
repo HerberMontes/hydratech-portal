@@ -361,9 +361,13 @@ async function atender(msg) {
       }
       if (st.paso === "S1") { st.paso = "S2"; await guardarEstado(tel, st); await enviarTexto(tel, T.s2); return; }
       if (st.paso === "S2") { st.paso = "S3"; await guardarEstado(tel, st); await enviarTexto(tel, T.s3); return; }
-      // S3 -> generar
+      // S3 -> generar (si la IA falla, NADA se pierde: LISTO reintenta)
       await enviarTexto(tel, "🤖 Generando tu reporte con IA, dame unos segundos…");
-      await generarYEnviar(tel, st);
+      try { await generarYEnviar(tel, st); }
+      catch (e) {
+        console.error("Error generando reporte:", e);
+        await enviarTexto(tel, `⚠️ La IA falló en este intento (${(e.message || e).toString().slice(0, 110)}).\n\n✅ *Tus notas y fotos están a salvo.* Espera un momento y escribe *LISTO* para reintentar.`);
+      }
       return;
     }
     if (texto) { // texto libre también suma a la sección
@@ -420,7 +424,13 @@ async function atender(msg) {
       if (!med.notas.voz) { await enviarTexto(tel, "Aún no me mandas ninguna nota de voz. 🎤"); return; }
       st.tx = med.notas.voz; // para la transcripción completa al guardar
       await enviarTexto(tel, "🤖 Estructurando la información…");
-      const v = await estructurarVozCliente(`Cliente: ${st.ref || "(no identificado)"}\n\n${med.notas.voz}`);
+      let v;
+      try { v = await estructurarVozCliente(`Cliente: ${st.ref || "(no identificado)"}\n\n${med.notas.voz}`); }
+      catch (e) {
+        console.error("Error voz cliente:", e);
+        await enviarTexto(tel, "⚠️ La IA falló en este intento. ✅ Tu audio está a salvo — espera un momento y escribe *LISTO* para reintentar.");
+        return;
+      }
       st.voz = v; st.paso = "VOZ_CONF";
       await guardarEstado(tel, st);
       const li = (arr) => (arr || []).map((x) => "• " + (x.titulo ? `${x.titulo} (${x.prioridad || "media"})` : x)).join("\n") || "• (nada)";
