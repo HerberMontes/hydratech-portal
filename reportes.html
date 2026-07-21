@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reportes de servicio · HydraTech</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/hydratech-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#141829">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HydraTech">
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){});}</script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; background:#e9edf3; font-family:'IBM Plex Sans',system-ui,sans-serif; color:#1b2138;}
+  .appbar{position:sticky; top:0; z-index:30; background:#141829; border-bottom:3px solid #263370;}
+  .appbar .in{max-width:1500px; margin:0 auto; padding:9px 18px; display:flex; align-items:center; justify-content:space-between;}
+  .appbar a{display:inline-flex; align-items:center; gap:9px; text-decoration:none;}
+  .appbar img{height:17px;}
+  .appbar .tag{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#5b6390;}
+  .layout{max-width:1500px; margin:0 auto; display:grid; grid-template-columns:440px 1fr; gap:18px; padding:18px;}
+  @media (max-width:1080px){ .layout{grid-template-columns:1fr;} }
+  .builder{background:#fff; border:1px solid #dfe4ee; border-radius:14px; padding:16px; align-self:start; position:sticky; top:64px;}
+  @media (max-width:1080px){ .builder{position:static;} }
+  .builder h2{font-family:'Archivo',sans-serif; font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:0.05em; color:#263370; margin:2px 0 10px;}
+  label{display:block; font-size:12px; font-weight:600; color:#404a63; margin:12px 0 5px;}
+  input,textarea,select{width:100%; border:1px solid #dfe4ee; border-radius:8px; padding:9px 11px; font-size:14px; font-family:inherit; color:#1b2138; background:#fff;}
+  input:focus,textarea:focus,select:focus{outline:none; border-color:#263370;}
+  input:read-only{background:#f4f6fa; color:#46506a;}
+  textarea{resize:vertical; min-height:80px;}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .btn{border:0; border-radius:8px; padding:10px 15px; font-size:14px; font-weight:700; cursor:pointer;}
+  .primary{background:#263370; color:#fff;} .primary:hover{background:#1c2858;} .primary:disabled{opacity:.5; cursor:default;}
+  .ghost{background:#eef2ff; color:#263370;} .ghost.rec{background:#fdecec; color:#b4232a;}
+  .rowbtns{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  .status{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#8a93a8;} .status.err{color:#b4232a;}
+  .ordbox{border:1px solid #eef1f6; border-radius:9px; max-height:230px; overflow:auto; margin-top:8px;}
+  .ord{padding:10px 11px; border-bottom:1px solid #f0f2f7; cursor:pointer;}
+  .ord:hover{background:#f7f9ff;} .ord.sel{background:#eef2ff;}
+  .ord .n{font-family:'IBM Plex Mono',monospace; font-weight:600; color:#263370; font-size:13px;}
+  .ord .p{font-size:12.5px; color:#404a63;} .ord .d{font-size:11px; color:#8a93a8;}
+  .empbox{border:1px solid #eef1f6; border-radius:9px; max-height:140px; overflow:auto; padding:4px;}
+  .emp{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px; cursor:pointer; font-size:13.5px;}
+  .emp:hover{background:#f7f9ff;} .emp input{width:auto;}
+  .thumbs{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .thumb{position:relative; width:74px;}
+  .thumb img{width:74px; height:56px; object-fit:cover; border-radius:7px; border:1px solid #dfe4ee; display:block;}
+  .thumb .x{position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #e3c4c4; color:#b4232a; font-size:12px; line-height:1; cursor:pointer; text-align:center;}
+  .step{border:1px solid #e6eaf2; border-radius:11px; padding:13px; margin-top:12px; background:#fcfdff;}
+  .stephead{display:flex; align-items:center; gap:9px; font-family:'Archivo',sans-serif; font-weight:700; font-size:14px; color:#1b2138;}
+  .stepnum{width:24px; height:24px; border-radius:7px; background:#263370; color:#fff; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .stepsub{font-size:11.5px; color:#8a93a8; margin:2px 0 8px 33px;}
+  .preview-wrap{min-width:0;}
+  .gal{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px;}
+  .gal figure{margin:0; border-radius:9px; overflow:hidden; border:1px solid #e2e7f0; background:#eef2f8;}
+  .gal img{width:100%; height:1.55in; object-fit:cover; display:block;}
+  .gal figcaption{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:0.04em; color:#5a647d; padding:6px 9px; background:#fff; border-top:1px solid #eef1f7;}
+  h1,h2,h3,h4{text-wrap:balance;} p,li{text-wrap:pretty;}
+  @media (max-width:600px){
+    .layout{padding:12px; gap:12px;} .builder{padding:14px; border-radius:12px; top:56px;}
+    input,textarea,select{font-size:16px;} .two{grid-template-columns:1fr;}
+    .appbar .tag{display:none;} .appbar .in{padding:9px 14px;} .btn{padding:12px 16px;} .builder h2{font-size:13px;}
+  }
+  @page{ size:letter; margin:0; }
+  @media print{
+    html{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    html,body{margin:0; padding:0; background:#fff;}
+    .appbar,.builder,.noprint{display:none !important;}
+    #stage{height:auto !important; overflow:visible !important; width:auto !important;}
+    #preview{transform:none !important; width:auto !important; margin:0 !important;}
+    .layout{display:block !important; padding:0 !important; margin:0 !important; max-width:none !important;}
+    .sheet{box-shadow:none !important; margin:0 !important; border-radius:0 !important;}
+    .cover{width:100% !important; height:11in !important; min-height:11in !important; overflow:hidden; break-after:page;}
+    .doc{max-width:none !important; margin:0 !important; padding:0.7in 0.75in 0.9in !important; box-shadow:none !important; break-before:page;}
+    .pbreak{break-before:page;} .avoid{break-inside:avoid;} .gal figure{break-inside:avoid;}
+    .pbreak{break-before:page;} .avoid{break-inside:avoid;} .gal figure{break-inside:avoid;}
+  }
+</style>
+  <script>window.REQUIRE_ROLE="reportes";</script>
+  <script defer src="auth-gate.js"></script>
+</head>
+<body>
+  <div class="appbar"><div class="in">
+    <a href="acceso.html"><span style="color:#aeb6d4; font-size:18px;">&#8592;</span><img src="assets/hydratech-wordmark-white.png" alt="HydraTech"></a>
+    <span class="tag">Reportes de servicio</span>
+  </div></div>
+
+  <div class="layout">
+    <div class="builder">
+      <h2>Nuevo reporte</h2>
+
+      <label>Plantilla / empresa</label>
+      <select id="brand">
+        <option value="hydratech">HydraTech Group</option>
+        <option value="tubemac">Tube-Mac</option>
+      </select>
+
+      <label>Selecciona la orden de servicio</label>
+      <input id="q" placeholder="Filtrar (opcional)" style="margin-bottom:2px;">
+      <div id="ordStatus" class="status" style="margin-top:6px;">Cargando órdenes…</div>
+      <div id="ordList" class="ordbox"></div>
+
+      <div id="rest" style="display:none;">
+        <div id="adminBanner" style="display:none; background:#143020; border:1px solid #1e7d4f; color:#9ce0bb; border-radius:9px; padding:10px 13px; font-size:13px; margin-bottom:14px;">
+          <strong>Modo revisión (admin).</strong> Revisa o edita este reporte. Usa <em>Guardar cambios</em> para dejarlo pendiente, o <em>Aprobar y archivar</em> para cerrarlo en la orden de Odoo.
+        </div>
+        <div class="two">
+          <div><label>Cliente</label><input id="cliente" readonly></div>
+          <div><label>Fecha</label><input id="fecha" readonly></div>
+        </div>
+        <div class="two">
+          <div><label>Planta / ubicación</label><input id="planta" placeholder="Dirección del cliente"></div>
+          <div><label>Folio</label><input id="folio" readonly></div>
+        </div>
+        <label>Tipo de servicio</label>
+        <input id="tipo" placeholder="Producto de servicio de la orden">
+
+        <label>Técnicos que intervinieron</label>
+        <div id="empWrap"><div id="empBox" class="empbox"><div class="status" style="padding:8px;">Cargando empleados…</div></div></div>
+
+        <div class="step">
+          <div class="stephead"><span class="stepnum">1</span> Foto de portada</div>
+          <div class="stepsub">La foto principal del servicio. Es la que aparece grande en la portada del reporte.</div>
+          <div class="rowbtns">
+            <label class="btn ghost">📷 Subir foto de portada<input type="file" accept="image/*" data-cover="1" style="display:none;"></label>
+          </div>
+          <div class="thumbs" id="th_portada"></div>
+        </div>
+
+        <div class="step">
+          <div class="stephead"><span class="stepnum">2</span> Hallazgos</div>
+          <div class="stepsub">Cómo se encontró el equipo / diagnóstico. Sube fotos de la situación.</div>
+          <textarea id="n1" placeholder="Qué encontraste..."></textarea>
+          <div class="rowbtns">
+            <button class="btn ghost" data-mic="n1" type="button">🎤 Dictar</button>
+            <label class="btn ghost">📷 Fotos<input type="file" accept="image/*" multiple data-sec="hallazgos" style="display:none;"></label>
+          </div>
+          <div class="thumbs" id="th_hallazgos"></div>
+        </div>
+
+        <div class="step">
+          <div class="stephead"><span class="stepnum">3</span> Actividades realizadas</div>
+          <div class="stepsub">Qué se hizo para reparar. Sube fotos de la reparación / evidencias.</div>
+          <textarea id="n2" placeholder="Qué hiciste para repararlo..."></textarea>
+          <div class="rowbtns">
+            <button class="btn ghost" data-mic="n2" type="button">🎤 Dictar</button>
+            <label class="btn ghost">📷 Fotos<input type="file" accept="image/*" multiple data-sec="actividades" style="display:none;"></label>
+          </div>
+          <div class="thumbs" id="th_actividades"></div>
+        </div>
+
+        <div class="step">
+          <div class="stephead"><span class="stepnum">4</span> Plan de acción</div>
+          <div class="stepsub">Pendientes y lo que se recomienda cambiar (orientado a venta). Fotos opcionales.</div>
+          <textarea id="n3" placeholder="Qué queda pendiente / qué recomiendas cambiar..."></textarea>
+          <div class="rowbtns">
+            <button class="btn ghost" data-mic="n3" type="button">🎤 Dictar</button>
+            <label class="btn ghost">📷 Fotos (opcional)<input type="file" accept="image/*" multiple data-sec="plan" style="display:none;"></label>
+          </div>
+          <div class="thumbs" id="th_plan"></div>
+        </div>
+
+        <div class="rowbtns" style="margin-top:14px;">
+          <button class="btn primary" id="gen" type="button">Generar reporte con IA</button>
+          <button class="btn ghost" id="pdf" type="button" style="display:none;">Descargar PDF</button>
+          <button class="btn ghost" id="saveDraft" type="button" style="display:none;">Guardar borrador</button>
+          <button class="btn primary" id="submitRep" type="button" style="display:none; background:#1e7d4f;">Enviar a aprobación</button>
+          <button class="btn ghost" id="adminSave" type="button" style="display:none;">Guardar cambios</button>
+          <button class="btn primary" id="adminApprove" type="button" style="display:none; background:#1e7d4f;">Aprobar y archivar</button>
+          <span id="genStatus" class="status"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-wrap">
+      <div id="stage" style="width:100%;">
+        <div id="preview" style="width:816px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:24px;">
+          <div class="noprint" style="color:#7a849e; font-family:'IBM Plex Mono',monospace; font-size:12px; padding:40px; text-align:center;">
+            Selecciona una orden, llena los 3 pasos y pulsa “Generar reporte con IA”.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="reporte-render.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const tok = () => { var e = $("tok"); return e ? e.value.trim() : ""; };
+const headers = (extra) => { const h = Object.assign({}, extra||{}); const t = tok(); if(t) h["x-portal-token"]=t; return h; };
+const esc = (s) => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+let images = [], coverPhoto = null, lastContent = null, selectedOrder = null, empleados = [], allOrders = [];
+
+
+/* ===== Órdenes (carga automática) ===== */
+async function cargarOrdenes(){
+  $("ordStatus").className="status"; $("ordStatus").textContent="Cargando órdenes…";
+  try{
+    const r = await fetch("/api/odoo-sale-orders?limit=60", { headers: headers() });
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error || ("HTTP "+r.status));
+    allOrders = d.orders;
+    $("ordStatus").textContent = d.count+" orden(es) de servicio"+(d.desde?(" desde "+d.desde):"")+".";
+    pintarOrdenes(allOrders);
+  }catch(e){ $("ordStatus").className="status err"; $("ordStatus").textContent="✗ "+(e.message||e); }
+}
+function pintarOrdenes(list){
+  $("ordList").innerHTML = list.map(o=>'<div class="ord" data-id="'+o.id+'"><div class="n">'+esc(o.name)+(o.nota?' · <span style="font-weight:600; color:#1b2138;">'+esc(o.nota)+'</span>':"")+'</div><div class="p">'+esc(o.partner)+'</div><div class="d">'+(o.date||"").slice(0,10)+' · '+esc(o.stateLabel)+'</div></div>').join("") || '<div class="ord">Sin órdenes pendientes.</div>';
+  $("ordList").querySelectorAll(".ord[data-id]").forEach(el=>el.addEventListener("click",()=>seleccionarOrden(el)));
+}
+$("q").addEventListener("input",()=>{ const q=$("q").value.trim().toLowerCase(); pintarOrdenes(!q?allOrders:allOrders.filter(o=>(o.name+" "+o.partner+" "+(o.nota||"")).toLowerCase().includes(q))); });
+
+async function seleccionarOrden(el){
+  $("ordList").querySelectorAll(".ord").forEach(x=>x.classList.remove("sel")); el.classList.add("sel");
+  await abrirOrden(el.dataset.id, { admin:false });
+}
+
+async function abrirOrden(id, opts){
+  opts = opts || {};
+  selectedOrder = { id: String(id) };
+  // Limpiar estado previo para no mezclar datos entre órdenes.
+  images=[]; coverPhoto=null; lastContent=null;
+  $("n1").value=""; $("n2").value=""; $("n3").value="";
+  drawThumbs(); drawCover(); $("pdf").style.display="none";
+  $("rest").style.display="block";
+  $("cliente").value="…"; $("folio").value="…";
+  // Botones según modo
+  if(opts.admin){
+    $("saveDraft").style.display="none"; $("submitRep").style.display="none";
+    $("adminSave").style.display="inline-block"; $("adminApprove").style.display="inline-block";
+    $("adminBanner").style.display="block";
+  } else {
+    $("saveDraft").style.display="inline-block"; $("submitRep").style.display="inline-block";
+    $("adminSave").style.display="none"; $("adminApprove").style.display="none";
+    $("adminBanner").style.display="none";
+  }
+  try{
+    const r = await fetch("/api/odoo-order-info?id="+id, { headers: headers() });
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error||("HTTP "+r.status));
+    $("cliente").value = d.info.cliente||""; $("fecha").value = d.info.fecha||"";
+    $("planta").value = d.info.direccion||""; $("tipo").value = d.info.tipo||""; $("folio").value = d.info.folio||"";
+    await cargarBorrador(id);
+    rerender();
+  }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+}
+
+/* ===== Cargar borrador/reporte guardado (si existe) ===== */
+async function cargarBorrador(id){
+  try{
+    const r = await fetch("/api/reporte-obtener?id="+id, { headers: headers() });
+    const d = await r.json();
+    if(!d.ok || !d.report) return;
+    const rep = d.report;
+    if(rep.notas){ $("n1").value=rep.notas.hallazgos||""; $("n2").value=rep.notas.actividades||""; $("n3").value=rep.notas.plan||""; }
+    if(rep.brand) $("brand").value=rep.brand;
+    if(rep.planta) $("planta").value=rep.planta;
+    if(rep.tipo) $("tipo").value=rep.tipo;
+    if(Array.isArray(rep.images)){ images = rep.images.slice(); drawThumbs(); }
+    if(rep.coverPhoto){ coverPhoto = rep.coverPhoto; drawCover(); }
+    if(rep.content){ lastContent = rep.content; $("pdf").style.display="inline-block"; }
+    $("genStatus").className="status"; $("genStatus").textContent="↩ Reporte recuperado.";
+  }catch(e){ /* sin borrador, normal */ }
+}
+
+/* ===== Empleados (técnicos) ===== */
+async function cargarEmpleados(){
+  try{
+    const r = await fetch("/api/odoo-empleados", { headers: headers() });
+    const d = await r.json();
+    if(!d.ok || !d.empleados || !d.empleados.length) throw new Error("sin empleados");
+    empleados = d.empleados;
+    $("empBox").innerHTML = empleados.map(e=>'<label class="emp"><input type="checkbox" value="'+esc(e.name)+'">'+esc(e.name)+(e.job?' <span style="color:#8a93a8;">· '+esc(e.job)+'</span>':"")+'</label>').join("");
+    $("empBox").querySelectorAll("input").forEach(c=>c.addEventListener("change", rerender));
+  }catch(e){
+    // Fallback: captura manual si no hay módulo de Empleados o falta permiso
+    $("empWrap").innerHTML = '<input id="tecnicosManual" placeholder="Nombres separados por coma"><div class="status" style="margin-top:4px;">No se pudieron cargar empleados de Odoo; captúralos a mano.</div>';
+    $("empWrap").querySelector("#tecnicosManual").addEventListener("input", rerender);
+  }
+}
+function getTecnicos(){
+  const checks = $("empBox") ? [...$("empBox").querySelectorAll("input:checked")].map(c=>c.value) : [];
+  if(checks.length) return checks;
+  const man = $("tecnicosManual"); return man ? man.value.split(",").map(s=>s.trim()).filter(Boolean) : [];
+}
+
+/* ===== Foto de portada (paso 1) ===== */
+document.querySelectorAll('input[type="file"][data-cover]').forEach(inp=>{
+  inp.addEventListener("change",(e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>resize(r.result,(d)=>{ coverPhoto=d; drawCover(); }); r.readAsDataURL(f);
+    e.target.value="";
+  });
+});
+function drawCover(){
+  const cont=$("th_portada"); if(!cont) return;
+  cont.innerHTML = coverPhoto ? '<div class="thumb"><span class="x" id="rmCover">×</span><img src="'+coverPhoto+'"></div>' : "";
+  const rm=$("rmCover"); if(rm) rm.addEventListener("click",()=>{ coverPhoto=null; drawCover(); rerender(); });
+  rerender();
+}
+
+/* ===== Fotos por etapa ===== */
+document.querySelectorAll('input[type="file"][data-sec]').forEach(inp=>{
+  inp.addEventListener("change",(e)=>{ const sec=inp.dataset.sec;
+    [...e.target.files].forEach(f=>{ const r=new FileReader(); r.onload=()=>resize(r.result,(d)=>{ images.push({dataURL:d, sec, cap:""}); drawThumbs(); }); r.readAsDataURL(f); });
+    e.target.value="";
+  });
+});
+function resize(dataUrl, cb){ const img=new Image(); img.onload=()=>{ const max=1200, sc=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement("canvas"); c.width=img.width*sc; c.height=img.height*sc; c.getContext("2d").drawImage(img,0,0,c.width,c.height); cb(c.toDataURL("image/jpeg",0.82)); }; img.src=dataUrl; }
+function drawThumbs(){
+  ["hallazgos","actividades","plan"].forEach(sec=>{
+    const cont=$("th_"+sec); if(!cont) return;
+    const list=images.map((im,i)=>({im,i})).filter(o=>o.im.sec===sec);
+    cont.innerHTML=list.map(o=>'<div class="thumb"><span class="x" data-i="'+o.i+'">×</span><img src="'+o.im.dataURL+'"></div>').join("");
+    cont.querySelectorAll(".x").forEach(b=>b.addEventListener("click",()=>{ images.splice(+b.dataset.i,1); drawThumbs(); }));
+  });
+  rerender();
+}
+
+/* ===== Dictado por etapa ===== */
+let rec=null, reccing=false, recBtn=null;
+document.querySelectorAll('[data-mic]').forEach(btn=>btn.addEventListener("click",()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ $("genStatus").textContent="Dictado no disponible; usa Chrome o escribe."; return; }
+  if(reccing){ rec&&rec.stop(); return; }
+  const ta=$(btn.dataset.mic); recBtn=btn;
+  rec=new SR(); rec.lang="es-MX"; rec.interimResults=true; rec.continuous=true;
+  let base=ta.value;
+  rec.onresult=(ev)=>{
+    let interim="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const res=ev.results[i];
+      if(res.isFinal){ base=(base?base.replace(/\s+$/,"")+" ":"")+(res[0].transcript||"").trim(); }
+      else interim+=res[0].transcript;
+    }
+    ta.value = base + (interim ? (base?" ":"")+interim : "");
+  };
+  rec.onend=()=>{ reccing=false; btn.classList.remove("rec"); btn.textContent="🎤 Dictar"; };
+  rec.start(); reccing=true; btn.classList.add("rec"); btn.textContent="⏹ Detener";
+}));
+
+function gatherData(){
+  return { cliente:$("cliente").value, planta:$("planta").value.trim(), tipo:$("tipo").value.trim(),
+    folio:$("folio").value, fecha:$("fecha").value, tecnicos:getTecnicos() };
+}
+
+$("gen").addEventListener("click", async ()=>{
+  const n1=$("n1").value.trim(), n2=$("n2").value.trim(), n3=$("n3").value.trim();
+  if(!n1 && !n2 && !n3 && !images.length){ $("genStatus").textContent="Llena al menos un paso o sube fotos."; return; }
+  $("gen").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Generando con IA…";
+  try{
+    const d = gatherData();
+    const r = await fetch("/api/generar-reporte", { method:"POST", headers: headers({"Content-Type":"application/json"}),
+      body: JSON.stringify({ hallazgos_notas:n1, actividades_notas:n2, plan_notas:n3,
+        cliente:d.cliente, orden:d.folio, fecha:d.fecha, planta:d.planta, tipo:d.tipo, tecnicos:d.tecnicos,
+        images: images.map(im=>im.dataURL) }) });
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error || ("HTTP "+r.status));
+    lastContent = j.report;
+    if(j.report.tipo_servicio && !$("tipo").value) $("tipo").value=j.report.tipo_servicio;
+    rerender(); $("pdf").style.display="inline-block";
+    $("genStatus").textContent="✓ Reporte generado. Revisa y ajusta lo que quieras.";
+  }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("gen").disabled=false; }
+});
+
+/* ===== Guardar borrador / Enviar a aprobación ===== */
+function buildReportPayload(status){
+  const d = gatherData();
+  return { id: selectedOrder && selectedOrder.id, status, report: {
+    brand: $("brand").value,
+    cliente: d.cliente, planta: d.planta, tipo: d.tipo, folio: d.folio, fecha: d.fecha,
+    tecnicos: d.tecnicos,
+    notas: { hallazgos:$("n1").value, actividades:$("n2").value, plan:$("n3").value },
+    content: lastContent || null,
+    coverPhoto: coverPhoto || null,
+    images: images.slice(),
+  }};
+}
+async function guardarReporte(status){
+  if(!selectedOrder || !selectedOrder.id){ $("genStatus").className="status err"; $("genStatus").textContent="Selecciona una orden primero."; return false; }
+  const payload = buildReportPayload(status);
+  const r = await fetch("/api/reporte-guardar", { method:"POST", headers: headers({"Content-Type":"application/json"}), body: JSON.stringify(payload) });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || ("HTTP "+r.status));
+  return true;
+}
+$("saveDraft").addEventListener("click", async ()=>{
+  $("saveDraft").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Guardando borrador…";
+  try{ await guardarReporte("draft"); $("genStatus").textContent="✓ Borrador guardado. Puedes volver a editarlo más tarde."; }
+  catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("saveDraft").disabled=false; }
+});
+$("submitRep").addEventListener("click", async ()=>{
+  if(!lastContent){ $("genStatus").className="status err"; $("genStatus").textContent="Genera el reporte con IA antes de enviarlo a aprobación."; return; }
+  if(!confirm("Al enviar a aprobación, el reporte se bloquea y esta orden ya no aparecerá en tu lista. ¿Continuar?")) return;
+  $("submitRep").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Enviando a aprobación…";
+  try{
+    await guardarReporte("submitted");
+    $("genStatus").textContent="✓ Enviado a aprobación. El administrador lo revisará.";
+    // limpiar y refrescar lista (la orden enviada desaparece)
+    setTimeout(()=>{ $("rest").style.display="none"; selectedOrder=null; lastContent=null; images=[]; coverPhoto=null; drawCover(); cargarOrdenes(); }, 1200);
+  }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("submitRep").disabled=false; }
+});
+
+/* ===== Acciones de admin (modo revisión) ===== */
+$("adminSave").addEventListener("click", async ()=>{
+  $("adminSave").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Guardando cambios…";
+  try{ await guardarReporte("submitted"); $("genStatus").textContent="✓ Cambios guardados. Sigue pendiente de aprobación."; }
+  catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); }
+  finally{ $("adminSave").disabled=false; }
+});
+$("adminApprove").addEventListener("click", async ()=>{
+  if(!lastContent){ $("genStatus").className="status err"; $("genStatus").textContent="No hay reporte generado para aprobar."; return; }
+  if(!confirm("Aprobar guarda el reporte como aprobado y lo archiva en la orden de Odoo. ¿Continuar?")) return;
+  $("adminApprove").disabled=true; $("genStatus").className="status"; $("genStatus").textContent="Aprobando…";
+  try{
+    await guardarReporte("approved");
+    $("genStatus").textContent="✓ Reporte aprobado y archivado. Regresando al panel…";
+    setTimeout(()=>{ location.href="reportes-admin.html"; }, 1100);
+  }catch(e){ $("genStatus").className="status err"; $("genStatus").textContent="✗ "+(e.message||e); $("adminApprove").disabled=false; }
+});
+
+/* ===== Arranque en modo revisión si viene ?id=NN&admin=1 ===== */
+window.onAuthReady = function(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const id = p.get("id");
+    if(id){
+      const isAdmin = (p.get("admin")==="1") && !!window.HT_IS_ADMIN;
+      abrirOrden(id, { admin: isAdmin });
+    }
+  }catch(e){}
+};
+
+function fitPreview(){
+  const stage=$("stage"), pv=$("preview"); if(!stage||!pv) return;
+  if(!lastContent){ pv.style.width="100%"; pv.style.transform="none"; pv.style.margin="0 auto"; stage.style.height=""; stage.style.overflow=""; return; }
+  pv.style.width="816px"; pv.style.transform="none"; pv.style.margin="0 auto";
+  const avail=stage.clientWidth, W=816;
+  if(avail<W){ const s=avail/W; pv.style.transformOrigin="top left"; pv.style.transform="scale("+s+")"; pv.style.margin="0"; stage.style.overflow="hidden"; stage.style.height=(pv.scrollHeight*s)+"px"; }
+  else { stage.style.height=""; stage.style.overflow=""; }
+}
+function rerender(){ if(!lastContent) return; $("preview").innerHTML=renderReport($("brand").value, gatherData(), lastContent, images, coverPhoto, null); fitPreview(); }
+let _rsz; window.addEventListener("resize", ()=>{ clearTimeout(_rsz); _rsz=setTimeout(fitPreview,120); });
+
+["brand","planta","tipo"].forEach(id=>$(id).addEventListener("input", rerender));
+$("brand").addEventListener("change", rerender);
+$("pdf").addEventListener("click", ()=>window.print());
+
+cargarOrdenes(); cargarEmpleados(); fitPreview();
+</script>
+</body>
+</html>
