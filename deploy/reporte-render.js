@@ -7,12 +7,12 @@
 const esc = (s) => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const BRANDS = {
   hydratech: { name:"HydraTech Group",
-    coverGrad:"linear-gradient(160deg,#161c33 0%,#1b2138 55%,#222a47 100%)", glow:"rgba(58,82,168,0.45)",
+    coverGrad:"linear-gradient(160deg,#161c33 0%,#1b2138 55%,#222a47 100%)", glow:"rgba(58,82,168,0.45)", glowEnd:"rgba(58,82,168,0)",
     metaBg:"#1b2138", metaLabel:"#7e8cc4", folioColor:"#9db0e8", accent:"#3a52a8", rule:"#263370",
     logoWhite:"assets/hydratech-icon-white.png", logoWhiteH:48, logoDark:"assets/hydratech-icon.png",
     footL:"SOLUTIONS THROUGH INNOVATION", footR:"hidratechgroup.mx", phone:"81 2904 9481", email:"ventas@hydratechgroup.mx" },
   tubemac: { name:"Tube-Mac",
-    coverGrad:"linear-gradient(160deg,#2a1850 0%,#341e60 55%,#3f2470 100%)", glow:"rgba(207,10,115,0.36)",
+    coverGrad:"linear-gradient(160deg,#2a1850 0%,#341e60 55%,#3f2470 100%)", glow:"rgba(207,10,115,0.36)", glowEnd:"rgba(207,10,115,0)",
     metaBg:"#341e60", metaLabel:"#b78ab0", folioColor:"#d488b6", accent:"#cf0a73", rule:"#341e60",
     logoWhite:"assets/tubemac/tubemac-logo-white.png", logoWhiteH:52, logoDark:"assets/tubemac/tubemac-logo.png",
     footL:"TUBE-MAC® · PIPING TECHNOLOGIES", footR:"hidratechgroup.mx · distribuidor Tube-Mac®", phone:"81 2904 9481", email:"ventas@hydratechgroup.mx" },
@@ -44,7 +44,7 @@ function renderReport(brandKey, d, c, imgs, coverPhoto, firma){
   const tecs = (d.tecnicos||[]).join(", ");
   const cover = '<section class="sheet cover" style="position:relative; width:8.5in; max-width:100%; min-height:11in; margin:0; background:'+b.coverGrad+'; color:#fff; overflow:hidden; box-shadow:0 12px 40px -12px rgba(20,24,41,0.5); display:flex; flex-direction:column;">'+
     '<div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size:46px 46px; pointer-events:none;"></div>'+
-    '<div style="position:absolute; top:-150px; right:-120px; width:460px; height:460px; background:radial-gradient(circle, '+b.glow+', transparent 68%); pointer-events:none;"></div>'+
+    '<div style="position:absolute; top:-150px; right:-120px; width:460px; height:460px; background:radial-gradient(circle, '+b.glow+', '+b.glowEnd+' 68%); pointer-events:none;"></div>'+
     '<div style="position:relative; padding:0.85in 0.85in 0; display:flex; justify-content:space-between; align-items:flex-start;"><img src="'+b.logoWhite+'" alt="'+esc(b.name)+'" style="height:'+b.logoWhiteH+'px; display:block;"><div style="text-align:right;"><div style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; letter-spacing:0.16em; color:'+b.folioColor+';">FOLIO</div><div style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:20px; margin-top:3px;">'+esc(d.folio||"—")+'</div></div></div>'+
     '<div style="position:relative; padding:0 0.85in; margin-top:0.7in;"><div style="display:inline-flex; align-items:center; gap:9px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); padding:8px 14px; border-radius:7px;"><span style="width:8px; height:8px; border-radius:50%; background:#1f9d55; box-shadow:0 0 0 4px rgba(31,157,85,0.2);"></span><span style="font-family:\'IBM Plex Mono\',monospace; font-size:11px; font-weight:600; letter-spacing:0.14em; color:#cdd6ef;">SERVICIO CONCLUIDO</span></div>'+
     '<h1 style="font-family:\'Archivo\',sans-serif; font-weight:800; font-size:50px; line-height:1.02; letter-spacing:-0.025em; margin:24px 0 0;">Reporte de<br>Servicio Técnico</h1><p style="font-size:17px; line-height:1.5; color:#aeb6d4; max-width:5.2in; margin:18px 0 0;">Diagnóstico, reparación y plan de seguimiento del equipo hidráulico intervenido.</p></div>'+
