@@ -75,10 +75,11 @@ async function geminiJSON(body) {
     const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json().catch(() => ({}));
     const msg = data.error && (data.error.message || "");
-    const saturado = res.status === 503 || res.status === 429 || /high demand|overloaded|unavailable|resource.*exhausted/i.test(msg || "");
+    const saturado = res.status === 503 || res.status === 429 || res.status === 404 || /high demand|overloaded|unavailable|resource.*exhausted|no longer available|not found|deprecated|unsupported/i.test(msg || "");
     if (!data.error) return data;
     ultimo = new Error(msg || `Gemini HTTP ${res.status}`);
     if (!saturado) throw ultimo;                    // error real: no reintentar
+    if (/no longer available|not found|deprecated|unsupported/i.test(msg || "")) { ultimo.saturado = true; throw ultimo; } // modelo retirado: directo al plan B (Groq)
     if (intento < 3) await new Promise((r) => setTimeout(r, intento * 1800)); // 1.8s, 3.6s
   }
   ultimo.saturado = true;
