@@ -69,6 +69,41 @@ export default async (req) => {
     const base = (process.env.ODOO_URL || "").replace(/\/+$/, "");
     const link = `${base}/web#id=${orderId}&model=sale.order&view_type=form`;
 
+    // 4b) Aviso por correo a administración (con copia a dirección) para revisión.
+    try {
+      const destino = (process.env.COTIZA_CORREO_ADMIN || "").trim();
+      const copia = (process.env.COTIZA_CORREO_DIRECCION || "").trim();
+      if (destino || copia) {
+        const cli = await executeKw("res.partner", "read", [[partnerId], ["name"]]).catch(() => [{ name: "Cliente" }]);
+        const nombreCli = (cli && cli[0] && cli[0].name) || "Cliente";
+        const mxn = (n) => "$" + (Number(n) || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 });
+        const total = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) > 0 ? Number(l.qty) : 1), 0);
+        const filas = lines.map((l) => {
+          const q = Number(l.qty) > 0 ? Number(l.qty) : 1;
+          const td = 'padding:7px 10px;border-bottom:1px solid #eceef4;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1b2138;';
+          return '<tr><td style="' + td + '">' + String(l.name).replace(/</g, "&lt;") + '</td><td align="center" style="' + td + '">' + q + '</td><td align="right" style="' + td + '">' + mxn(l.price) + '</td><td align="right" style="' + td + 'font-weight:bold;">' + mxn((Number(l.price) || 0) * q) + '</td></tr>';
+        }).join("");
+        const th = 'padding:7px 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1px;color:#8a93a8;border-bottom:2px solid #e6e9f0;';
+        const html = '<div style="max-width:640px;margin:0 auto;font-family:Arial,Helvetica,sans-serif;">' +
+          '<div style="background:#141829;border-bottom:3px solid #263370;padding:16px 20px;color:#ffffff;font-weight:bold;font-size:16px;">Nueva cotización de mangueras — revisar</div>' +
+          '<div style="background:#ffffff;border:1px solid #e6e9f0;padding:18px 20px;">' +
+          '<p style="font-size:14px;color:#1b2138;margin:0 0 4px;"><b>' + folio + '</b> · ' + nombreCli.replace(/</g, "&lt;") + '</p>' +
+          '<p style="font-size:13px;color:#46506a;margin:0 0 14px;">' + String(body.note || "").replace(/</g, "&lt;") + '</p>' +
+          '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">' +
+          '<tr><th align="left" style="' + th + '">DESCRIPCIÓN</th><th style="' + th + '">CANT.</th><th align="right" style="' + th + '">P. UNIT</th><th align="right" style="' + th + '">IMPORTE</th></tr>' +
+          filas +
+          '<tr><td colspan="3" align="right" style="padding:10px;font-family:Arial;font-size:13px;font-weight:bold;">TOTAL</td><td align="right" style="padding:10px;font-family:Arial;font-size:15px;font-weight:bold;color:#3a52a8;">' + mxn(total) + '</td></tr>' +
+          '</table>' +
+          '<p style="margin:16px 0 0;"><a href="' + link + '" style="background:#3a52a8;color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:8px;font-size:13px;font-weight:bold;display:inline-block;">Abrir cotización en Odoo</a></p>' +
+          '<p style="font-size:11px;color:#8a93a8;margin-top:14px;">La cotización quedó en BORRADOR. Revísala antes de enviarla al cliente.</p>' +
+          '</div></div>';
+        const vals = { subject: `📋 Cotización ${folio} · ${nombreCli} · ${mxn(total)}`, body_html: html, email_to: destino || copia, auto_delete: false };
+        if (destino && copia && copia !== destino) vals.email_cc = copia;
+        const mailId = await executeKw("mail.mail", "create", [vals]);
+        await executeKw("mail.mail", "send", [[mailId]]).catch(() => {});
+      }
+    } catch (e) { console.error("Aviso de cotización falló:", e); }
+
     return json({ ok: true, orderId, folio, link });
   } catch (e) {
     return json({ ok: false, error: String(e.message || e) }, 500);
