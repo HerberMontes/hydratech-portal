@@ -388,6 +388,8 @@ function App() {
   const [areasDoc, setAreasDoc] = useState({ rev: 0, areas: [] });
   const [areaTxt, setAreaTxt] = useState("");
   const [equipoTxt, setEquipoTxt] = useState("");
+  const [areaNueva, setAreaNueva] = useState(false);
+  const [equipoNuevo, setEquipoNuevo] = useState(false);
   const [cargandoAreas, setCargandoAreas] = useState(false);
   const results = useMemo(() => lines.map(quoteLine), [lines]);
   useEffect(() => {
@@ -400,7 +402,7 @@ function App() {
     } catch (e) {}
   }, []);
   useEffect(() => {
-    setAreaTxt(""); setEquipoTxt(""); setAreasDoc({ rev: 0, areas: [] });
+    setAreaTxt(""); setEquipoTxt(""); setAreaNueva(false); setEquipoNuevo(false); setAreasDoc({ rev: 0, areas: [] });
     if (!clienteId) return;
     setCargandoAreas(true);
     fetch("/api/mangueras-listar?partnerId=" + clienteId).then((r) => r.json()).then((d) => {
@@ -415,7 +417,7 @@ function App() {
     window.addEventListener("beforeunload", warn);
     return () => { window.__ht_dirty = false; window.removeEventListener("beforeunload", warn); };
   }, [lines]);
-  const _n = (x) => String(x || "").trim().toLowerCase();
+  const _n = (x) => String(x || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const areaSel = areasDoc.areas.find((a) => _n(a.nombre) === _n(areaTxt));
   const equipoSel = areaSel && (areaSel.equipos || []).find((e) => _n(e.nombre) === _n(equipoTxt));
   const orientTxt = (l) => {
@@ -621,15 +623,23 @@ function App() {
         ] }),
         /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
           "\xC1rea * ",
-          areaTxt.trim() && !areaSel && /* @__PURE__ */ jsx("span", { className: "normal-case text-emerald-600", children: "(nueva)" }),
-          /* @__PURE__ */ jsx("input", { list: "dl-areas", value: areaTxt, disabled: !clienteId, placeholder: !clienteId ? "Primero el cliente" : cargandoAreas ? "Cargando\u2026" : "Escribe o elige\u2026", onChange: (e) => { setAreaTxt(e.target.value); setEquipoTxt(""); }, className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 180 } }),
-          /* @__PURE__ */ jsx("datalist", { id: "dl-areas", children: areasDoc.areas.map((a) => /* @__PURE__ */ jsx("option", { value: a.nombre }, a.id)) })
+          areaNueva && areaTxt.trim() && (areaSel ? /* @__PURE__ */ jsx("span", { className: "normal-case text-blue-600", children: "(ya existe: se usar\xE1 esa)" }) : /* @__PURE__ */ jsx("span", { className: "normal-case text-emerald-600", children: "(se crear\xE1 al cotizar)" })),
+          /* @__PURE__ */ jsxs("select", { value: areaNueva ? "__add__" : (areaSel ? areaSel.nombre : ""), disabled: !clienteId, onChange: (e) => { const v = e.target.value; if (v === "__add__") { setAreaNueva(true); setAreaTxt(""); } else { setAreaNueva(false); setAreaTxt(v); } setEquipoTxt(""); setEquipoNuevo(false); }, className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 180 }, children: [
+            /* @__PURE__ */ jsx("option", { value: "", children: !clienteId ? "Primero el cliente" : cargandoAreas ? "Cargando\u2026" : "Elige \xE1rea\u2026" }),
+            ...areasDoc.areas.map((a) => /* @__PURE__ */ jsx("option", { value: a.nombre, children: a.nombre }, a.id)),
+            /* @__PURE__ */ jsx("option", { value: "__add__", children: "\u2795 A\xF1adir \xE1rea nueva\u2026" })
+          ] }),
+          areaNueva && /* @__PURE__ */ jsx("input", { autoFocus: true, value: areaTxt, placeholder: "Nombre de la nueva \xE1rea", onChange: (e) => setAreaTxt(e.target.value), className: "mt-1 block w-full rounded border border-emerald-400 bg-emerald-50/40 px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto", style: { minWidth: 180 } })
         ] }),
         /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
           "Equipo * ",
-          equipoTxt.trim() && !equipoSel && /* @__PURE__ */ jsx("span", { className: "normal-case text-emerald-600", children: "(nuevo)" }),
-          /* @__PURE__ */ jsx("input", { list: "dl-equipos", value: equipoTxt, disabled: !areaTxt.trim(), placeholder: !areaTxt.trim() ? "Primero el \xE1rea" : "Escribe o elige\u2026", onChange: (e) => setEquipoTxt(e.target.value), className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 200 } }),
-          /* @__PURE__ */ jsx("datalist", { id: "dl-equipos", children: (areaSel && areaSel.equipos || []).map((e2) => /* @__PURE__ */ jsx("option", { value: e2.nombre }, e2.id)) })
+          equipoNuevo && equipoTxt.trim() && (equipoSel ? /* @__PURE__ */ jsx("span", { className: "normal-case text-blue-600", children: "(ya existe: se usar\xE1 ese)" }) : /* @__PURE__ */ jsx("span", { className: "normal-case text-emerald-600", children: "(se crear\xE1 al cotizar)" })),
+          /* @__PURE__ */ jsxs("select", { value: equipoNuevo ? "__add__" : (equipoSel ? equipoSel.nombre : ""), disabled: !areaTxt.trim(), onChange: (e) => { const v = e.target.value; if (v === "__add__") { setEquipoNuevo(true); setEquipoTxt(""); } else { setEquipoNuevo(false); setEquipoTxt(v); } }, className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 200 }, children: [
+            /* @__PURE__ */ jsx("option", { value: "", children: !areaTxt.trim() ? "Primero el \xE1rea" : "Elige equipo\u2026" }),
+            ...(areaSel && areaSel.equipos || []).map((e2) => /* @__PURE__ */ jsx("option", { value: e2.nombre, children: e2.nombre }, e2.id)),
+            /* @__PURE__ */ jsx("option", { value: "__add__", children: "\u2795 A\xF1adir equipo nuevo\u2026" })
+          ] }),
+          equipoNuevo && /* @__PURE__ */ jsx("input", { autoFocus: true, value: equipoTxt, placeholder: "Nombre del nuevo equipo", onChange: (e) => setEquipoTxt(e.target.value), className: "mt-1 block w-full rounded border border-emerald-400 bg-emerald-50/40 px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto", style: { minWidth: 200 } })
         ] }),
         clienteId && !cargandoAreas && areasDoc.areas.length === 0 && /* @__PURE__ */ jsxs("span", { className: "text-[12px] text-amber-700", children: [
           "Este cliente no tiene \xE1reas/equipos dados de alta. ",
