@@ -38,7 +38,7 @@ export default async (req) => {
     }
 
     doc.areas = doc.areas || [];
-    const norm = (x) => String(x || "").trim().toLowerCase();
+    const norm = (x) => String(x || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const genId = (p) => p + "-" + Math.random().toString(36).slice(2, 8);
     // ÁREA: por id, o por nombre (sin duplicar por mayúsculas), o SE CREA
     let area = doc.areas.find((a) => a.id === areaId) ||
