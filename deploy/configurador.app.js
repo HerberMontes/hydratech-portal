@@ -261,7 +261,7 @@ function OrientacionCodo({ line, onPatch }) {
   );
 }
 function newLine() {
-  return { id: _id++, len: 1, pres: 3e3, A: defSide(), B: defSide() };
+  return { id: _id++, len: 1, pres: 3e3, qty: 1, A: defSide(), B: defSide() };
 }
 function mkConnName(c) {
   return `PRE.${c.sys} ${describe(c)} (esp. ${DASH[c.hd]}")`;
@@ -352,7 +352,10 @@ function MobileLine({ line, i, res, onPatch, onDup, onRemove, canRemove }) {
       h("div", { className: "flex gap-1.5" },
         h("button", { onClick: onDup, className: "rounded border border-slate-300 px-2.5 py-1 text-[12px] font-bold text-slate-600" }, "Duplicar"),
         h("button", { onClick: onRemove, disabled: !canRemove, className: "rounded border border-red-200 px-2.5 py-1 text-[12px] font-bold text-red-600 disabled:opacity-30" }, "Quitar"))),
-    h("div", { className: "mb-2 grid grid-cols-2 gap-2" },
+    h("div", { className: "mb-2 grid grid-cols-3 gap-2" },
+      h("label", { className: "block" },
+        h("span", { className: "text-[11px] font-bold text-slate-500" }, "Cantidad"),
+        h("input", { type: "number", min: "1", step: "1", value: line.qty || 1, className: numCls, onChange: (e) => onPatch({ qty: e.target.value }) })),
       h("label", { className: "block" },
         h("span", { className: "text-[11px] font-bold text-slate-500" }, "Largo total (m)"),
         h("input", { type: "number", min: "0", step: "0.1", value: line.len, className: numCls, onChange: (e) => onPatch({ len: e.target.value }) })),
@@ -383,8 +386,8 @@ function App() {
   const [saved, setSaved] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
   const [areasDoc, setAreasDoc] = useState({ rev: 0, areas: [] });
-  const [areaId, setAreaId] = useState("");
-  const [equipoId, setEquipoId] = useState("");
+  const [areaTxt, setAreaTxt] = useState("");
+  const [equipoTxt, setEquipoTxt] = useState("");
   const [cargandoAreas, setCargandoAreas] = useState(false);
   const results = useMemo(() => lines.map(quoteLine), [lines]);
   useEffect(() => {
@@ -397,7 +400,7 @@ function App() {
     } catch (e) {}
   }, []);
   useEffect(() => {
-    setAreaId(""); setEquipoId(""); setAreasDoc({ rev: 0, areas: [] });
+    setAreaTxt(""); setEquipoTxt(""); setAreasDoc({ rev: 0, areas: [] });
     if (!clienteId) return;
     setCargandoAreas(true);
     fetch("/api/mangueras-listar?partnerId=" + clienteId).then((r) => r.json()).then((d) => {
@@ -412,8 +415,9 @@ function App() {
     window.addEventListener("beforeunload", warn);
     return () => { window.__ht_dirty = false; window.removeEventListener("beforeunload", warn); };
   }, [lines]);
-  const areaSel = areasDoc.areas.find((a) => a.id === areaId);
-  const equipoSel = areaSel && (areaSel.equipos || []).find((e) => e.id === equipoId);
+  const _n = (x) => String(x || "").trim().toLowerCase();
+  const areaSel = areasDoc.areas.find((a) => _n(a.nombre) === _n(areaTxt));
+  const equipoSel = areaSel && (areaSel.equipos || []).find((e) => _n(e.nombre) === _n(equipoTxt));
   const orientTxt = (l) => {
     const p = [];
     if (l.A.ak !== "R") p.push(`A ${(l.A.or || 0)}\xB0`);
@@ -423,13 +427,14 @@ function App() {
   };
   const validaObligatorios = () => {
     if (!clienteId) return "Elige el cliente.";
-    if (!areaId) return "Elige el \xE1rea del cliente (campo obligatorio).";
-    if (!equipoId) return "Elige el equipo (campo obligatorio).";
+    if (!areaTxt.trim()) return "Escribe el \xE1rea del cliente (existente o nueva).";
+    if (!equipoTxt.trim()) return "Escribe el equipo (existente o nuevo).";
     if (lines.length === 0) return "Agrega al menos una manguera.";
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i];
       if (!l.pres || isNaN(+l.pres) || +l.pres <= 0) return `Manguera ${i + 1}: captura la presi\xF3n (PSI).`;
       if (!l.len || isNaN(+l.len) || +l.len <= 0) return `Manguera ${i + 1}: captura el largo total (m).`;
+      if (l.qty !== void 0 && (isNaN(+l.qty) || +l.qty < 1)) return `Manguera ${i + 1}: la cantidad debe ser 1 o más.`;
     }
     return null;
   };
@@ -447,9 +452,12 @@ function App() {
       const v = norm(r);
       if (!v) return null;
       const mid = genId();
-      const name = `[${mid}] Manguera \u2300${DASH[v.hose.dash]}" \xB7 ${lines[i].len} m \xB7 ${v.hose.wp} psi \u2014 A: ${describe(v.A)} | B: ${describe(v.B)}` + orientTxt(lines[i]);
-      registro.push({ id: mid, pres: +lines[i].pres, len: +lines[i].len, A: { ...lines[i].A }, B: { ...lines[i].B }, fecha: new Date().toISOString().slice(0, 10) });
-      return { name, price: v.customer, qty: 1 };
+      const qty = Math.max(1, Math.round(Number(lines[i].qty) || 1));
+      const name = `[${mid}${qty > 1 ? " \xD7" + qty : ""}] Manguera \u2300${DASH[v.hose.dash]}" \xB7 ${lines[i].len} m \xB7 ${v.hose.wp} psi \u2014 A: ${describe(v.A)} | B: ${describe(v.B)}` + orientTxt(lines[i]);
+      for (let n = 1; n <= qty; n++) {
+        registro.push({ id: qty > 1 ? `${mid}-${n}` : mid, pres: +lines[i].pres, len: +lines[i].len, A: { ...lines[i].A }, B: { ...lines[i].B }, fecha: new Date().toISOString().slice(0, 10) });
+      }
+      return { name, price: v.customer, qty };
     }).filter(Boolean);
     if (payloadLines.length === 0) { setCotMsg({ err: "No hay mangueras v\xE1lidas para cotizar." }); return; }
     setCotizando(true);
@@ -458,7 +466,7 @@ function App() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           partnerId: Number(clienteId),
-          note: `\xC1rea: ${areaSel ? areaSel.nombre : ""} \xB7 Equipo: ${equipoSel ? equipoSel.nombre : ""}`,
+          note: `\xC1rea: ${areaTxt.trim()} \xB7 Equipo: ${equipoTxt.trim()}`,
           lines: payloadLines,
         }),
       });
@@ -468,7 +476,7 @@ function App() {
         // Registra las mangueras cotizadas en el plan de mantenimiento del cliente.
         fetch("/api/mangueras-registrar", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ partnerId: Number(clienteId), areaId, equipoId, folio: d.folio, mangueras: registro }),
+          body: JSON.stringify({ partnerId: Number(clienteId), areaId: areaSel ? areaSel.id : "", equipoId: equipoSel ? equipoSel.id : "", areaNombre: areaTxt.trim(), equipoNombre: equipoTxt.trim(), folio: d.folio, mangueras: registro }),
         }).catch(() => {});
       }
       else setCotMsg({ err: d.error || "No se pudo crear la cotizaci\xF3n." });
@@ -494,14 +502,14 @@ function App() {
       const it = saved.find((s) => s.id === editandoId);
       if (!it) { setEditandoId(null); return; }
       if (!window.confirm(`\u00BFActualizar la configuraci\u00F3n guardada "${it.nombre}" con estos cambios?`)) return;
-      const arr = saved.map((s) => s.id === editandoId ? { ...s, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaId, equipoId } : s);
+      const arr = saved.map((s) => s.id === editandoId ? { ...s, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaTxt, equipoTxt } : s);
       setSaved(arr); persistSaved(arr); setEditandoId(null);
       setLines([]); setClienteId(""); setCotMsg(null); setTab("guardados");
       return;
     }
     const nombre = (window.prompt("Nombre para guardar esta configuraci\xF3n:") || "").trim();
     if (!nombre) return;
-    const item = { id: Date.now(), nombre, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaId, equipoId };
+    const item = { id: Date.now(), nombre, fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaTxt, equipoTxt };
     const arr = [item, ...saved];
     setSaved(arr); persistSaved(arr);
   };
@@ -518,7 +526,7 @@ function App() {
     if (!it) return;
     setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
     if (it.clienteId !== void 0) setClienteId(it.clienteId);
-    if (it.areaId) setTimeout(() => { setAreaId(it.areaId); setEquipoId(it.equipoId || ""); }, 600);
+    if (it.areaTxt) setTimeout(() => { setAreaTxt(it.areaTxt); setEquipoTxt(it.equipoTxt || ""); }, 600);
     setEditandoId(null);
     setTab("cotizacion");
   };
@@ -527,7 +535,7 @@ function App() {
     if (!it) return;
     setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
     if (it.clienteId !== void 0) setClienteId(it.clienteId);
-    if (it.areaId) setTimeout(() => { setAreaId(it.areaId); setEquipoId(it.equipoId || ""); }, 600);
+    if (it.areaTxt) setTimeout(() => { setAreaTxt(it.areaTxt); setEquipoTxt(it.equipoTxt || ""); }, 600);
     setEditandoId(id);
     setTab("cotizacion");
   };
@@ -593,7 +601,7 @@ function App() {
         ] })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-5", children: [
-        /* @__PURE__ */ jsx(Stat, { label: "Mangueras", value: lines.length }),
+        /* @__PURE__ */ jsx(Stat, { label: "Mangueras", value: lines.reduce((a, l) => a + Math.max(1, Math.round(Number(l.qty) || 1)), 0) }),
         canP && /* @__PURE__ */ jsx(Stat, { label: "Costo compra", value: money(purchaseTotal), dim: true }),
         canP && /* @__PURE__ */ jsx(Stat, { label: "Margen", value: margin + "%", accent: "#34d399" }),
         canP && /* @__PURE__ */ jsxs("div", { className: "text-right", children: [
@@ -612,18 +620,16 @@ function App() {
           ] })
         ] }),
         /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
-          "\xC1rea *",
-          /* @__PURE__ */ jsxs("select", { value: areaId, disabled: !clienteId, onChange: (e) => { setAreaId(e.target.value); setEquipoId(""); }, className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 180 }, children: [
-            /* @__PURE__ */ jsx("option", { value: "", children: !clienteId ? "Primero el cliente" : cargandoAreas ? "Cargando\u2026" : areasDoc.areas.length ? "Elige \xE1rea\u2026" : "Sin \xE1reas dadas de alta" }),
-            ...areasDoc.areas.map((a) => /* @__PURE__ */ jsx("option", { value: a.id, children: a.nombre }, a.id))
-          ] })
+          "\xC1rea * ",
+          areaTxt.trim() && !areaSel && /* @__PURE__ */ jsx("span", { className: "normal-case text-emerald-600", children: "(nueva)" }),
+          /* @__PURE__ */ jsx("input", { list: "dl-areas", value: areaTxt, disabled: !clienteId, placeholder: !clienteId ? "Primero el cliente" : cargandoAreas ? "Cargando\u2026" : "Escribe o elige\u2026", onChange: (e) => { setAreaTxt(e.target.value); setEquipoTxt(""); }, className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 180 } }),
+          /* @__PURE__ */ jsx("datalist", { id: "dl-areas", children: areasDoc.areas.map((a) => /* @__PURE__ */ jsx("option", { value: a.nombre }, a.id)) })
         ] }),
         /* @__PURE__ */ jsxs("label", { className: "w-full text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:w-auto", children: [
-          "Equipo *",
-          /* @__PURE__ */ jsxs("select", { value: equipoId, disabled: !areaId, onChange: (e) => setEquipoId(e.target.value), className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 200 }, children: [
-            /* @__PURE__ */ jsx("option", { value: "", children: !areaId ? "Primero el \xE1rea" : (areaSel && areaSel.equipos && areaSel.equipos.length) ? "Elige equipo\u2026" : "Sin equipos en esta \xE1rea" }),
-            ...(areaSel && areaSel.equipos || []).map((e2) => /* @__PURE__ */ jsx("option", { value: e2.id, children: e2.nombre }, e2.id))
-          ] })
+          "Equipo * ",
+          equipoTxt.trim() && !equipoSel && /* @__PURE__ */ jsx("span", { className: "normal-case text-emerald-600", children: "(nuevo)" }),
+          /* @__PURE__ */ jsx("input", { list: "dl-equipos", value: equipoTxt, disabled: !areaTxt.trim(), placeholder: !areaTxt.trim() ? "Primero el \xE1rea" : "Escribe o elige\u2026", onChange: (e) => setEquipoTxt(e.target.value), className: "mt-0.5 block w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-[13px] font-normal normal-case tracking-normal text-slate-800 sm:w-auto disabled:bg-slate-100", style: { minWidth: 200 } }),
+          /* @__PURE__ */ jsx("datalist", { id: "dl-equipos", children: (areaSel && areaSel.equipos || []).map((e2) => /* @__PURE__ */ jsx("option", { value: e2.nombre }, e2.id)) })
         ] }),
         clienteId && !cargandoAreas && areasDoc.areas.length === 0 && /* @__PURE__ */ jsxs("span", { className: "text-[12px] text-amber-700", children: [
           "Este cliente no tiene \xE1reas/equipos dados de alta. ",
@@ -635,14 +641,15 @@ function App() {
         /* @__PURE__ */ jsxs("thead", { children: [
           /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-200 bg-slate-50", children: [
             /* @__PURE__ */ jsx("th", { className: th, rowSpan: 2, style: { width: 30 }, children: "#" }),
-            /* @__PURE__ */ jsx("th", { className: th + " border-l border-slate-200 text-center", colSpan: 2, style: { background: "#f1f5f9" }, children: "Datos" }),
+            /* @__PURE__ */ jsx("th", { className: th + " border-l border-slate-200 text-center", colSpan: 3, style: { background: "#f1f5f9" }, children: "Datos" }),
             /* @__PURE__ */ jsx("th", { className: th + " border-l-2 border-slate-200 text-center", colSpan: 4, style: { background: "#eff6ff", color: "#2563eb" }, children: "Lado A \u2014 conexi\xF3n" }),
             /* @__PURE__ */ jsx("th", { className: th + " border-l-2 border-slate-200 text-center", colSpan: 4, style: { background: "#eff6ff", color: "#2563eb" }, children: "Lado B \u2014 conexi\xF3n" }),
             /* @__PURE__ */ jsx("th", { className: th + " border-l-2 border-slate-200", rowSpan: 2, style: { minWidth: 240 }, children: "Manguera asignada (auto)" }),
             /* @__PURE__ */ jsx("th", { className: th + " border-l border-slate-200 text-center", rowSpan: 2, style: { width: 64 } })
           ] }),
           /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-200 bg-slate-50 text-slate-400", children: [
-            /* @__PURE__ */ jsx("th", { className: th + " border-l border-slate-200", children: "Largo m" }),
+            /* @__PURE__ */ jsx("th", { className: th + " border-l border-slate-200", children: "Cant." }),
+            /* @__PURE__ */ jsx("th", { className: th, children: "Largo m" }),
             /* @__PURE__ */ jsx("th", { className: th, children: "Presi\xF3n PSI" }),
             /* @__PURE__ */ jsx("th", { className: th + " border-l-2 border-slate-200", children: "Familia" }),
             /* @__PURE__ */ jsx("th", { className: th, children: "Est\xE1ndar" }),
@@ -658,12 +665,13 @@ function App() {
           const res = results[i];
           const v = norm(res);
           const codoA = line.A.ak !== "R", codoB = line.B.ak !== "R";
-          const filaOrient = (codoA || codoB) && /* @__PURE__ */ jsx("tr", { className: "border-b-2 border-slate-200 bg-amber-50/50", children: /* @__PURE__ */ jsxs("td", { colSpan: 13, className: "px-3 py-3", children: [
+          const filaOrient = (codoA || codoB) && /* @__PURE__ */ jsx("tr", { className: "border-b-2 border-slate-200 bg-amber-50/50", children: /* @__PURE__ */ jsxs("td", { colSpan: 14, className: "px-3 py-3", children: [
             /* @__PURE__ */ jsxs("div", { className: "mb-2 text-center text-[12px] font-bold text-amber-900", children: ["Orientaci\xF3n de codos \u2014 manguera ", i + 1] }),
             /* @__PURE__ */ jsx(OrientacionCodo, { line, onPatch: (pp) => patch(line.id, pp) })
           ] }) }, line.id + "-or");
           const filaPrincipal = /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-100 align-middle hover:bg-slate-50/60", children: [
             /* @__PURE__ */ jsx("td", { className: "px-1 text-center text-xs font-bold text-slate-400", children: i + 1 }),
+            /* @__PURE__ */ jsx("td", { className: "border-l border-slate-100 px-1 py-1", children: /* @__PURE__ */ jsx("input", { type: "number", min: "1", step: "1", value: line.qty || 1, title: "Cantidad de mangueras iguales", className: "w-14 rounded border border-slate-300 px-1.5 py-1.5 text-center text-sm font-bold", onChange: (e) => patch(line.id, { qty: e.target.value }) }) }),
             /* @__PURE__ */ jsx("td", { className: "border-l border-slate-100 px-1 py-1", children: /* @__PURE__ */ jsx(
               "input",
               {
@@ -769,7 +777,7 @@ function App() {
             /* @__PURE__ */ jsx(TabBtn, { on: tab === "guardados", onClick: () => setTab("guardados"), children: saved.length ? "Guardados (" + saved.length + ")" : "Guardados" })
           ] }),
           tab === "cotizacion" ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ jsx("span", { className: "max-w-[320px] truncate text-[11px] font-bold text-slate-500", children: equipoSel ? ((clientes.find((c) => String(c.id) === String(clienteId)) || {}).name || "") + " \xB7 " + (areaSel ? areaSel.nombre : "") + " \xB7 " + equipoSel.nombre : "Elige cliente, \xE1rea y equipo arriba" }),
+            /* @__PURE__ */ jsx("span", { className: "max-w-[320px] truncate text-[11px] font-bold text-slate-500", children: clienteId && areaTxt.trim() && equipoTxt.trim() ? ((clientes.find((c) => String(c.id) === String(clienteId)) || {}).name || "") + " \xB7 " + areaTxt.trim() + " \xB7 " + equipoTxt.trim() : "Elige cliente, \xE1rea y equipo arriba" }),
             /* @__PURE__ */ jsx("button", { onClick: cotizar, disabled: cotizando, className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 disabled:opacity-50", children: cotizando ? "Cotizando\u2026" : "Cotizar en Odoo" })
           ] }) : tab === "compra" && bom.length > 0 && /* @__PURE__ */ jsx("button", { onClick: copyBOM, className: "rounded bg-slate-800 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-700", children: copied ? "\u2713 Copiado" : "Copiar para compras" })
         ] }),
