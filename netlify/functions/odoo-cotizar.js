@@ -41,11 +41,25 @@ export default async (req) => {
     }
     const productId = prod[0].id;
 
+    // 1b) Conexiones: si la línea trae "sku" (código STROBBE), usa el producto
+    // REAL de Odoo (match por referencia interna). Así descuenta inventario y
+    // reporta por SKU. Si el código no existe en Odoo, cae al genérico.
+    const skus = [...new Set(lines.filter((l) => l && l.sku).map((l) => String(l.sku)))];
+    const bySku = {};
+    if (skus.length) {
+      const found = await executeKw(
+        "product.product", "search_read",
+        [[["default_code", "in", skus]]],
+        { fields: ["id", "default_code"] }
+      ).catch(() => []);
+      (found || []).forEach((p) => { bySku[p.default_code] = p.id; });
+    }
+
     // 2) Arma las líneas de la cotización.
     const orderLines = lines
       .filter((l) => l && l.name)
       .map((l) => [0, 0, {
-        product_id: productId,
+        product_id: (l.sku && bySku[String(l.sku)]) || productId,
         name: String(l.name),
         product_uom_qty: Number(l.qty) > 0 ? Number(l.qty) : 1,
         price_unit: Number(l.price) || 0,
