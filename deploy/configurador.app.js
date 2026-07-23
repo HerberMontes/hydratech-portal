@@ -83,36 +83,49 @@ function quoteLine(line) {
   if (!cA.length) return { error: "Sin conector para el lado A en cat\xE1logo." };
   if (!cB.length) return { error: "Sin conector para el lado B en cat\xE1logo." };
   const thA = line.A.th, thB = line.B.th;
-  const sameSize = thA === thB;
-  const allowedDash = sameSize ? /* @__PURE__ */ new Set([thA]) : /* @__PURE__ */ new Set([thA, thB]);
+  // ===== REGLA DE SELECCIÓN DE MANGUERA (definida por HydraTech) =====
+  // 1) La compatibilidad la dan las ESPIGAS del catálogo comunes a ambos extremos.
+  // 2) Si los extremos difieren de tamaño, manda el MENOR (el flujo lo limita él).
+  // 3) A igualdad, gana la espiga MÁS CERCANA a la medida REAL del conector
+  //    (ej. 18L ≈ 3/4", no 1/2") — para no crear flujo turbulento.
+  // 4) Dentro de la espiga elegida, la manguera más económica que cumple presión.
+  const DASH_MM = { "02": 3.18, "03": 4.76, "04": 6.35, "05": 7.94, "06": 9.53, "08": 12.7, "10": 15.88, "12": 19.05, "16": 25.4, "20": 31.75, "24": 38.1, "32": 50.8, "40": 63.5 };
+  const DIN_SKS = ["m_light", "h_light", "m_heavy", "h_heavy"];
+  const METRICOS = [...DIN_SKS, "komatsu", "plano_m"];
+  const realMM = (side, cs) => {
+    if (DIN_SKS.includes(side.sk)) { const m = /^(\d+)[LS]/.exec(String((cs[0] || {}).ml || "")); if (m) return +m[1]; }
+    if (!METRICOS.includes(side.sk)) return DASH_MM[side.th] != null ? DASH_MM[side.th] : null;
+    return null;
+  };
+  const tA = realMM(line.A, cA), tB = realMM(line.B, cB);
+  const conocidos = [tA, tB].filter((x) => x != null);
+  const objetivo = conocidos.length ? Math.min(...conocidos) : null;
+  const hdA = /* @__PURE__ */ new Set(cA.map((c) => c.hd));
+  const comunes = [...new Set(cB.map((c) => c.hd))].filter((d) => hdA.has(d));
+  const orden = comunes.slice().sort((a, b) => {
+    if (objetivo == null) return (DASH_MM[b] || 0) - (DASH_MM[a] || 0);
+    const da = Math.abs((DASH_MM[a] || 0) - objetivo), db = Math.abs((DASH_MM[b] || 0) - objetivo);
+    return da - db || (DASH_MM[b] || 0) - (DASH_MM[a] || 0);
+  });
   let best = null;
-  for (const h of HOSES) {
-    if (!h.wp || h.wp < reqPsi) continue;
-    if (!allowedDash.has(h.dash)) continue;
-    for (const sys of h.sys) {
-      const a = cA.filter((c) => c.sys === sys && c.hd === h.dash).sort((x, y) => x.s - y.s)[0];
-      const b = cB.filter((c) => c.sys === sys && c.hd === h.dash).sort((x, y) => x.s - y.s)[0];
-      if (a && b) {
-        const cutKnown = a.cut != null && b.cut != null;
-        const cutmm = cutKnown ? a.cut + b.cut : 0;
-        const hoseM = +Math.max(0, len - cutmm / 1e3).toFixed(3);
-        const customer = +(h.s * hoseM + a.s + b.s).toFixed(2);
-        const cand = {
-          hose: h,
-          sys,
-          A: a,
-          B: b,
-          cutmm,
-          cutKnown,
-          hoseM,
-          reqPsi,
-          customer,
-          purchaseCost: +(h.c * hoseM + a.c + b.c).toFixed(2),
-          short: len > 0 && cutmm / 1e3 >= len
-        };
-        if (!best || cand.customer < best.customer) best = cand;
+  for (const dash of orden) {
+    for (const h of HOSES) {
+      if (h.dash !== dash) continue;
+      if (!h.wp || h.wp < reqPsi) continue;
+      for (const sys of h.sys) {
+        const a = cA.filter((c) => c.sys === sys && c.hd === h.dash).sort((x, y) => x.s - y.s)[0];
+        const b = cB.filter((c) => c.sys === sys && c.hd === h.dash).sort((x, y) => x.s - y.s)[0];
+        if (a && b) {
+          const cutKnown = a.cut != null && b.cut != null;
+          const cutmm = cutKnown ? a.cut + b.cut : 0;
+          const hoseM = +Math.max(0, len - cutmm / 1e3).toFixed(3);
+          const customer = +(h.s * hoseM + a.s + b.s).toFixed(2);
+          const cand = { hose: h, sys, A: a, B: b, cutmm, cutKnown, hoseM, reqPsi, customer, purchaseCost: +(h.c * hoseM + a.c + b.c).toFixed(2), short: len > 0 && cutmm / 1e3 >= len };
+          if (!best || cand.customer < best.customer) best = cand;
+        }
       }
     }
+    if (best) break; // la espiga prioritaria manda; dentro de ella, la más económica
   }
   if (!best) return { error: "No hay combinaci\xF3n v\xE1lida de espigas para estos dos extremos. Ajusta el lado A/B o la presi\xF3n." };
   if (best.short) return { error: "El largo total es menor que los conectores; aumenta el largo.", soft: best };
