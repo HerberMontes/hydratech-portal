@@ -965,34 +965,29 @@ function ConxPanel({ conx, setConx, canP }) {
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState("");
   const [forma, setForma] = useState("");
-  const [extA, setExtA] = useState("");
-  const [extB, setExtB] = useState("");
+  const [fam, setFam] = useState("");
   const nn = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const busq = nn(q).trim();
-  const step = busq ? 4 : !tipo ? 1 : !forma ? 2 : !extA ? 3 : 4;
+  const step = busq ? 4 : !tipo ? 1 : !forma ? 2 : !fam ? 3 : 4;
   const deTipo = useMemo(() => CONX.filter((x) => conxTipoDe(x) === tipo), [tipo]);
   const formas = useMemo(() => { const m = {}; deTipo.forEach((x) => { m[x.f] = (m[x.f] || 0) + 1; }); return Object.keys(m).map((k) => [k, m[k]]); }, [deTipo]);
   const deForma = useMemo(() => deTipo.filter((x) => !forma || x.f === forma), [deTipo, forma]);
-  const stds = useMemo(() => { const m = {}; deForma.forEach((x) => x.e.forEach((s) => { m[s] = (m[s] || 0) + 1; })); return Object.keys(m).sort().map((k) => [k, m[k]]); }, [deForma]);
-  const stdsB = useMemo(() => { const m = {}; deForma.filter((x) => x.e.indexOf(extA) >= 0).forEach((x) => x.e.forEach((s) => { m[s] = (m[s] || 0) + 1; })); return Object.keys(m).sort().map((k) => [k, m[k]]); }, [deForma, extA]);
+  const familias = useMemo(() => { const m = {}; deForma.forEach((x) => { m[x.g] = (m[x.g] || 0) + 1; }); return Object.keys(m).sort().map((k) => [k, m[k]]); }, [deForma]);
   const res = useMemo(() => {
-    if (busq) return CONX.filter((x) => nn(x.k).indexOf(busq) >= 0 || nn(x.d).indexOf(busq) >= 0);
-    let r = deForma;
-    if (extA) r = r.filter((x) => x.e.indexOf(extA) >= 0);
-    if (extB && extB !== extA) r = r.filter((x) => x.e.indexOf(extB) >= 0);
-    return r;
-  }, [busq, deForma, extA, extB]);
+    if (busq) return CONX.filter((x) => nn(x.k).indexOf(busq) >= 0 || nn(x.d).indexOf(busq) >= 0 || nn(x.g).indexOf(busq) >= 0);
+    return fam ? deForma.filter((x) => x.g === fam) : deForma;
+  }, [busq, deForma, fam]);
   const inCart = (k) => { const c = conx.find((x) => x.k === k); return c ? c.qty : 0; };
   const add = (k) => setConx((cs) => { const i = cs.findIndex((c) => c.k === k); if (i >= 0) { const a = [...cs]; a[i] = { ...a[i], qty: a[i].qty + 1 }; return a; } return [...cs, { k, qty: 1 }]; });
   const setQty = (k, v) => setConx((cs) => cs.map((c) => c.k === k ? { ...c, qty: Math.max(1, Math.round(Number(v) || 1)) } : c));
   const del = (k) => setConx((cs) => cs.filter((c) => c.k !== k));
-  const irA = (s) => { if (s <= 0) { setTipo(""); setForma(""); setExtA(""); setExtB(""); } else if (s === 1) { setForma(""); setExtA(""); setExtB(""); } else if (s === 2) { setExtA(""); setExtB(""); } };
-  const stepTitles = { 1: "\xBFQu\xE9 necesitas?", 2: "Forma", 3: "Est\xE1ndares de cada extremo", 4: "Medida y cantidad" };
-  const stepHints = { 1: "Toca el tipo de pieza para empezar.", 2: "Solo se muestran las formas que existen para este tipo.", 3: "Elige el est\xE1ndar de cada extremo. Al completar, ver\xE1s las piezas.", 4: "Confirma la pieza, ajusta cantidad y agrega al pedido." };
+  const irA = (s) => { if (s <= 0) { setTipo(""); setForma(""); setFam(""); } else if (s === 1) { setForma(""); setFam(""); } else if (s === 2) { setFam(""); } };
+  const stepTitles = { 1: "\xBFQu\xE9 necesitas?", 2: "Forma", 3: "Extremos (familia)", 4: "Medida y cantidad" };
+  const stepHints = { 1: "Toca el tipo de pieza para empezar.", 2: "Solo se muestran las formas que existen para este tipo.", 3: "Elige la combinaci\xF3n de extremos, tal como en el cat\xE1logo (ej. Macho NPT \u2013 Macho JIC).", 4: "Confirma la pieza, ajusta cantidad y agrega al pedido." };
   const crumbs = [{ label: "Inicio", s: 0 }];
   if (tipo) crumbs.push({ label: (CONX_TIPOS.find((t) => t.id === tipo) || {}).name || tipo, s: 1 });
-  if (forma) crumbs.push({ label: forma, s: 2 });
-  if (extA) crumbs.push({ label: extA + (extB && extB !== extA ? " \xD7 " + extB : ""), s: 3 });
+  if (forma) crumbs.push({ label: forma === "\u2014" ? "\xDAnica" : forma, s: 2 });
+  if (fam) crumbs.push({ label: fam, s: 3 });
   const card = { background: "#ffffff", border: "1px solid #e3e8f2", borderRadius: 12 };
   const F = { fontFamily: "'IBM Plex Sans',system-ui,sans-serif" };
   return /* @__PURE__ */ jsxs("div", { style: F, children: [
@@ -1013,34 +1008,28 @@ function ConxPanel({ conx, setConx, canP }) {
       return /* @__PURE__ */ jsxs("button", { onClick: () => setTipo(t.id), className: "rounded-xl p-3 text-left transition hover:shadow-md", style: { ...card }, children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
           /* @__PURE__ */ jsx("span", { className: "text-[13px] font-extrabold", style: { color: "#1b2138" }, children: t.name }),
-          /* @__PURE__ */ jsxs("span", { className: "rounded-full px-2 py-0.5 text-[10px] font-bold", style: { background: "#eef2f9", color: "#3a52a8" }, children: [n] })
+          /* @__PURE__ */ jsx("span", { className: "rounded-full px-2 py-0.5 text-[10px] font-bold", style: { background: "#eef2f9", color: "#3a52a8" }, children: n })
         ] }),
         /* @__PURE__ */ jsx("p", { className: "mt-1 text-[11px]", style: { color: "#46506a" }, children: t.desc })
       ] }, t.id);
     }) }),
     step === 2 && !busq && /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2", children: formas.map(([fk, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setForma(fk), className: "rounded-xl px-4 py-2.5 text-[13px] font-bold transition hover:shadow-md", style: { ...card, color: "#1b2138" }, children: [fk === "\u2014" ? "\xDAnica" : fk, /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[10px] font-bold", style: { color: "#9aa3bd" }, children: ["(", n, ")"] })] }, fk)) }),
-    step === 3 && !busq && /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
-      /* @__PURE__ */ jsx("p", { className: "text-[11px] font-bold uppercase tracking-wide", style: { color: "#9aa3bd" }, children: "Extremo A" }),
-      /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-1.5", children: stds.map(([s, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => { setExtA(s); setExtB(""); }, className: "rounded-full px-3 py-1.5 text-[12px] font-bold transition", style: { background: extA === s ? "#3a52a8" : "#eef2f9", color: extA === s ? "#ffffff" : "#46506a" }, children: [s, " (", n, ")"] }, s)) })
-    ] }),
-    step === 4 && /* @__PURE__ */ jsxs("div", { children: [
-      !busq && extA && /* @__PURE__ */ jsxs("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
-        /* @__PURE__ */ jsx("span", { className: "text-[11px] font-bold uppercase tracking-wide", style: { color: "#9aa3bd" }, children: "Extremo B:" }),
-        stdsB.map(([s, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setExtB(extB === s ? "" : s), className: "rounded-full px-2.5 py-1 text-[11px] font-bold transition", style: { background: extB === s ? "#3a52a8" : "#eef2f9", color: extB === s ? "#ffffff" : "#46506a" }, children: [s, " (", n, ")"] }, s))
-      ] }),
-      /* @__PURE__ */ jsxs("div", { className: "max-h-80 overflow-y-auto rounded-xl", style: card, children: [
-        res.slice(0, 80).map((x) => { const en = inCart(x.k); return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 px-3 py-2", style: { borderBottom: "1px solid #eef1f7" }, children: [
-          /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
-            /* @__PURE__ */ jsx("span", { className: "mr-2 text-[11px] font-bold", style: { fontFamily: "'IBM Plex Mono',monospace", color: "#3a52a8" }, children: x.k }),
-            x.m && /* @__PURE__ */ jsx("span", { className: "mr-2 text-[12px] font-extrabold", style: { color: "#1b2138" }, children: x.m }),
-            /* @__PURE__ */ jsx("span", { className: "text-[12px]", style: { color: "#46506a" }, children: x.d }),
-            canP && /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[11px] font-bold", style: { color: "#16a34a" }, children: ["$", (x.s || 0).toLocaleString("es-MX")] })
-          ] }),
-          /* @__PURE__ */ jsx("button", { onClick: () => add(x.k), className: "shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-bold text-white transition", style: { background: en ? "#16a34a" : "#3a52a8" }, children: en ? "\u2713 " + en + " \xB7 +1" : "Agregar" })
-        ] }, x.k); }),
-        res.length === 0 && /* @__PURE__ */ jsx("p", { className: "p-3 text-[12px]", style: { color: "#9aa3bd" }, children: "Sin piezas con esa combinaci\xF3n." }),
-        res.length > 80 && /* @__PURE__ */ jsxs("p", { className: "p-2 text-center text-[11px]", style: { color: "#9aa3bd" }, children: [res.length - 80, " m\xE1s\u2026 afina la b\xFAsqueda."] })
-      ] })
+    step === 3 && !busq && /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-2 sm:grid-cols-2", children: familias.map(([g, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setFam(g), className: "flex items-center justify-between rounded-xl px-3 py-2.5 text-left transition hover:shadow-md", style: { ...card }, children: [
+      /* @__PURE__ */ jsx("span", { className: "text-[13px] font-bold", style: { color: "#1b2138" }, children: g }),
+      /* @__PURE__ */ jsxs("span", { className: "ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold", style: { background: "#eef2f9", color: "#3a52a8" }, children: [n, " medida", n > 1 ? "s" : ""] })
+    ] }, g)) }),
+    step === 4 && /* @__PURE__ */ jsxs("div", { className: "max-h-80 overflow-y-auto rounded-xl", style: card, children: [
+      res.slice(0, 80).map((x) => { const en = inCart(x.k); return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 px-3 py-2", style: { borderBottom: "1px solid #eef1f7" }, children: [
+        /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+          /* @__PURE__ */ jsx("span", { className: "mr-2 text-[11px] font-bold", style: { fontFamily: "'IBM Plex Mono',monospace", color: "#3a52a8" }, children: x.k }),
+          x.m && /* @__PURE__ */ jsx("span", { className: "mr-2 text-[12px] font-extrabold", style: { color: "#1b2138" }, children: x.m }),
+          /* @__PURE__ */ jsx("span", { className: "text-[12px]", style: { color: "#46506a" }, children: busq ? x.d : x.g }),
+          canP && /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[11px] font-bold", style: { color: "#16a34a" }, children: ["$", (x.s || 0).toLocaleString("es-MX")] })
+        ] }),
+        /* @__PURE__ */ jsx("button", { onClick: () => add(x.k), className: "shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-bold text-white transition", style: { background: en ? "#16a34a" : "#3a52a8" }, children: en ? "\u2713 " + en + " \xB7 +1" : "Agregar" })
+      ] }, x.k); }),
+      res.length === 0 && /* @__PURE__ */ jsx("p", { className: "p-3 text-[12px]", style: { color: "#9aa3bd" }, children: "Sin piezas con esa combinaci\xF3n." }),
+      res.length > 80 && /* @__PURE__ */ jsxs("p", { className: "p-2 text-center text-[11px]", style: { color: "#9aa3bd" }, children: [res.length - 80, " m\xE1s\u2026 afina la b\xFAsqueda."] })
     ] }),
     conx.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mt-3 rounded-xl p-3", style: { background: "#f7f9fc", border: "1px solid #e3e8f2" }, children: [
       /* @__PURE__ */ jsx("p", { className: "mb-1 text-[11px] font-extrabold uppercase tracking-wide", style: { color: "#9aa3bd" }, children: "En este pedido" }),
