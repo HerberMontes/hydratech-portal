@@ -960,6 +960,8 @@ var CONX_TIPOS = [
   { id: "Portabrida", name: "Portabrida", desc: "Uni\xF3n bridada c\xF3digo 61 / 62." },
   { id: "__acc__", name: "Tapones y accesorios", desc: "Tapones, tuercas, anillos y v\xE1lvulas check." }
 ];
+function conxImg(code) { const p = String(code).split("."); return "assets/conx/" + p.slice(0, -1).join(".") + ".png"; }
+function ConxFoto({ code, size }) { const [ok, setOk] = useState(true); if (!ok) return null; return /* @__PURE__ */ jsx("img", { src: conxImg(code), onError: () => setOk(false), className: "shrink-0 rounded bg-white object-contain", style: { width: size, height: size, border: "1px solid #eef1f7" }, alt: "" }); }
 function conxTipoDe(x) { return ["Tap\xF3n", "Tuerca", "Anillo", "V\xE1lvula check"].indexOf(x.t) >= 0 ? "__acc__" : x.t; }
 function ConxPanel({ conx, setConx, canP }) {
   const [q, setQ] = useState("");
@@ -1014,17 +1016,23 @@ function ConxPanel({ conx, setConx, canP }) {
       ] }, t.id);
     }) }),
     step === 2 && !busq && /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2", children: formas.map(([fk, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setForma(fk), className: "rounded-xl px-4 py-2.5 text-[13px] font-bold transition hover:shadow-md", style: { ...card, color: "#1b2138" }, children: [fk === "\u2014" ? "\xDAnica" : fk, /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[10px] font-bold", style: { color: "#9aa3bd" }, children: ["(", n, ")"] })] }, fk)) }),
-    step === 3 && !busq && /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-2 sm:grid-cols-2", children: familias.map(([g, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setFam(g), className: "flex items-center justify-between rounded-xl px-3 py-2.5 text-left transition hover:shadow-md", style: { ...card }, children: [
-      /* @__PURE__ */ jsx("span", { className: "text-[13px] font-bold", style: { color: "#1b2138" }, children: g }),
+    step === 3 && !busq && /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-2 sm:grid-cols-2", children: familias.map(([g, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setFam(g), className: "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left transition hover:shadow-md", style: { ...card }, children: [
+      /* @__PURE__ */ jsxs("span", { className: "flex min-w-0 items-center gap-2.5", children: [
+        /* @__PURE__ */ jsx(ConxFoto, { code: (deForma.find((x) => x.g === g) || { k: "" }).k, size: 44 }),
+        /* @__PURE__ */ jsx("span", { className: "text-[13px] font-bold", style: { color: "#1b2138" }, children: g })
+      ] }),
       /* @__PURE__ */ jsxs("span", { className: "ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold", style: { background: "#eef2f9", color: "#3a52a8" }, children: [n, " medida", n > 1 ? "s" : ""] })
     ] }, g)) }),
     step === 4 && /* @__PURE__ */ jsxs("div", { className: "max-h-80 overflow-y-auto rounded-xl", style: card, children: [
       res.slice(0, 80).map((x) => { const en = inCart(x.k); return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 px-3 py-2", style: { borderBottom: "1px solid #eef1f7" }, children: [
-        /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex min-w-0 items-center gap-2.5", children: [
+          /* @__PURE__ */ jsx(ConxFoto, { code: x.k, size: 40 }),
+          /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
           /* @__PURE__ */ jsx("span", { className: "mr-2 text-[11px] font-bold", style: { fontFamily: "'IBM Plex Mono',monospace", color: "#3a52a8" }, children: x.k }),
           x.m && /* @__PURE__ */ jsx("span", { className: "mr-2 text-[12px] font-extrabold", style: { color: "#1b2138" }, children: x.m }),
           /* @__PURE__ */ jsx("span", { className: "text-[12px]", style: { color: "#46506a" }, children: busq ? x.d : x.g }),
           canP && /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[11px] font-bold", style: { color: "#16a34a" }, children: ["$", (x.s || 0).toLocaleString("es-MX")] })
+          ] })
         ] }),
         /* @__PURE__ */ jsx("button", { onClick: () => add(x.k), className: "shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-bold text-white transition", style: { background: en ? "#16a34a" : "#3a52a8" }, children: en ? "\u2713 " + en + " \xB7 +1" : "Agregar" })
       ] }, x.k); }),
