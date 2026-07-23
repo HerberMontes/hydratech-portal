@@ -392,6 +392,7 @@ function MobileLine({ line, i, res, onPatch, onDup, onRemove, canRemove }) {
 function App() {
   const [lines, setLines] = useState([]);
   const [conx, setConx] = useState([]);
+  const [modo, setModo] = useState("mangueras");
   const [tab, setTab] = useState("cotizacion");
   const [copied, setCopied] = useState(false);
   const [clientes, setClientes] = useState([]);
@@ -650,6 +651,7 @@ function App() {
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-5", children: [
         /* @__PURE__ */ jsx(Stat, { label: "Mangueras", value: lines.reduce((a, l) => a + Math.max(1, Math.round(Number(l.qty) || 1)), 0) }),
+        /* @__PURE__ */ jsx(Stat, { label: "Conexiones", value: conx.reduce((a, c) => a + c.qty, 0) }),
         canP && /* @__PURE__ */ jsx(Stat, { label: "Costo compra", value: money(purchaseTotal), dim: true }),
         canP && /* @__PURE__ */ jsx(Stat, { label: "Margen", value: margin + "%", accent: "#34d399" }),
         canP && /* @__PURE__ */ jsxs("div", { className: "text-right", children: [
@@ -692,6 +694,8 @@ function App() {
           /* @__PURE__ */ jsx("a", { href: "mangueras.html", className: "font-bold underline", children: "Dalos de alta aqu\xED" })
         ] })
       ] }),
+      /* @__PURE__ */ jsx(ModeTabs, { modo, setModo, mangPz: lines.reduce((a, l) => a + Math.max(1, Math.round(Number(l.qty) || 1)), 0), conxPz: conx.reduce((a, c) => a + c.qty, 0) }),
+      modo === "mangueras" && /* @__PURE__ */ jsxs(Fragment, { children: [
       /* @__PURE__ */ jsx("div", { className: "space-y-3 md:hidden", children: lines.map((line, i) => /* @__PURE__ */ jsx(MobileLine, { line, i, res: results[i], onPatch: (pp) => patch(line.id, pp), onDup: () => dupLine(line.id), onRemove: () => removeLine(line.id), canRemove: lines.length > 1 }, line.id)) }),
       /* @__PURE__ */ jsx("div", { className: "hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block", children: /* @__PURE__ */ jsxs("table", { className: "w-full border-collapse text-sm", style: { minWidth: 1240 }, children: [
         /* @__PURE__ */ jsxs("thead", { children: [
@@ -815,8 +819,9 @@ function App() {
             " A\xF1adir manguera"
           ]
         }
-      ),
-      /* @__PURE__ */ jsx(ConxPanel, { conx, setConx, canP }),
+      )
+      ] }),
+      modo === "conexiones" && /* @__PURE__ */ jsx(ConxPanel, { conx, setConx, canP }),
       lines.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mt-2 flex flex-wrap items-center justify-end gap-2", children: [
         editandoId && /* @__PURE__ */ jsxs("span", { className: "rounded-lg bg-amber-50 px-3 py-1.5 text-[12px] font-bold text-amber-800", children: [
           "Editando: ",
@@ -934,65 +939,120 @@ function Stat({ label, value, dim, accent }) {
     /* @__PURE__ */ jsx("div", { className: "text-sm font-extrabold leading-none tabular-nums", style: { color: accent || (dim ? "#94a3b8" : "#fff") }, children: value })
   ] });
 }
+function ModeTabs({ modo, setModo, mangPz, conxPz }) {
+  const tabs = [
+    { id: "mangueras", icon: "\uD83D\uDD27", label: "Mangueras", n: mangPz },
+    { id: "conexiones", icon: "\uD83D\uDD29", label: "Conexiones", n: conxPz }
+  ];
+  return /* @__PURE__ */ jsx("div", { className: "mb-3 flex gap-2 rounded-xl p-1", style: { background: "#e3e8f2", fontFamily: "'IBM Plex Sans',system-ui,sans-serif" }, children: tabs.map((t) => {
+    const on = modo === t.id;
+    return /* @__PURE__ */ jsxs("button", { onClick: () => setModo(t.id), className: "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-[13px] font-bold transition", style: { background: on ? "#3a52a8" : "transparent", color: on ? "#ffffff" : "#46506a", boxShadow: on ? "0 2px 8px rgba(58,82,168,0.35)" : "none" }, children: [
+      /* @__PURE__ */ jsx("span", { children: t.icon }),
+      t.label,
+      /* @__PURE__ */ jsx("span", { className: "rounded-full px-2 py-0.5 text-[11px] font-bold", style: { background: on ? "rgba(255,255,255,0.2)" : "#dde4f0", color: on ? "#ffffff" : "#46506a" }, children: t.n })
+    ] }, t.id);
+  }) });
+}
+var CONX_TIPOS = [
+  { id: "Adaptador", name: "Conector / adaptador", desc: "Une dos extremos con est\xE1ndares o medidas distintas." },
+  { id: "Acople r\xE1pido", name: "Acople r\xE1pido", desc: "Conexi\xF3n y desconexi\xF3n sin herramienta." },
+  { id: "Toma de presi\xF3n", name: "Toma de presi\xF3n", desc: "Punto de medici\xF3n para diagn\xF3stico." },
+  { id: "Portabrida", name: "Portabrida", desc: "Uni\xF3n bridada c\xF3digo 61 / 62." },
+  { id: "__acc__", name: "Tapones y accesorios", desc: "Tapones, tuercas, anillos y v\xE1lvulas check." }
+];
+function conxTipoDe(x) { return ["Tap\xF3n", "Tuerca", "Anillo", "V\xE1lvula check"].indexOf(x.t) >= 0 ? "__acc__" : x.t; }
 function ConxPanel({ conx, setConx, canP }) {
-  const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [t, setT] = useState("");
-  const [f, setF] = useState("");
-  const [e, setE] = useState("");
+  const [tipo, setTipo] = useState("");
+  const [forma, setForma] = useState("");
+  const [extA, setExtA] = useState("");
+  const [extB, setExtB] = useState("");
   const nn = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const tipos = useMemo(() => { const m = {}; CONX.forEach((x) => { m[x.t] = (m[x.t] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map((k) => [k, m[k]]); }, []);
-  const base = useMemo(() => CONX.filter((x) => !t || x.t === t), [t]);
-  const formas = useMemo(() => [...new Set(base.map((x) => x.f))].filter((x) => x !== "\u2014"), [base]);
-  const stds = useMemo(() => [...new Set(base.filter((x) => !f || x.f === f).flatMap((x) => x.e))].sort(), [base, f]);
+  const busq = nn(q).trim();
+  const step = busq ? 4 : !tipo ? 1 : !forma ? 2 : !extA ? 3 : 4;
+  const deTipo = useMemo(() => CONX.filter((x) => conxTipoDe(x) === tipo), [tipo]);
+  const formas = useMemo(() => { const m = {}; deTipo.forEach((x) => { m[x.f] = (m[x.f] || 0) + 1; }); return Object.keys(m).map((k) => [k, m[k]]); }, [deTipo]);
+  const deForma = useMemo(() => deTipo.filter((x) => !forma || x.f === forma), [deTipo, forma]);
+  const stds = useMemo(() => { const m = {}; deForma.forEach((x) => x.e.forEach((s) => { m[s] = (m[s] || 0) + 1; })); return Object.keys(m).sort().map((k) => [k, m[k]]); }, [deForma]);
+  const stdsB = useMemo(() => { const m = {}; deForma.filter((x) => x.e.indexOf(extA) >= 0).forEach((x) => x.e.forEach((s) => { m[s] = (m[s] || 0) + 1; })); return Object.keys(m).sort().map((k) => [k, m[k]]); }, [deForma, extA]);
   const res = useMemo(() => {
-    let r = base;
-    if (f) r = r.filter((x) => x.f === f);
-    if (e) r = r.filter((x) => x.e.indexOf(e) >= 0);
-    const s = nn(q).trim();
-    if (s) r = CONX.filter((x) => nn(x.k).indexOf(s) >= 0 || nn(x.d).indexOf(s) >= 0);
+    if (busq) return CONX.filter((x) => nn(x.k).indexOf(busq) >= 0 || nn(x.d).indexOf(busq) >= 0);
+    let r = deForma;
+    if (extA) r = r.filter((x) => x.e.indexOf(extA) >= 0);
+    if (extB && extB !== extA) r = r.filter((x) => x.e.indexOf(extB) >= 0);
     return r;
-  }, [base, f, e, q]);
+  }, [busq, deForma, extA, extB]);
   const inCart = (k) => { const c = conx.find((x) => x.k === k); return c ? c.qty : 0; };
   const add = (k) => setConx((cs) => { const i = cs.findIndex((c) => c.k === k); if (i >= 0) { const a = [...cs]; a[i] = { ...a[i], qty: a[i].qty + 1 }; return a; } return [...cs, { k, qty: 1 }]; });
   const setQty = (k, v) => setConx((cs) => cs.map((c) => c.k === k ? { ...c, qty: Math.max(1, Math.round(Number(v) || 1)) } : c));
   const del = (k) => setConx((cs) => cs.filter((c) => c.k !== k));
-  const totalPz = conx.reduce((a, c) => a + c.qty, 0);
-  const sel = "rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-[12px] font-semibold text-slate-700";
-  return /* @__PURE__ */ jsxs("div", { className: "mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm", children: [
-    /* @__PURE__ */ jsxs("button", { onClick: () => setOpen((o) => !o), className: "flex w-full items-center justify-between gap-2 bg-slate-50 px-3 py-2.5 text-left", children: [
-      /* @__PURE__ */ jsxs("span", { className: "text-sm font-extrabold text-slate-800", children: ["\uD83D\uDD29 Conexiones y adaptadores", totalPz > 0 ? /* @__PURE__ */ jsxs("span", { className: "ml-2 rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-bold text-white", children: [totalPz, " pza", totalPz > 1 ? "s" : ""] }) : null] }),
-      /* @__PURE__ */ jsx("span", { className: "text-slate-400", children: open ? "\u25B2" : "\u25BC" })
+  const irA = (s) => { if (s <= 0) { setTipo(""); setForma(""); setExtA(""); setExtB(""); } else if (s === 1) { setForma(""); setExtA(""); setExtB(""); } else if (s === 2) { setExtA(""); setExtB(""); } };
+  const stepTitles = { 1: "\xBFQu\xE9 necesitas?", 2: "Forma", 3: "Est\xE1ndares de cada extremo", 4: "Medida y cantidad" };
+  const stepHints = { 1: "Toca el tipo de pieza para empezar.", 2: "Solo se muestran las formas que existen para este tipo.", 3: "Elige el est\xE1ndar de cada extremo. Al completar, ver\xE1s las piezas.", 4: "Confirma la pieza, ajusta cantidad y agrega al pedido." };
+  const crumbs = [{ label: "Inicio", s: 0 }];
+  if (tipo) crumbs.push({ label: (CONX_TIPOS.find((t) => t.id === tipo) || {}).name || tipo, s: 1 });
+  if (forma) crumbs.push({ label: forma, s: 2 });
+  if (extA) crumbs.push({ label: extA + (extB && extB !== extA ? " \xD7 " + extB : ""), s: 3 });
+  const card = { background: "#ffffff", border: "1px solid #e3e8f2", borderRadius: 12 };
+  const F = { fontFamily: "'IBM Plex Sans',system-ui,sans-serif" };
+  return /* @__PURE__ */ jsxs("div", { style: F, children: [
+    /* @__PURE__ */ jsxs("div", { className: "mb-2 flex flex-wrap items-center justify-between gap-2", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex flex-wrap items-center gap-1 text-[12px] font-semibold", style: { color: "#9aa3bd" }, children: crumbs.map((c, i) => /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1", children: [
+        i > 0 && /* @__PURE__ */ jsx("span", { children: "\u203A" }),
+        i === crumbs.length - 1 && !busq ? /* @__PURE__ */ jsx("span", { style: { color: "#1b2138" }, children: c.label }) : /* @__PURE__ */ jsx("button", { onClick: () => { setQ(""); irA(c.s); }, className: "hover:underline", style: { color: "#3a52a8" }, children: c.label })
+      ] }, i)) }),
+      /* @__PURE__ */ jsx("input", { value: q, onChange: (ev) => setQ(ev.target.value), placeholder: "\uD83D\uDD0D C\xF3digo o descripci\xF3n\u2026", className: "w-60 rounded-lg px-3 py-1.5 text-[13px]", style: { border: "1px solid #d5dcea", background: "#ffffff", color: "#1b2138" } })
     ] }),
-    open && /* @__PURE__ */ jsxs("div", { className: "p-3", children: [
-      /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-2", children: [
-        /* @__PURE__ */ jsx("input", { value: q, onChange: (ev) => setQ(ev.target.value), placeholder: "Buscar por c\xF3digo o descripci\xF3n\u2026", className: "w-64 rounded-lg border border-slate-300 px-3 py-1.5 text-[13px]" }),
-        !q && tipos.map(([k, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => { setT(t === k ? "" : k); setF(""); setE(""); }, className: "rounded-full px-3 py-1 text-[12px] font-bold " + (t === k ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"), children: [k, " (", n, ")"] }, k)),
-        !q && formas.length > 1 && /* @__PURE__ */ jsxs("select", { value: f, onChange: (ev) => setF(ev.target.value), className: sel, children: [/* @__PURE__ */ jsx("option", { value: "", children: "Forma: todas" }), formas.map((x) => /* @__PURE__ */ jsx("option", { value: x, children: x }, x))] }),
-        !q && stds.length > 1 && /* @__PURE__ */ jsxs("select", { value: e, onChange: (ev) => setE(ev.target.value), className: sel, children: [/* @__PURE__ */ jsx("option", { value: "", children: "Est\xE1ndar: todos" }), stds.map((x) => /* @__PURE__ */ jsx("option", { value: x, children: x }, x))] })
+    !busq && /* @__PURE__ */ jsxs("div", { className: "mb-2", children: [
+      /* @__PURE__ */ jsx("h3", { className: "text-[15px] font-extrabold", style: { color: "#1b2138", fontFamily: "'Archivo',sans-serif" }, children: stepTitles[step] }),
+      /* @__PURE__ */ jsx("p", { className: "text-[12px]", style: { color: "#9aa3bd" }, children: stepHints[step] })
+    ] }),
+    step === 1 && !busq && /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3", children: CONX_TIPOS.map((t) => {
+      const n = CONX.filter((x) => conxTipoDe(x) === t.id).length;
+      if (!n) return null;
+      return /* @__PURE__ */ jsxs("button", { onClick: () => setTipo(t.id), className: "rounded-xl p-3 text-left transition hover:shadow-md", style: { ...card }, children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsx("span", { className: "text-[13px] font-extrabold", style: { color: "#1b2138" }, children: t.name }),
+          /* @__PURE__ */ jsxs("span", { className: "rounded-full px-2 py-0.5 text-[10px] font-bold", style: { background: "#eef2f9", color: "#3a52a8" }, children: [n] })
+        ] }),
+        /* @__PURE__ */ jsx("p", { className: "mt-1 text-[11px]", style: { color: "#46506a" }, children: t.desc })
+      ] }, t.id);
+    }) }),
+    step === 2 && !busq && /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2", children: formas.map(([fk, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setForma(fk), className: "rounded-xl px-4 py-2.5 text-[13px] font-bold transition hover:shadow-md", style: { ...card, color: "#1b2138" }, children: [fk === "\u2014" ? "\xDAnica" : fk, /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[10px] font-bold", style: { color: "#9aa3bd" }, children: ["(", n, ")"] })] }, fk)) }),
+    step === 3 && !busq && /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+      /* @__PURE__ */ jsx("p", { className: "text-[11px] font-bold uppercase tracking-wide", style: { color: "#9aa3bd" }, children: "Extremo A" }),
+      /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-1.5", children: stds.map(([s, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => { setExtA(s); setExtB(""); }, className: "rounded-full px-3 py-1.5 text-[12px] font-bold transition", style: { background: extA === s ? "#3a52a8" : "#eef2f9", color: extA === s ? "#ffffff" : "#46506a" }, children: [s, " (", n, ")"] }, s)) })
+    ] }),
+    step === 4 && /* @__PURE__ */ jsxs("div", { children: [
+      !busq && extA && /* @__PURE__ */ jsxs("div", { className: "mb-2 flex flex-wrap items-center gap-1.5", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-[11px] font-bold uppercase tracking-wide", style: { color: "#9aa3bd" }, children: "Extremo B:" }),
+        stdsB.map(([s, n]) => /* @__PURE__ */ jsxs("button", { onClick: () => setExtB(extB === s ? "" : s), className: "rounded-full px-2.5 py-1 text-[11px] font-bold transition", style: { background: extB === s ? "#3a52a8" : "#eef2f9", color: extB === s ? "#ffffff" : "#46506a" }, children: [s, " (", n, ")"] }, s))
       ] }),
-      /* @__PURE__ */ jsxs("div", { className: "mt-2 max-h-72 overflow-y-auto rounded-lg border border-slate-100", children: [
-        res.slice(0, 80).map((x) => /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 border-b border-slate-50 px-2 py-1.5 hover:bg-slate-50", children: [
+      /* @__PURE__ */ jsxs("div", { className: "max-h-80 overflow-y-auto rounded-xl", style: card, children: [
+        res.slice(0, 80).map((x) => { const en = inCart(x.k); return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 px-3 py-2", style: { borderBottom: "1px solid #eef1f7" }, children: [
           /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
-            /* @__PURE__ */ jsx("span", { className: "mono mr-2 text-[11px] font-bold text-blue-700", children: x.k }),
-            /* @__PURE__ */ jsx("span", { className: "text-[12px] text-slate-700", children: x.d }),
-            canP && /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[11px] font-bold text-emerald-700", children: ["$", (x.s || 0).toLocaleString("es-MX")] })
+            /* @__PURE__ */ jsx("span", { className: "mr-2 text-[11px] font-bold", style: { fontFamily: "'IBM Plex Mono',monospace", color: "#3a52a8" }, children: x.k }),
+            x.m && /* @__PURE__ */ jsx("span", { className: "mr-2 text-[12px] font-extrabold", style: { color: "#1b2138" }, children: x.m }),
+            /* @__PURE__ */ jsx("span", { className: "text-[12px]", style: { color: "#46506a" }, children: x.d }),
+            canP && /* @__PURE__ */ jsxs("span", { className: "ml-2 text-[11px] font-bold", style: { color: "#16a34a" }, children: ["$", (x.s || 0).toLocaleString("es-MX")] })
           ] }),
-          /* @__PURE__ */ jsx("button", { onClick: () => add(x.k), className: "shrink-0 rounded-lg px-2.5 py-1 text-[12px] font-bold " + (inCart(x.k) ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white hover:bg-blue-700"), children: inCart(x.k) ? "\u2713 " + inCart(x.k) + " \xB7 +1" : "+ Agregar" })
-        ] }, x.k)),
-        res.length === 0 && /* @__PURE__ */ jsx("p", { className: "p-3 text-[12px] text-slate-400", children: "Sin resultados. Prueba otro filtro o b\xFAsqueda." }),
-        res.length > 80 && /* @__PURE__ */ jsxs("p", { className: "p-2 text-center text-[11px] text-slate-400", children: [res.length - 80, " m\xE1s\u2026 afina el filtro o la b\xFAsqueda."] })
-      ] }),
-      conx.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mt-3 rounded-lg border border-blue-100 bg-blue-50/50 p-2", children: [
-        /* @__PURE__ */ jsx("p", { className: "mb-1 text-[11px] font-extrabold uppercase tracking-wide text-slate-500", children: "En esta solicitud" }),
-        conx.map((c) => { const it = CONX.find((x) => x.k === c.k) || { d: c.k }; return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 py-1", children: [
-          /* @__PURE__ */ jsxs("div", { className: "min-w-0 text-[12px] text-slate-700", children: [/* @__PURE__ */ jsx("span", { className: "mono mr-2 text-[11px] font-bold text-blue-700", children: c.k }), it.d] }),
-          /* @__PURE__ */ jsxs("div", { className: "flex shrink-0 items-center gap-1", children: [
-            /* @__PURE__ */ jsx("input", { type: "number", min: 1, value: c.qty, onChange: (ev) => setQty(c.k, ev.target.value), className: "w-16 rounded border border-slate-300 px-1.5 py-0.5 text-center text-[12px]" }),
-            /* @__PURE__ */ jsx("button", { onClick: () => del(c.k), className: "rounded px-1.5 py-0.5 text-[13px] text-slate-400 hover:bg-red-50 hover:text-red-600", children: "\u2715" })
-          ] })
-        ] }, c.k); })
+          /* @__PURE__ */ jsx("button", { onClick: () => add(x.k), className: "shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-bold text-white transition", style: { background: en ? "#16a34a" : "#3a52a8" }, children: en ? "\u2713 " + en + " \xB7 +1" : "Agregar" })
+        ] }, x.k); }),
+        res.length === 0 && /* @__PURE__ */ jsx("p", { className: "p-3 text-[12px]", style: { color: "#9aa3bd" }, children: "Sin piezas con esa combinaci\xF3n." }),
+        res.length > 80 && /* @__PURE__ */ jsxs("p", { className: "p-2 text-center text-[11px]", style: { color: "#9aa3bd" }, children: [res.length - 80, " m\xE1s\u2026 afina la b\xFAsqueda."] })
       ] })
+    ] }),
+    conx.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mt-3 rounded-xl p-3", style: { background: "#f7f9fc", border: "1px solid #e3e8f2" }, children: [
+      /* @__PURE__ */ jsx("p", { className: "mb-1 text-[11px] font-extrabold uppercase tracking-wide", style: { color: "#9aa3bd" }, children: "En este pedido" }),
+      conx.map((c) => { const it = CONX.find((x) => x.k === c.k) || { d: c.k }; return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2 py-1", children: [
+        /* @__PURE__ */ jsxs("div", { className: "min-w-0 text-[12px]", style: { color: "#1b2138" }, children: [/* @__PURE__ */ jsx("span", { className: "mr-2 text-[11px] font-bold", style: { fontFamily: "'IBM Plex Mono',monospace", color: "#3a52a8" }, children: c.k }), it.d] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex shrink-0 items-center gap-1", children: [
+          /* @__PURE__ */ jsx("button", { onClick: () => setQty(c.k, c.qty - 1), className: "h-6 w-6 rounded font-bold", style: { background: "#e3e8f2", color: "#46506a" }, children: "\u2212" }),
+          /* @__PURE__ */ jsx("input", { type: "number", min: 1, value: c.qty, onChange: (ev) => setQty(c.k, ev.target.value), className: "w-12 rounded px-1 py-0.5 text-center text-[12px]", style: { border: "1px solid #d5dcea" } }),
+          /* @__PURE__ */ jsx("button", { onClick: () => setQty(c.k, c.qty + 1), className: "h-6 w-6 rounded font-bold", style: { background: "#e3e8f2", color: "#46506a" }, children: "+" }),
+          /* @__PURE__ */ jsx("button", { onClick: () => del(c.k), className: "ml-1 rounded px-1.5 py-0.5 text-[13px]", style: { color: "#9aa3bd" }, children: "\u2715" })
+        ] })
+      ] }, c.k); })
     ] })
   ] });
 }
