@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Configurador de mangueras · HydraTech Group</title>
+<title>Cotizador de mangueras y conexiones · HydraTech Group</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="assets/hydratech-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -37,7 +37,7 @@
     document.addEventListener("click", function (e) {
       var a = e.target.closest && e.target.closest('a[href="acceso.html"]');
       if (!a) return;
-      if (window.__ht_dirty && !window.confirm("Tienes mangueras capturadas sin guardar.\nSi sales se perderán. ¿Salir de todos modos?")) {
+      if (window.__ht_dirty && !window.confirm("Tienes trabajo capturado sin guardar.\nSi sales se perderán. ¿Salir de todos modos?")) {
         e.preventDefault();
       }
     }, true);
@@ -56,7 +56,7 @@
         <span style="color:#aeb6d4; font-size:18px; line-height:1;">&#8592;</span>
         <img src="assets/hydratech-wordmark-white.png" alt="HydraTech Group" style="height:18px; display:block;">
       </a>
-      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#5b6390;">Configurador de mangueras</span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#5b6390;">Cotizador de mangueras y conexiones</span>
     </div>
   </div>
 
@@ -64,6 +64,7 @@
 
   <noscript style="display:block; padding:40px; text-align:center; font-family:sans-serif;">Esta herramienta necesita JavaScript activado.</noscript>
 
+  <script src="conexiones.data.js"></script>
   <script type="module">
     import React from 'react';
     import { createRoot } from 'react-dom/client';
