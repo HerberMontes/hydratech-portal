@@ -395,6 +395,7 @@ function App() {
   const [clientes, setClientes] = useState([]);
   const [clienteId, setClienteId] = useState("");
   const [cotizando, setCotizando] = useState(false);
+  const [solicitudId, setSolicitudId] = useState(null);
   const [cotMsg, setCotMsg] = useState(null);
   const [saved, setSaved] = useState([]);
   const [editandoId, setEditandoId] = useState(null);
@@ -474,27 +475,36 @@ function App() {
       }
       return { name, price: v.customer, qty };
     }).filter(Boolean);
-    if (payloadLines.length === 0) { setCotMsg({ err: "No hay mangueras v\xE1lidas para cotizar." }); return; }
+    if (payloadLines.length === 0) { setCotMsg({ err: "No hay mangueras v\xE1lidas para enviar." }); return; }
+    const clienteNombre = (clientes.find((c) => String(c.id) === String(clienteId)) || {}).name || "";
+    const total = payloadLines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 1), 0);
+    const nombreSol = `${clienteNombre} \xB7 ${equipoTxt.trim() || areaTxt.trim()}`;
     setCotizando(true);
     try {
-      const res = await fetch("/api/odoo-cotizar", {
+      const d = await fetch("/api/cotiza-solicitud", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          partnerId: Number(clienteId),
-          note: `\xC1rea: ${areaTxt.trim()} \xB7 Equipo: ${equipoTxt.trim()}`,
-          lines: payloadLines,
+          action: "enviar", id: solicitudId, nombre: nombreSol,
+          clienteId: Number(clienteId), clienteNombre,
+          areaTxt: areaTxt.trim(), equipoTxt: equipoTxt.trim(),
+          areaId: areaSel ? areaSel.id : "", equipoId: equipoSel ? equipoSel.id : "",
+          payload: { note: `\xC1rea: ${areaTxt.trim()} \xB7 Equipo: ${equipoTxt.trim()}`, lines: payloadLines },
+          registro, total, piezas: registro.length,
         }),
-      });
-      const d = await res.json();
+      }).then((r) => r.json());
       if (d.ok) {
-        setCotMsg({ ok: true, folio: d.folio, link: d.link });
-        // Registra las mangueras cotizadas en el plan de mantenimiento del cliente.
-        fetch("/api/mangueras-registrar", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ partnerId: Number(clienteId), areaId: areaSel ? areaSel.id : "", equipoId: equipoSel ? equipoSel.id : "", areaNombre: areaTxt.trim(), equipoNombre: equipoTxt.trim(), folio: d.folio, mangueras: registro }),
-        }).catch(() => {});
-      }
-      else setCotMsg({ err: d.error || "No se pudo crear la cotizaci\xF3n." });
+        setSolicitudId(d.id);
+        setCotMsg({ ok: true, enviada: true });
+        const item = { id: editandoId || Date.now(), solicitudId: d.id, estado: "pendiente", nombre: nombreSol,
+          fecha: new Date().toLocaleString("es-MX"), lines: JSON.parse(JSON.stringify(lines)), clienteId, areaTxt, equipoTxt };
+        const arr = editandoId || saved.some((x) => x.solicitudId === d.id)
+          ? saved.map((x) => (x.id === editandoId || x.solicitudId === d.id) ? { ...x, ...item, id: x.id } : x)
+          : [item, ...saved];
+        setSaved(arr); persistSaved(arr);
+      } else if (d.code === "cotizada") {
+        setSolicitudId(null);
+        setCotMsg({ err: `Esa solicitud ya fue cotizada (${d.folio}). Vuelve a Enviar y saldr\xE1 como solicitud nueva.` });
+      } else setCotMsg({ err: d.error || "No se pudo enviar la solicitud." });
     } catch (e) {
       setCotMsg({ err: String(e.message || e) });
     } finally {
@@ -530,18 +540,30 @@ function App() {
   };
   const limpiar = () => {
     if (lines.length && !window.confirm("Se borrar\u00E1n las mangueras capturadas sin guardar. \u00BFEmpezar una cotizaci\u00F3n nueva en limpio?")) return;
-    setLines([]); setClienteId(""); setAreaId(""); setEquipoId(""); setEditandoId(null); setCotMsg(null);
+    setLines([]); setClienteId(""); setAreaTxt(""); setEquipoTxt(""); setAreaNueva(false); setEquipoNuevo(false); setEditandoId(null); setSolicitudId(null); setCotMsg(null);
   };
   const cancelarEdicion = () => {
     if (!window.confirm("\u00BFDescartar los cambios de esta edici\u00F3n? La configuraci\u00F3n guardada queda como estaba.")) return;
     setLines([]); setClienteId(""); setEditandoId(null); setCotMsg(null); setTab("guardados");
   };
+  useEffect(() => {
+    if (tab !== "guardados") return;
+    const ids = saved.filter((x) => x.solicitudId && x.estado !== "cotizada").map((x) => x.solicitudId);
+    if (!ids.length) return;
+    fetch("/api/cotiza-solicitud?estados=" + ids.join(",")).then((r) => r.json()).then((r) => {
+      if (!r || !r.ok) return;
+      const arr = saved.map((x) => x.solicitudId && r.estados[x.solicitudId]
+        ? { ...x, estado: r.estados[x.solicitudId].estado, folio: r.estados[x.solicitudId].folio } : x);
+      setSaved(arr); persistSaved(arr);
+    }).catch(() => {});
+  }, [tab]);
   const cargarGuardado = (id) => {
     const it = saved.find((s) => s.id === id);
     if (!it) return;
     setLines(it.lines.map((l) => ({ ...l, id: _id++, A: { ...l.A }, B: { ...l.B } })));
     if (it.clienteId !== void 0) setClienteId(it.clienteId);
     if (it.areaTxt) setTimeout(() => { setAreaTxt(it.areaTxt); setEquipoTxt(it.equipoTxt || ""); }, 600);
+    setSolicitudId(it.estado === "cotizada" ? null : (it.solicitudId || null));
     setEditandoId(null);
     setTab("cotizacion");
   };
@@ -603,7 +625,7 @@ function App() {
       setTimeout(() => setCopied(false), 1800);
     });
   };
-  const [canP] = useState(false);
+  const [canP] = useState(() => { try { return new URLSearchParams(window.location.search).get("precios") === "1"; } catch (e) { return false; } });
   const th = "px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-slate-400";
   return /* @__PURE__ */ jsxs("div", { className: "min-h-screen w-full bg-slate-100 text-slate-900", style: { fontFamily: "'Inter',ui-sans-serif,system-ui,sans-serif" }, children: [
     /* @__PURE__ */ jsx("style", { children: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');.mono{font-family:'JetBrains Mono',ui-monospace,monospace}` }),
@@ -801,10 +823,10 @@ function App() {
           ] }),
           tab === "cotizacion" ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
             /* @__PURE__ */ jsx("span", { className: "max-w-[320px] truncate text-[11px] font-bold text-slate-500", children: clienteId && areaTxt.trim() && equipoTxt.trim() ? ((clientes.find((c) => String(c.id) === String(clienteId)) || {}).name || "") + " \xB7 " + areaTxt.trim() + " \xB7 " + equipoTxt.trim() : "Elige cliente, \xE1rea y equipo arriba" }),
-            /* @__PURE__ */ jsx("button", { onClick: cotizar, disabled: cotizando, className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 disabled:opacity-50", children: cotizando ? "Cotizando\u2026" : "Cotizar en Odoo" })
+            /* @__PURE__ */ jsx("button", { onClick: cotizar, disabled: cotizando, className: "rounded bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-blue-700 disabled:opacity-50", children: cotizando ? "Enviando\u2026" : "\uD83D\uDCE8 Enviar a aprobaci\xF3n" })
           ] }) : tab === "compra" && bom.length > 0 && /* @__PURE__ */ jsx("button", { onClick: copyBOM, className: "rounded bg-slate-800 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-700", children: copied ? "\u2713 Copiado" : "Copiar para compras" })
         ] }),
-        cotMsg && /* @__PURE__ */ jsx("div", { className: "border-b px-3 py-2 text-[12px] " + (cotMsg.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"), children: cotMsg.ok ? /* @__PURE__ */ jsxs(Fragment, { children: ["Cotizaci\xF3n ", cotMsg.folio, " creada en Odoo. ", /* @__PURE__ */ jsx("a", { href: cotMsg.link, target: "_blank", rel: "noreferrer", className: "font-bold underline", children: "Abrir en Odoo \u2192" })] }) : cotMsg.err }),
+        cotMsg && /* @__PURE__ */ jsx("div", { className: "border-b px-3 py-2 text-[12px] " + (cotMsg.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"), children: cotMsg.ok ? /* @__PURE__ */ jsx(Fragment, { children: "\uD83D\uDCE8 Solicitud enviada a aprobaci\xF3n. Cuando se apruebe, en Guardados ver\xE1s \u2705 con el folio." }) : cotMsg.err }),
         tab === "compra" ? /* @__PURE__ */ jsx("div", { className: "overflow-x-auto p-3", children: bom.length === 0 ? /* @__PURE__ */ jsx("p", { className: "p-4 text-sm text-slate-400", children: "A\xFAn no hay materiales resueltos." }) : /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", style: { minWidth: 720 }, children: [
           /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-200 text-left text-[10px] uppercase tracking-wide text-slate-400", children: [
             /* @__PURE__ */ jsx("th", { className: "px-2 py-1.5", children: "C\xF3digo" }),
@@ -835,7 +857,11 @@ function App() {
           ] })
         ] }) }) : tab === "guardados" ? /* @__PURE__ */ jsx("div", { className: "p-3", children: saved.length === 0 ? /* @__PURE__ */ jsx("p", { className: "p-4 text-sm text-slate-400", children: "No tienes configuraciones guardadas. Arma una manguera y usa \u201CGuardar configuraci\xF3n\u201D." }) : /* @__PURE__ */ jsx("div", { className: "divide-y divide-slate-100", children: saved.map((s) => /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-3 py-2", children: [
           /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
-            /* @__PURE__ */ jsx("div", { className: "truncate text-sm font-bold text-slate-800", children: s.nombre }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 min-w-0", children: [
+              /* @__PURE__ */ jsx("span", { className: "truncate text-sm font-bold text-slate-800", children: s.nombre }),
+              s.estado === "cotizada" ? /* @__PURE__ */ jsxs("span", { className: "shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700", children: ["\u2705 Cotizada ", s.folio || ""] })
+              : s.solicitudId ? /* @__PURE__ */ jsx("span", { className: "shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700", children: "\uD83D\uDFE1 En aprobaci\xF3n" }) : null
+            ] }),
             /* @__PURE__ */ jsxs("div", { className: "text-[11px] text-slate-400", children: [s.fecha, " \xB7 ", s.lines.length, " manguera(s)"] })
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "flex shrink-0 items-center gap-2", children: [
