@@ -397,7 +397,9 @@ async function atender(msg) {
       cliente = (st.clientes || []).find((c) => c.id === cid) || { id: cid, name: msg.texto || "" };
     }
     await guardarEstado(tel, { paso: "VOZ_AUDIO", cliente, ref: cliente ? cliente.name : (st.busqueda || ""), tx: "", fotos: [], lastMsgId: msg.id });
-    await enviarTexto(tel, `Cliente: *${cliente ? cliente.name : st.busqueda || "por identificar"}*.\n\n` + T.vozAudio);
+    await enviarTexto(tel, cliente
+      ? `Cliente: *${cliente.name}* ✅ (ya está en el sistema, esto va a entrar como *oportunidad*).\n\n` + T.vozAudio
+      : `Cliente: *${st.busqueda || "por identificar"}* ⚠️ (no está en el sistema, va a entrar como *prospecto por contactar* para darlo de alta).\n\n` + T.vozAudio);
     return;
   }
 
@@ -495,11 +497,28 @@ async function guardarVozCliente(tel, st, msg) {
     `<p><i>Transcripción completa:</i><br>${(st.tx || "").replace(/\n/g, "<br>")}</p>`,
   ].filter(Boolean).join("");
 
+  /* ============ SEGMENTACIÓN ============
+     La decide el propio técnico sin darse cuenta, al elegir el cliente:
+
+     · Eligió un cliente de la lista  -> ya existe en Odoo -> es OPORTUNIDAD
+       y arranca en "Nuevo", lista para cotizar.
+     · Eligió "➕ Otro / no está"      -> no lo tenemos -> es PROSPECTO y
+       arranca en "Por contactar". Primero se da de alta al cliente y de ahí
+       se convierte en oportunidad con el botón "Cliente aprobado".
+
+     Así el técnico no tiene que saber la diferencia: solo dice de quién habla. */
+  const esOportunidad = !!partnerId;
+  const nombreLibre = String(st.ref || v.cliente || "").trim();
+
   const lead = {
-    name: (hayQuejas ? "⚠️ " : "") + `Voz del cliente: ${st.ref || v.cliente || "sin identificar"}`,
-    type: "opportunity", description: desc, priority,
+    name: (hayQuejas ? "⚠️ " : "") + `Voz del cliente: ${nombreLibre || "sin identificar"}`,
+    type: esOportunidad ? "opportunity" : "lead",
+    description: desc, priority,
   };
   if (partnerId) lead.partner_id = partnerId;
+  // Sin cliente ligado, el nombre dictado se guarda como texto para que la
+  // tarjeta no salga vacía y se pueda dar de alta después.
+  else if (nombreLibre) lead.partner_name = nombreLibre.slice(0, 120);
 
   /* DUEÑO: hoy una sola persona mueve el pipeline. Si CRM_OWNER_EMAIL está
      configurada, TODO se le asigna a ella. Si no, se conserva el vendedor
@@ -518,8 +537,10 @@ async function guardarVozCliente(tel, st, msg) {
 
   /* ETAPA INICIAL: sin esto Odoo la manda a la primera etapa de su pipeline
      por defecto, que puede no ser ninguna de las columnas del portal y la
-     tarjeta se queda invisible. La nacemos en la primera etapa comercial. */
-  const etapa = await etapaPorNombre(["Nuevo", "New", "Nueva"]);
+     tarjeta se queda invisible en "Fuera de etapa". */
+  const etapa = esOportunidad
+    ? await etapaPorNombre(["Nuevo", "New", "Nueva"])
+    : await etapaPorNombre(["Por contactar", "To Contact", "Nuevo", "New"]);
   if (etapa) lead.stage_id = etapa;
 
   const leadId = await executeKw("crm.lead", "create", [lead]);
@@ -554,10 +575,11 @@ async function guardarVozCliente(tel, st, msg) {
 
   await borrarEstado(tel);
   await limpiarMedia(tel);
-  await enviarTexto(tel, `✅ Guardado. Quedó en el CRM${asignado ? ` asignado a *${asignado.name}*` : ""}${hayQuejas ? " y ya se avisó de la queja" : ""}. ¡Nada se pierde! Escribe *menu* para otra cosa.`);
+  const queEs = esOportunidad ? "oportunidad" : "prospecto por contactar";
+  await enviarTexto(tel, `✅ Guardado como *${queEs}*${asignado ? ` — lo trabaja *${asignado.name}*` : ""}.${esOportunidad ? "" : "\n\n📌 Como el cliente no está en el sistema, primero hay que darlo de alta."}${hayQuejas ? "\n⚠️ Ya se avisó de la queja." : ""}\n\n¡Nada se pierde! Escribe *menu* para otra cosa.`);
 
   // Avisos: admin SIEMPRE; vendedor por WhatsApp si está mapeado
-  const aviso = `🗣 *Voz del cliente* — ${st.ref || v.cliente || "cliente por identificar"}\nLa subió: ${tec}\n${hayQuejas ? "⚠️ *HAY QUEJAS:*\n" + v.quejas.map((q) => "• " + q).join("\n") + "\n" : ""}${v.resumen || ""}\n→ Lead #${leadId} en el CRM${asignado ? " (asignado a " + asignado.name + ")" : ""}.`;
+  const aviso = `🗣 *Voz del cliente* — ${nombreLibre || "cliente por identificar"}\nLa subió: ${tec}\nEntró como: *${queEs}*\n${hayQuejas ? "⚠️ *HAY QUEJAS:*\n" + v.quejas.map((q) => "• " + q).join("\n") + "\n" : ""}${v.resumen || ""}\n→ Registro #${leadId} en el CRM${asignado ? " (asignado a " + asignado.name + ")" : ""}.`;
   if (ADMIN) enviarTexto(ADMIN, aviso).catch(() => {});
   const waVend = waDeVendedor(vendedor);
   if (waVend && waVend !== ADMIN) enviarTexto(waVend, aviso + "\n\nRevisa tu pipeline en Odoo para darle seguimiento. 🙌").catch(() => {});
