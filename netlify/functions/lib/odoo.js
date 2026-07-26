@@ -248,7 +248,14 @@ export async function fuenteUTM(nombre) {
 export async function etapaPorNombre(nombres) {
   try {
     const dic = await diccionarioEtapas();
-    const ids = dic.idsDe(nombres);
-    return ids.length ? ids[0] : 0;
+    /* Uno por uno y EN ORDEN: la lista es de prioridad, no un conjunto.
+       Buscarlos todos de golpe devolvía el de id más bajo, así que un
+       respaldo como "Nuevo" le ganaba a la opción preferida "Por contactar"
+       y el prospecto nacía en una etapa comercial. */
+    for (const n of nombres) {
+      const ids = dic.idsDe([n]);
+      if (ids.length) return ids[0];
+    }
+    return 0;
   } catch (e) { return 0; }
 }
