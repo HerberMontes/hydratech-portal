@@ -166,3 +166,73 @@ export async function diccionarioEtapas() {
     },
   };
 }
+
+/* ============================================================
+   DUEÑO DEL PIPELINE
+   Hoy una sola persona mueve TODAS las oportunidades. Su usuario de Odoo se
+   define con la variable de entorno CRM_OWNER_EMAIL (el correo con el que
+   entra a Odoo). Todo lead que llegue por cualquier canal se le asigna en
+   user_id, que es el campo que el CRM nativo de Odoo usa para filtrar,
+   agrupar y reportar.
+   Si la variable NO está puesta, regresa null y cada canal conserva la
+   asignación que ya traía (comportamiento anterior, sin romper nada).
+============================================================ */
+let _dueno = undefined;
+export async function duenoPipeline() {
+  if (_dueno !== undefined) return _dueno;
+  const correo = String(process.env.CRM_OWNER_EMAIL || "").trim();
+  if (!correo) { _dueno = null; return _dueno; }
+  try {
+    const u = await executeKw("res.users", "search_read",
+      [["|", ["login", "=ilike", correo], ["email", "=ilike", correo]]],
+      { fields: ["id", "name"], limit: 1 });
+    _dueno = (u && u.length) ? { id: u[0].id, name: u[0].name } : null;
+    if (!_dueno) console.error("CRM_OWNER_EMAIL no coincide con ningún usuario de Odoo:", correo);
+  } catch (e) { _dueno = null; }
+  return _dueno;
+}
+
+/* ============================================================
+   QUIÉN LA SUBIÓ  (etiqueta "Origen · Nombre")
+   OJO: es distinto del dueño del pipeline. El dueño es quien la trabaja
+   (siempre el mismo); el origen es quien la reportó (el técnico en campo).
+   Antes ambos conceptos vivían en la etiqueta "Vendedor · Nombre" y por eso
+   no cuadraba nada.
+============================================================ */
+const ORIGEN_PREFIJO = "Origen · ";
+
+export async function tagOrigen(nombre) {
+  const n = String(nombre || "").trim();
+  if (!n) return 0;
+  const etiqueta = ORIGEN_PREFIJO + n;
+  try {
+    const t = await executeKw("crm.tag", "search_read", [[["name", "=", etiqueta]]], { fields: ["id"], limit: 1 });
+    if (t && t.length) return t[0].id;
+    return await executeKw("crm.tag", "create", [{ name: etiqueta }]);
+  } catch (e) { return 0; }
+}
+
+// Recibe un diccionario {idEtiqueta: nombre} y la lista de ids de un lead.
+// Devuelve el nombre de quien la subió, o "" si el lead no trae etiqueta de origen.
+export function nombreDeOrigen(dicTags, ids) {
+  for (const id of ids || []) {
+    const n = dicTags[id];
+    if (typeof n === "string" && n.startsWith(ORIGEN_PREFIJO)) return n.slice(ORIGEN_PREFIJO.length).trim();
+  }
+  return "";
+}
+
+/* ============================================================
+   CANAL DE ENTRADA (utm.source)
+   Sirve para responder "¿por dónde entró?": voz del cliente, campo, correo.
+   Se crea sola la primera vez que se usa.
+============================================================ */
+export async function fuenteUTM(nombre) {
+  const n = String(nombre || "").trim();
+  if (!n) return 0;
+  try {
+    const s = await executeKw("utm.source", "search_read", [[["name", "=", n]]], { fields: ["id"], limit: 1 });
+    if (s && s.length) return s[0].id;
+    return await executeKw("utm.source", "create", [{ name: n }]);
+  } catch (e) { return 0; }
+}
