@@ -24,7 +24,7 @@
 //
 // Atribución por ETIQUETA del vendedor (misma convención que odoo-crm-plan.js).
 
-import { executeKw, checkToken, json, diccionarioEtapas, parseBitacora } from "./lib/odoo.js";
+import { executeKw, checkToken, json, diccionarioEtapas, parseBitacora, duenoPipeline, nombreDeOrigen } from "./lib/odoo.js";
 
 const vendTag = (name) => "Vendedor · " + name;
 const fmt = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
@@ -266,9 +266,16 @@ export default async (req) => {
     if (fichaId) {
       const L = await executeKw("crm.lead","read",
         [[fichaId],["name","type","partner_name","contact_name","partner_id","stage_id",
-                    "expected_revenue","phone","email_from","create_date"]]);
+                    "expected_revenue","phone","email_from","create_date","tag_ids","source_id"]]);
       const l = L && L[0];
       if(!l) return json({ ok:false, error:"Lead no encontrado." },404);
+
+      // Quién la subió (etiqueta "Origen · Nombre")
+      const dicT = {};
+      if((l.tag_ids||[]).length){
+        const tg = await executeKw("crm.tag","read",[l.tag_ids,["name"]]).catch(()=>[]);
+        (tg||[]).forEach(t => { dicT[t.id] = t.name; });
+      }
 
       // siguiente actividad
       const acts = await executeKw("mail.activity","search_read",
@@ -302,6 +309,8 @@ export default async (req) => {
         cliente:(l.partner_name||m2oName(l.partner_id)||l.contact_name||"—"),
         contacto:l.contact_name||"", telefono:l.phone||"", correo:l.email_from||"",
         etapa:etapaDisplay,
+        quienSubio: nombreDeOrigen(dicT, l.tag_ids),
+        canal: m2oName(l.source_id) || "",
         monto:mxn(l.expected_revenue), montoNum:Number(l.expected_revenue)||0,
         sig: a ? { activityId:a.id, resumen:a.summary||m2oName(a.activity_type_id)||"Siguiente paso",
                    fecha:a.date_deadline||"", fechaTxt:fechaCorta(a.date_deadline) } : null,
@@ -310,27 +319,45 @@ export default async (req) => {
     }
 
     const { tagId, nombre } = await tagDeVendedor(email);
+    const dueno = await duenoPipeline();
     const today = fmt(new Date());
     const hoyMs = Date.parse(today+"T00:00:00Z");
 
-    const out = { vendedor:nombre, tagId, hoyISO:today,
+    const out = { vendedor: dueno ? dueno.name : nombre, tagId, hoyISO:today,
                   vencidas:0, paraHoy:0, sinPaso:0, frias:0,
                   cola:[], proximas:[] };
-    if(!tagId) return json({ ok:true, dia:out });
+
+    /* ALCANCE DE LA COLA
+       Modo dueño único (CRM_OWNER_EMAIL configurada): la cola trae TODAS las
+       oportunidades asignadas a esa persona, sin importar quién las subió.
+       Cada tarjeta indica el origen por separado.
+       Modo anterior (sin la variable): cada quien ve solo lo que trae su
+       etiqueta "Vendedor · Nombre". */
+    if(!dueno && !tagId) return json({ ok:true, dia:out });
 
     // Etapas: excluir ganadas por ID (robusto a idiomas / renombres).
     let idsGanado = [];
     let etapasDic = null;
     try { etapasDic = await diccionarioEtapas(); idsGanado = etapasDic.idsDe(["Ganado","Won"]); } catch(e){}
 
-    // AMBOS FLUJOS del vendedor: prospectos (type=lead, embudo de alta) y
-    // oportunidades (type=opportunity, pipeline comercial). Mi Día los vigila juntos.
-    const dominio = [["tag_ids","in",[tagId]],["active","=",true]];
+    // AMBOS FLUJOS: prospectos (type=lead, embudo de alta) y oportunidades
+    // (type=opportunity, pipeline comercial). Mi Día los vigila juntos.
+    const dominio = dueno
+      ? [["user_id","=",dueno.id],["active","=",true]]
+      : [["tag_ids","in",[tagId]],["active","=",true]];
     if(idsGanado.length) dominio.push(["stage_id","not in",idsGanado]);
     const leads = await executeKw("crm.lead","search_read",[dominio],
-      { fields:["id","name","type","partner_name","contact_name","partner_id","stage_id","expected_revenue","create_date","priority"], limit:500 });
+      { fields:["id","name","type","partner_name","contact_name","partner_id","stage_id","expected_revenue","create_date","priority","tag_ids","source_id"], limit:500 });
     const leadIds = leads.map(l=>l.id);
     const leadById = {}; leads.forEach(l=>leadById[l.id]=l);
+
+    // QUIÉN LA SUBIÓ: las etiquetas llegan como ids, hay que resolver sus nombres.
+    const dicTags = {};
+    const idsTags = [...new Set(leads.flatMap(l => l.tag_ids || []))];
+    if(idsTags.length){
+      const tgs = await executeKw("crm.tag","read",[idsTags,["name"]]).catch(()=>[]);
+      (tgs||[]).forEach(t => { dicTags[t.id] = t.name; });
+    }
 
     // Tipos de actividad (para el icono)
     const tipos = await executeKw("mail.activity.type","search_read",[[]],{fields:["id","name","category"]}).catch(()=>[]);
@@ -388,6 +415,8 @@ export default async (req) => {
       etapa:m2oName(l.stage_id)||"—",
       monto:mxn(l.expected_revenue),
       montoNum:Number(l.expected_revenue)||0,
+      quienSubio: nombreDeOrigen(dicTags, l.tag_ids),
+      canal: m2oName(l.source_id) || "",
       ...extra,
     });
 

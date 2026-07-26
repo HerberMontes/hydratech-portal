@@ -19,7 +19,7 @@
 //   VENDEDORES_WHATSAPP (opcional) -> JSON {"7":"5215533333333","Luis García":"5215544444444"} (llave: id o nombre del usuario Odoo)
 import crypto from "node:crypto";
 import { getStore } from "@netlify/blobs";
-import { executeKw, json } from "./lib/odoo.js";
+import { executeKw, json, duenoPipeline, tagOrigen, fuenteUTM } from "./lib/odoo.js";
 import { enviarTexto, enviarBotones, enviarLista, descargarMedia, leerMensaje } from "./lib/whatsapp.js";
 import { transcribirAudio, generarReporteIA, estructurarVozCliente } from "./lib/reporte-ia.js";
 import { crearOportunidadDePlan } from "./lib/crm-plan.js";
@@ -500,7 +500,22 @@ async function guardarVozCliente(tel, st, msg) {
     type: "opportunity", description: desc, priority,
   };
   if (partnerId) lead.partner_id = partnerId;
-  if (vendedor) lead.user_id = vendedor.id;
+
+  /* DUEÑO: hoy una sola persona mueve el pipeline. Si CRM_OWNER_EMAIL está
+     configurada, TODO se le asigna a ella. Si no, se conserva el vendedor
+     del cliente (comportamiento anterior). */
+  const asignado = (await duenoPipeline()) || vendedor;
+  if (asignado) lead.user_id = asignado.id;
+
+  /* QUIÉN LA SUBIÓ: etiqueta "Origen · <técnico>", para poder filtrar y
+     agrupar por persona tanto en el portal como en Odoo nativo. */
+  const tagOrig = await tagOrigen(tec);
+  if (tagOrig) lead.tag_ids = [[4, tagOrig]];
+
+  /* POR DÓNDE ENTRÓ */
+  const fuente = await fuenteUTM("Voz del cliente");
+  if (fuente) lead.source_id = fuente;
+
   const leadId = await executeKw("crm.lead", "create", [lead]);
 
   // Fotos adjuntas al lead (recolectadas de los registros independientes)
@@ -526,17 +541,17 @@ async function guardarVozCliente(tel, st, msg) {
         res_model_id: modelIds[0], res_id: leadId,
         ...(tipoIds.length ? { activity_type_id: tipoIds[0] } : {}),
         summary: p.slice(0, 120), date_deadline: deadline,
-        ...(vendedor ? { user_id: vendedor.id } : {}),
+        ...(asignado ? { user_id: asignado.id } : {}),
       }]).catch(() => {});
     }
   } catch (e) {}
 
   await borrarEstado(tel);
   await limpiarMedia(tel);
-  await enviarTexto(tel, `✅ Guardado. Quedó en el CRM${vendedor ? ` asignado a *${vendedor.name}*` : ""}${hayQuejas ? " y ya se avisó de la queja" : ""}. ¡Nada se pierde! Escribe *menu* para otra cosa.`);
+  await enviarTexto(tel, `✅ Guardado. Quedó en el CRM${asignado ? ` asignado a *${asignado.name}*` : ""}${hayQuejas ? " y ya se avisó de la queja" : ""}. ¡Nada se pierde! Escribe *menu* para otra cosa.`);
 
   // Avisos: admin SIEMPRE; vendedor por WhatsApp si está mapeado
-  const aviso = `🗣 *Voz del cliente* — ${st.ref || v.cliente || "cliente por identificar"}\nCapturó: ${tec}\n${hayQuejas ? "⚠️ *HAY QUEJAS:*\n" + v.quejas.map((q) => "• " + q).join("\n") + "\n" : ""}${v.resumen || ""}\n→ Lead #${leadId} en el CRM${vendedor ? " (asignado a " + vendedor.name + ")" : ""}.`;
+  const aviso = `🗣 *Voz del cliente* — ${st.ref || v.cliente || "cliente por identificar"}\nLa subió: ${tec}\n${hayQuejas ? "⚠️ *HAY QUEJAS:*\n" + v.quejas.map((q) => "• " + q).join("\n") + "\n" : ""}${v.resumen || ""}\n→ Lead #${leadId} en el CRM${asignado ? " (asignado a " + asignado.name + ")" : ""}.`;
   if (ADMIN) enviarTexto(ADMIN, aviso).catch(() => {});
   const waVend = waDeVendedor(vendedor);
   if (waVend && waVend !== ADMIN) enviarTexto(waVend, aviso + "\n\nRevisa tu pipeline en Odoo para darle seguimiento. 🙌").catch(() => {});
