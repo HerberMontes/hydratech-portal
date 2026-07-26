@@ -236,3 +236,19 @@ export async function fuenteUTM(nombre) {
     return await executeKw("utm.source", "create", [{ name: n }]);
   } catch (e) { return 0; }
 }
+
+/* ============================================================
+   RESOLVER UNA ETAPA POR NOMBRE
+   Devuelve el id de la primera etapa de crm.stage cuyo nombre coincida con
+   alguno de los que le pases, en cualquier idioma instalado. Sirve para que
+   los leads que crea el bot nazcan en una etapa CONOCIDA por el portal, en
+   vez de caer en la etapa por defecto de Odoo (que puede no existir en las
+   columnas del pipeline y dejar la tarjeta invisible).
+============================================================ */
+export async function etapaPorNombre(nombres) {
+  try {
+    const dic = await diccionarioEtapas();
+    const ids = dic.idsDe(nombres);
+    return ids.length ? ids[0] : 0;
+  } catch (e) { return 0; }
+}
