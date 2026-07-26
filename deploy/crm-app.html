@@ -563,13 +563,14 @@ function renderDia(){
     html+='<div class="sech">Trabaja en este orden</div>';
     COLA.forEach((it,i)=>{
       const contacto=(it.diasSinContacto!=null&&it.bucket!=="sinpaso")?(' · '+(it.diasSinContacto===0?'contacto hoy':it.diasSinContacto+' días sin contacto')):'';
+      const origen=it.quienSubio?(' · la subió '+it.quienSubio):'';
       const paso=it.bucket==="sinpaso"
         ?'<div class="q-paso" style="color:var(--gold-d)">Sin nada agendado — decide ahora el siguiente paso.</div>'
         :'<div class="q-paso"><b>'+esc(it.resumen)+'</b>'+(it.fechaTxt?(' · '+esc(it.fechaTxt)):'')+'</div>';
       html+='<div class="q b-'+it.bucket+' s-'+(it.salud||"warn")+'" onclick="abrirFicha('+it.leadId+')">'
         +'<div style="flex:1;min-width:210px">'+flagHTML(it.flujo)
         +'<div style="margin-top:5px"><span class="razon"><span class="dot"></span>'+esc(it.razon)+esc(contacto)+'</span></div>'
-        +'<div class="q-name">'+esc(it.oportunidad)+'</div><div class="q-co">'+esc(it.cliente)+' · '+esc(it.etapa)+'</div>'+paso+'</div>'
+        +'<div class="q-name">'+esc(it.oportunidad)+'</div><div class="q-co">'+esc(it.cliente)+' · '+esc(it.etapa)+esc(origen)+'</div>'+paso+'</div>'
         +'<div class="q-val"><div class="v">'+esc(it.monto)+'</div><div class="vt">estimado</div></div>'
         +'<div class="q-btns" onclick="event.stopPropagation()">'
           +(it.puedeConvertir?'<button class="conv" onclick="abrirConv('+it.leadId+',\''+esc(it.oportunidad).replace(/'/g,"")+'\')">✓ Aprobado</button>':'')
@@ -1038,7 +1039,7 @@ function renderFocus(){
   const contacto=it.diasSinContacto!=null?(it.diasSinContacto===0?"hoy":it.diasSinContacto+" días"):"—";
   body.innerHTML='<div class="fx-card s-'+(it.salud||"warn")+' b-'+it.bucket+'">'+flagHTML(it.flujo)
     +'<div style="margin-top:8px"><span class="razon"><span class="dot"></span>'+esc(it.razon)+'</span></div>'
-    +'<div class="fx-name">'+esc(it.oportunidad)+'</div><div class="fx-co">'+esc(it.cliente)+'</div>'
+    +'<div class="fx-name">'+esc(it.oportunidad)+'</div><div class="fx-co">'+esc(it.cliente)+(it.quienSubio?(' · la subió '+esc(it.quienSubio)):'')+'</div>'
     +'<div class="fx-meta"><div><div class="v">'+esc(it.monto)+'</div><div class="t">Estimado</div></div>'
     +'<div><div class="v">'+esc(it.etapa)+'</div><div class="t">Etapa</div></div>'
     +'<div><div class="v">'+esc(contacto)+'</div><div class="t">Último contacto</div></div></div>'
