@@ -540,7 +540,10 @@ async function guardarVozCliente(tel, st, msg) {
      tarjeta se queda invisible en "Fuera de etapa". */
   const etapa = esOportunidad
     ? await etapaPorNombre(["Nuevo", "New", "Nueva"])
-    : await etapaPorNombre(["Por contactar", "To Contact", "Nuevo", "New"]);
+    : await etapaPorNombre(["Por contactar", "To Contact", "Por Contactar"]);
+  // Si no existe la etapa buscada, mejor no forzar ninguna: Odoo pone la suya
+  // y la tarjeta aparece en "Fuera de etapa", visible, en vez de caer en una
+  // etapa del embudo equivocado.
   if (etapa) lead.stage_id = etapa;
 
   const leadId = await executeKw("crm.lead", "create", [lead]);
