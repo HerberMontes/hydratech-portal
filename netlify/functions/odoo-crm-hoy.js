@@ -30,6 +30,18 @@ const vendTag = (name) => "Vendedor · " + name;
 const fmt = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const m2oName = (v) => (Array.isArray(v) ? v[1] : "");
+
+/* Odoo guarda la descripción del lead como HTML. La pasamos a texto plano
+   para poder mostrarla en el portal sin abrir la puerta a inyección: el
+   frontend escapa el resultado y no interpreta etiquetas. */
+const htmlATexto = (h) => String(h || "")
+  .replace(/<br\s*\/?>/gi, "\n")
+  .replace(/<li[^>]*>/gi, "• ")
+  .replace(/<\/(p|li|div|h\d|ul|ol)>/gi, "\n")
+  .replace(/<[^>]+>/g, "")
+  .replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&")
+  .replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'")
+  .replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 const m2oId = (v) => (Array.isArray(v) ? v[0] : 0);
 function mxn(n){ n=Number(n)||0; if(n>=1e6) return "$"+(n/1e6).toFixed(2).replace(/\.00$/,"")+"M"; if(n>=1e3) return "$"+Math.round(n/1e3)+"K"; return "$"+Math.round(n); }
 function fechaCorta(s){ if(!s) return "—"; const d=new Date(s); if(isNaN(d)) return "—"; return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]}`; }
@@ -129,6 +141,28 @@ export default async (req) => {
       if (b.action === "snooze" && b.activityId && b.fecha) {
         await executeKw("mail.activity","write",[[Number(b.activityId)],{ date_deadline:b.fecha }]);
         return json({ ok:true });
+      }
+
+      // --- ELIMINAR una oportunidad (también en Odoo) ---
+      // modo "archivar" (por defecto): active=false. Sale de la vista pero se
+      //   recupera desde Odoo con el filtro Archivado. Es lo correcto para algo
+      //   que sí existió y se cayó.
+      // modo "borrar": unlink de verdad, sin vuelta atrás. Para basura de
+      //   pruebas. Si Odoo lo impide por dependencias, cae a archivar y avisa.
+      if (b.action === "descartar" && b.leadId) {
+        const id = Number(b.leadId);
+        if (b.modo === "borrar") {
+          try {
+            await executeKw("crm.lead","unlink",[[id]]);
+            return json({ ok:true, modo:"borrado" });
+          } catch(e) {
+            await executeKw("crm.lead","write",[[id],{ active:false }]);
+            return json({ ok:true, modo:"archivado",
+              aviso:"Odoo no permitió borrarlo (tiene registros ligados). Quedó archivado." });
+          }
+        }
+        await executeKw("crm.lead","write",[[id],{ active:false }]);
+        return json({ ok:true, modo:"archivado" });
       }
 
       // --- registrar el resultado de un toque + siguiente paso obligado ---
@@ -266,7 +300,7 @@ export default async (req) => {
     if (fichaId) {
       const L = await executeKw("crm.lead","read",
         [[fichaId],["name","type","partner_name","contact_name","partner_id","stage_id",
-                    "expected_revenue","phone","email_from","create_date","tag_ids","source_id"]]);
+                    "expected_revenue","phone","email_from","create_date","tag_ids","source_id","description"]]);
       const l = L && L[0];
       if(!l) return json({ ok:false, error:"Lead no encontrado." },404);
 
@@ -311,6 +345,10 @@ export default async (req) => {
         etapa:etapaDisplay,
         quienSubio: nombreDeOrigen(dicT, l.tag_ids),
         canal: m2oName(l.source_id) || "",
+        // Lo que dictó el técnico y lo que estructuró la IA. Llega como HTML
+        // desde Odoo; se convierte a texto plano para que el frontend lo pueda
+        // escapar sin riesgo.
+        detalle: htmlATexto(l.description),
         monto:mxn(l.expected_revenue), montoNum:Number(l.expected_revenue)||0,
         sig: a ? { activityId:a.id, resumen:a.summary||m2oName(a.activity_type_id)||"Siguiente paso",
                    fecha:a.date_deadline||"", fechaTxt:fechaCorta(a.date_deadline) } : null,
