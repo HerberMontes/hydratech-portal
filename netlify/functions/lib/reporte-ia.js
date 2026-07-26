@@ -131,18 +131,42 @@ export async function generarReporteIA({ contexto, notas, images }) {
     const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(im.dataURL || im || "");
     if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
   }
+
+  /* NUNCA DEVOLVER UN REPORTE VACÍO EN SILENCIO.
+     Antes, si la respuesta de la IA venía cortada o mal formada, cleanJson
+     regresaba null, normalize(null) daba arrays vacíos y el reporte se
+     generaba "bien" con todo en blanco: sin hallazgos, sin actividades, sin
+     plan, y el CTA con su texto por defecto. El técnico perdía el trabajo sin
+     enterarse. Ahora eso revienta, y el bot ya sabe pedirle que escriba LISTO
+     para reintentar sin perder notas ni fotos. */
+  const exigirJson = (raw, finishReason) => {
+    const obj = cleanJson(raw);
+    if (!obj) {
+      throw new Error(finishReason === "MAX_TOKENS"
+        ? "La respuesta se cortó por longitud. Reintenta; si vuelve a pasar, manda notas más cortas."
+        : "La IA no devolvió un JSON válido.");
+    }
+    const n = normalize(obj);
+    if (!n.hallazgos.length && !n.actividades.length && !n.plan.length) {
+      throw new Error("La IA devolvió el reporte vacío. Reintenta.");
+    }
+    return n;
+  };
+
   try {
     const data = await geminiJSON({
       systemInstruction: { parts: [{ text: SYSTEM }] },
       contents: [{ role: "user", parts }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 2200, responseMimeType: "application/json" },
+      // 2200 se quedaba corto con tres secciones y varias fotos: la respuesta
+      // se truncaba a la mitad del JSON y ya no se podía parsear.
+      generationConfig: { temperature: 0.3, maxOutputTokens: 4096, responseMimeType: "application/json" },
     });
-    return normalize(cleanJson((data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("")));
+    const cand = data.candidates?.[0] || {};
+    return exigirJson((cand.content?.parts || []).map((p) => p.text || "").join(""), cand.finishReason);
   } catch (e) {
     if (e.saturado && GROQ_API_KEY) {
       // Gemini saturado -> Plan B con Groq (solo texto)
-      const txt = await groqJSON(SYSTEM, userText);
-      return normalize(cleanJson(txt));
+      return exigirJson(await groqJSON(SYSTEM, userText), "");
     }
     throw e;
   }
