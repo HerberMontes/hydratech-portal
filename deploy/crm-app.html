@@ -652,15 +652,25 @@ function renderPipeline(){
   const tab=DIA.tablero||[];
   const mxnFmt=(n)=>{n=Number(n)||0;if(n>=1e6)return "$"+(n/1e6).toFixed(1).replace(/\.0$/,"")+"M";if(n>=1e3)return "$"+Math.round(n/1e3)+"K";return "$"+Math.round(n);};
   const lane=(cls,titulo,stages,items)=>{
+    /* RED DE SEGURIDAD: si la etapa que trae Odoo no coincide con ninguna
+       columna, la tarjeta se quedaba invisible. Ahora se agrupan aparte, con
+       su etapa real a la vista, para poder arrastrarlas a donde van. */
+    const huerfanas=items.filter(x=>!stages.includes(x.etapa));
+    const cols=huerfanas.length?stages.concat(["__otras__"]):stages;
     let h='<div class="lane '+cls+'"><div class="lbl">'+titulo+'</div><div class="lane-cols">';
-    stages.forEach(st=>{
-      const cards=items.filter(x=>x.etapa===st);
+    cols.forEach(st=>{
+      const otras=st==="__otras__";
+      const cards=otras?huerfanas:items.filter(x=>x.etapa===st);
       const suma=cards.reduce((s,c)=>s+(c.montoNum||0),0);
-      h+='<div class="kcol" data-etapa="'+esc(st)+'" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropCard(event)">'
-        +'<div class="kcol-h"><span class="n">'+esc(st)+'</span><span class="s">'+cards.length+' · '+mxnFmt(suma)+'</span></div>';
+      h+=otras
+        ?'<div class="kcol" style="border-style:dashed;border-color:var(--gold-bd);background:var(--gold-bg)">'
+          +'<div class="kcol-h"><span class="n" style="color:var(--gold-d)">Fuera de etapa</span><span class="s">'+cards.length+' · '+mxnFmt(suma)+'</span></div>'
+        :'<div class="kcol" data-etapa="'+esc(st)+'" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropCard(event)">'
+          +'<div class="kcol-h"><span class="n">'+esc(st)+'</span><span class="s">'+cards.length+' · '+mxnFmt(suma)+'</span></div>';
       cards.forEach(c=>{
         h+='<div class="kcard" draggable="true" ondragstart="dragStart(event,'+c.leadId+')" onclick="abrirFicha('+c.leadId+')">'
           +'<div class="n">'+esc(c.oportunidad)+'</div><div class="c">'+esc(c.cliente)+'</div>'
+          +(otras?('<div class="c" style="color:var(--gold-d);font-weight:600">Etapa en Odoo: '+esc(c.etapa||"sin etapa")+'</div>'):'')
           +'<div class="f"><span class="a">'+esc(c.monto)+'</span><span class="kchip k-'+(c.salud||"warn")+'">'+(c.diasSinContacto!=null?c.diasSinContacto+"d":"—")+'</span></div></div>';
       });
       h+='</div>';
