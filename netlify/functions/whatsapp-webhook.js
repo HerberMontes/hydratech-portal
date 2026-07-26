@@ -329,6 +329,13 @@ async function atender(msg) {
       await enviarTexto(tel, "🎧 Escuchando tu nota…");
       const m = await descargarMedia(msg.mediaId);
       const tx = await transcribirAudio(m.mime, m.base64);
+      // Si el audio salió mudo o la transcripción vino vacía, NO se guarda:
+      // guardarla creaba un registro sin texto que dejaba avanzar y terminaba
+      // en un reporte en blanco.
+      if (!String(tx || "").trim()) {
+        await enviarTexto(tel, `⚠️ No se entendió nada en esa nota de voz. Grábala otra vez, más cerca del micrófono y sin ruido de fondo.\n\nSeguimos en *${sec.toUpperCase()}*.`);
+        return;
+      }
       await agregarNota(tel, sec, tx, msg); // registro independiente: no se pisa con mensajes simultáneos
       await enviarTexto(tel, `✍️ Anoté en *${sec.toUpperCase()}*:\n_"${tx.slice(0, 400)}"_\n\nManda *fotos* u otro audio para agregar más, o escribe *LISTO* para continuar.`);
       return;
@@ -596,6 +603,17 @@ async function generarYEnviar(tel, st) {
   const med = await recolectar(tel);
   const fotosReporte = med.fotos.filter((f) => ["hallazgos", "actividades", "plan"].includes(f.sec));
   const contexto = `- Cliente: ${o.partner || "(de la orden)"}\n- Orden: ${o.name || ""}\n- Fecha: ${new Date().toISOString().slice(0, 10)}\n- Técnicos: ${tec || "(n/d)"}`;
+
+  /* CANDADO: si las transcripciones llegaron vacías no tiene caso llamar a la
+     IA — saldría un reporte en blanco. Pasaba cuando el audio se transcribía
+     como cadena vacía: el registro existía (por eso dejaba avanzar) pero sin
+     texto. Mejor detenerse aquí: el estado NO se borra, así que el técnico
+     puede grabar de nuevo y escribir LISTO sin perder las fotos. */
+  const textoTotal = `${med.notas.h}${med.notas.a}${med.notas.p}`.trim();
+  if (!textoTotal) {
+    throw new Error("No se guardó el texto de ninguna nota de voz. Vuelve a grabar cada sección y escribe LISTO.");
+  }
+
   const notas = `[HALLAZGOS / cómo se encontró]\n${med.notas.h || "(sin notas)"}\n\n[ACTIVIDADES REALIZADAS]\n${med.notas.a || "(sin notas)"}\n\n[PLAN DE ACCIÓN / pendientes]\n${med.notas.p || "(sin notas)"}`;
   const content = await generarReporteIA({ contexto, notas, images: fotosReporte });
 
