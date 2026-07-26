@@ -155,6 +155,8 @@
 
   .modal-wrap{position:fixed;inset:0;z-index:97;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(27,33,56,.45)}
   .modal-wrap.show{display:flex}
+  .dw-foot .del{border-color:#f3cdce;color:#b23a3e;background:#fff}
+  .dw-foot .del:hover{background:#fdf0f0}
   .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(27,33,56,.25);width:470px;max-width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;animation:fadeUp .25s ease}
   .m-h{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
   .m-h h2{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:var(--ink)}
@@ -340,6 +342,27 @@
 </div>
 
 <!-- ===== MODAL PLANTILLA ===== -->
+<div class="modal-wrap" id="m-borrar">
+  <div class="modal" style="width:430px">
+    <div class="m-h"><div><h2>Eliminar oportunidad</h2><div class="s" id="bo-name">—</div></div><button class="dw-x" onclick="cerrarModal('m-borrar')">✕</button></div>
+    <div class="m-b">
+      <div style="font-size:13px;color:var(--body)">Elige qué tan definitivo quieres que sea. Las dos opciones afectan también a Odoo.</div>
+      <div style="border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+        <div style="font-weight:600;color:var(--ink);margin-bottom:4px">Archivar</div>
+        <div style="font-size:12.5px;color:var(--muted)">Sale de tu día y del pipeline. Se recupera desde Odoo con el filtro Archivado. Úsalo para algo real que se cayó.</div>
+      </div>
+      <div style="border:1px solid #f3cdce;background:#fdf0f0;border-radius:12px;padding:12px 14px">
+        <div style="font-weight:600;color:#b23a3e;margin-bottom:4px">Borrar definitivo</div>
+        <div style="font-size:12.5px;color:#8c4a4d">Desaparece de Odoo y no hay vuelta atrás. Úsalo solo para pruebas y duplicados.</div>
+      </div>
+    </div>
+    <div class="m-f">
+      <button onclick="cerrarModal('m-borrar')">Cancelar</button>
+      <button onclick="confirmarBorrado('archivar')">Archivar</button>
+      <button class="del" style="border-color:#f3cdce;color:#b23a3e" onclick="confirmarBorrado('borrar')">Borrar definitivo</button>
+    </div>
+  </div>
+</div>
 <div class="modal-wrap" id="m-tpl">
   <div class="modal">
     <div class="m-h"><div><h2 id="tpl-title">Enviar plantilla</h2><div class="s" id="tpl-sub">—</div></div><button class="dw-x" onclick="cerrarModal('m-tpl')">✕</button></div>
@@ -537,7 +560,7 @@ function cerrarSesion(){
 }
 function go(v){vista=v;["dia","semana","pipeline","material"].forEach(x=>{document.getElementById("v-"+x).style.display=x===v?"":"none";document.getElementById("nav-"+x).classList.toggle("on",x===v);});renderVista();}
 function renderVista(){if(vista==="material"){renderMaterial();return;}if(!DIA)return;if(vista==="dia")renderDia();else if(vista==="semana")renderSemana();else renderPipeline();}
-function cerrarTodo(){document.getElementById("ovl").classList.remove("show");document.getElementById("drawer").classList.remove("show");["m-nuevo","m-toque","m-conv","m-tpl"].forEach(id=>document.getElementById(id).classList.remove("show"));}
+function cerrarTodo(){document.getElementById("ovl").classList.remove("show");document.getElementById("drawer").classList.remove("show");["m-nuevo","m-toque","m-conv","m-tpl","m-borrar"].forEach(id=>document.getElementById(id).classList.remove("show"));}
 function cerrarModal(id){document.getElementById(id).classList.remove("show");if(!document.getElementById("drawer").classList.contains("show"))document.getElementById("ovl").classList.remove("show");}
 
 /* ================= MI DÍA ================= */
@@ -696,6 +719,17 @@ async function abrirFicha(leadId){
   body+=f.sig
     ?'<div class="next-box"><div class="lbl">Siguiente actividad</div><div class="t">'+esc(f.sig.resumen)+'</div><div class="d">'+esc(f.sig.fechaTxt)+'</div></div>'
     :'<div class="next-box" style="background:#fdf0f0;border-color:#f3cdce"><div class="lbl" style="color:#b23a3e">Sin siguiente actividad</div><div class="t">Regla de oro rota — agenda el siguiente paso ahora.</div></div>';
+  // LO QUE SE REPORTÓ: transcripción y estructura de la IA, tal como quedó en
+  // la descripción del lead en Odoo.
+  if(f.detalle){
+    body+='<div class="lbl" style="margin-bottom:8px">Lo que se reportó</div>'
+      +(f.quienSubio||f.canal?('<div style="font-size:12px;color:var(--muted);margin-bottom:8px">'
+        +(f.quienSubio?('La subió '+esc(f.quienSubio)):'')
+        +(f.quienSubio&&f.canal?' · ':'')+(f.canal?esc(f.canal):'')+'</div>'):'')
+      +'<div style="white-space:pre-wrap;font-size:12.5px;color:var(--body);background:var(--soft);'
+      +'border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:18px;'
+      +'max-height:260px;overflow:auto">'+esc(f.detalle)+'</div>';
+  }
   body+='<div class="lbl" style="margin-bottom:12px">Bitácora</div>';
   if(!(f.timeline||[]).length) body+='<div style="font-size:12.5px;color:var(--muted)">Aún no hay avances documentados. El primer toque inaugura la historia.</div>';
   (f.timeline||[]).forEach((t,i)=>{
@@ -707,7 +741,46 @@ async function abrirFicha(leadId){
   document.getElementById("dw-foot").innerHTML=
     '<button class="prim" onclick="abrirToque('+f.leadId+',\''+esc(f.nombre).replace(/'/g,"")+'\','+(f.sig?f.sig.activityId:"null")+',\'call\',false)">Registrar toque</button>'
     +'<button onclick="enviarInfo()">Enviar info</button>'
-    +(f.puedeConvertir?'<button class="ok" onclick="abrirConv('+f.leadId+',\''+esc(f.nombre).replace(/'/g,"")+'\')">✓ Cliente aprobado</button>':'');
+    +(f.puedeConvertir?'<button class="ok" onclick="abrirConv('+f.leadId+',\''+esc(f.nombre).replace(/'/g,"")+'\')">✓ Cliente aprobado</button>':'')
+    +'<button class="del" onclick="pedirBorrado('+f.leadId+',\''+esc(f.nombre).replace(/'/g,"")+'\')">Eliminar</button>';
+}
+
+/* ================= ELIMINAR UNA OPORTUNIDAD =================
+   Dos caminos a propósito:
+   · Archivar  -> active=false en Odoo. Desaparece de la vista y del pipeline,
+                  pero se recupera con el filtro "Archivado". Para algo real
+                  que se cayó.
+   · Borrar    -> unlink en Odoo. No hay vuelta atrás. Para basura de pruebas.
+   Si Odoo no deja borrar (registros ligados), el servidor archiva y lo avisa. */
+function pedirBorrado(leadId, nombre){
+  const m=document.getElementById("m-borrar");
+  document.getElementById("bo-name").textContent=nombre||"esta oportunidad";
+  m.dataset.leadId=leadId;
+  m.classList.add("show");
+}
+async function confirmarBorrado(modo){
+  const m=document.getElementById("m-borrar");
+  const leadId=Number(m.dataset.leadId||0);
+  if(!leadId) return;
+  if(modo==="borrar" && !confirm("Se borra de Odoo y no se puede recuperar. ¿Seguro?")) return;
+  const btns=m.querySelectorAll("button"); btns.forEach(b=>b.disabled=true);
+  try{
+    if(MODO_EJEMPLO){ await new Promise(r=>setTimeout(r,300)); }
+    else{
+      const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"descartar",leadId,modo,email:repEmail||""})});
+      const d=await r.json();
+      if(!d||!d.ok) throw new Error((d&&d.error)||"No se pudo eliminar.");
+      if(d.aviso) alert(d.aviso);
+    }
+    m.classList.remove("show");
+    cerrarTodo();
+    await cargar();
+  }catch(e){
+    alert("No se pudo eliminar: "+(e.message||e));
+  }finally{
+    btns.forEach(b=>b.disabled=false);
+  }
 }
 /* ================= MATERIAL (plantillas + documentación) ================= */
 function renderMaterial(){
