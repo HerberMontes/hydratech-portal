@@ -19,7 +19,7 @@
 //   VENDEDORES_WHATSAPP (opcional) -> JSON {"7":"5215533333333","Luis García":"5215544444444"} (llave: id o nombre del usuario Odoo)
 import crypto from "node:crypto";
 import { getStore } from "@netlify/blobs";
-import { executeKw, json, duenoPipeline, tagOrigen, fuenteUTM } from "./lib/odoo.js";
+import { executeKw, json, duenoPipeline, tagOrigen, fuenteUTM, etapaPorNombre } from "./lib/odoo.js";
 import { enviarTexto, enviarBotones, enviarLista, descargarMedia, leerMensaje } from "./lib/whatsapp.js";
 import { transcribirAudio, generarReporteIA, estructurarVozCliente } from "./lib/reporte-ia.js";
 import { crearOportunidadDePlan } from "./lib/crm-plan.js";
@@ -515,6 +515,12 @@ async function guardarVozCliente(tel, st, msg) {
   /* POR DÓNDE ENTRÓ */
   const fuente = await fuenteUTM("Voz del cliente");
   if (fuente) lead.source_id = fuente;
+
+  /* ETAPA INICIAL: sin esto Odoo la manda a la primera etapa de su pipeline
+     por defecto, que puede no ser ninguna de las columnas del portal y la
+     tarjeta se queda invisible. La nacemos en la primera etapa comercial. */
+  const etapa = await etapaPorNombre(["Nuevo", "New", "Nueva"]);
+  if (etapa) lead.stage_id = etapa;
 
   const leadId = await executeKw("crm.lead", "create", [lead]);
 
