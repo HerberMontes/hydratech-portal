@@ -44,8 +44,13 @@ export default async (req) => {
   let b;
   try { b = await req.json(); } catch { return json({ ok: false, error: "JSON inválido." }, 400); }
 
-  if (!b.contact_name && !b.partner_name) {
-    return json({ ok: false, error: "Falta el nombre del contacto o la empresa." }, 400);
+  /* Un cliente YA EXISTENTE en Odoo llega solo como partner_id: el formulario
+     deja partner_name vacío a propósito para no duplicar el nombre. Antes esta
+     validación no lo contemplaba, así que elegir un cliente de la lista
+     fallaba siempre y escribir uno nuevo a mano sí pasaba — al revés de lo
+     esperado. */
+  if (!b.contact_name && !b.partner_name && !b.partner_id) {
+    return json({ ok: false, error: "Indica el cliente: elígelo de la lista o escribe el nombre de la empresa." }, 400);
   }
 
   try {
