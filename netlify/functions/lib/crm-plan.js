@@ -4,7 +4,7 @@
 // actividad (con fecha límite) por cada punto del plan.
 // Se llama al VALIDAR el reporte (WhatsApp o portal). Idempotente: si el
 // reporte ya tiene crmLeadId, no duplica.
-import { executeKw } from "./odoo.js";
+import { executeKw, duenoPipeline, etapaPorNombre, tagOrigen, fuenteUTM, avisarOportunidadNueva } from "./odoo.js";
 
 const DIAS_URGENCIA = (u) => /0-15/.test(u || "") ? 15 : /1-2/.test(u || "") ? 60 : /6/.test(u || "") ? 180 : 30;
 const PRIO = { alta: "2", media: "1", baja: "0" };
@@ -37,8 +37,38 @@ export async function crearOportunidadDePlan(orderId, rep) {
     priority: alta ? "2" : "1",
   };
   if (partnerId) lead.partner_id = partnerId;
-  if (vendedorId) lead.user_id = vendedorId;
+
+  /* DUEÑO: hoy una sola persona mueve el pipeline. Si CRM_OWNER_EMAIL está
+     configurada, la oportunidad se le asigna a ella; si no, al vendedor de la
+     orden, como antes. */
+  const dueno = await duenoPipeline();
+  const asignadoId = dueno ? dueno.id : vendedorId;
+  if (asignadoId) lead.user_id = asignadoId;
+
+  /* ETAPA: estas SIEMPRE nacen en "Nuevo" del pipeline comercial. Viene de una
+     orden de venta ya confirmada, o sea un cliente activo con trabajo hecho:
+     no hay nada que prospectar. Sin esta línea Odoo le ponía su etapa por
+     defecto ("Por contactar") y la tarjeta caía en "Fuera de etapa". */
+  const etapa = await etapaPorNombre(["Nuevo", "New", "Nueva"]);
+  if (etapa) lead.stage_id = etapa;
+
+  /* Trazabilidad: de dónde salió esta oportunidad */
+  const tagOrig = await tagOrigen(((rep.tecnicos || [])[0]) || "Reporte de servicio");
+  if (tagOrig) lead.tag_ids = [[4, tagOrig]];
+  const fuente = await fuenteUTM("Plan de acción de reporte");
+  if (fuente) lead.source_id = fuente;
+
   const leadId = await executeKw("crm.lead", "create", [lead]);
+
+  await avisarOportunidadNueva({
+    leadId,
+    titulo: lead.name,
+    cliente,
+    monto: 0,
+    origen: ((rep.tecnicos || [])[0]) || "",
+    canal: "Plan de acción de reporte",
+    detalle: plan.map((p) => "• " + (p.titulo || "")).join("\n"),
+  });
 
   // Una actividad por punto del plan, con deadline según la urgencia
   try {
@@ -53,7 +83,7 @@ export async function crearOportunidadDePlan(orderId, rep) {
         summary: (`[${p.prioridad || "media"}] ` + (p.titulo || "")).slice(0, 120),
         note: p.descripcion || "",
         date_deadline: deadline,
-        ...(vendedorId ? { user_id: vendedorId } : {}),
+        ...(asignadoId ? { user_id: asignadoId } : {}),
       }]).catch(() => {});
     }
   } catch (e) {}

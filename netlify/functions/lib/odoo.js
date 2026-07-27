@@ -259,3 +259,61 @@ export async function etapaPorNombre(nombres) {
     return 0;
   } catch (e) { return 0; }
 }
+
+/* ============================================================
+   AVISO POR CORREO DE OPORTUNIDAD NUEVA
+   Usa el servidor de correo saliente que Odoo ya tiene configurado (el mismo
+   con el que manda cotizaciones), así no hace falta contratar ni configurar
+   ningún servicio aparte, ni guardar llaves nuevas.
+
+   Destinatario: variable de entorno CRM_AVISO_EMAIL. Acepta varios correos
+   separados por coma. Si no está puesta, no hace nada y no rompe: el aviso es
+   opcional, la oportunidad se crea igual.
+============================================================ */
+export async function avisarOportunidadNueva({ leadId, titulo, cliente, monto, origen, canal, detalle }) {
+  const destino = String(process.env.CRM_AVISO_EMAIL || "").trim();
+  if (!destino || !leadId) return false;
+
+  const base = String(process.env.URL || "").replace(/\/$/, "");
+  const dinero = Number(monto) > 0
+    ? "$" + Math.round(Number(monto)).toLocaleString("es-MX")
+    : "sin monto estimado";
+
+  const fila = (k, v) => v
+    ? `<tr><td style="padding:6px 14px 6px 0;color:#717a90;font-size:13px">${k}</td>`
+      + `<td style="padding:6px 0;color:#1b2138;font-size:13px"><b>${v}</b></td></tr>`
+    : "";
+
+  const cuerpo =
+    `<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:560px">`
+    + `<p style="font-size:15px;color:#1b2138;margin:0 0 14px">Entró una oportunidad nueva al CRM.</p>`
+    + `<table style="border-collapse:collapse;margin-bottom:16px">`
+    + fila("Oportunidad", titulo)
+    + fila("Cliente", cliente)
+    + fila("Monto", dinero)
+    + fila("La subió", origen)
+    + fila("Entró por", canal)
+    + `</table>`
+    + (detalle ? `<div style="background:#f7f9fc;border:1px solid #e6e9f0;border-radius:10px;padding:12px 14px;`
+        + `font-size:13px;color:#4a5267;white-space:pre-wrap;margin-bottom:16px">${detalle.slice(0, 1200)}</div>` : "")
+    + (base ? `<p style="margin:0"><a href="${base}/crm-app.html" `
+        + `style="background:#1b2447;color:#fff;text-decoration:none;padding:10px 18px;`
+        + `border-radius:8px;font-size:14px;display:inline-block">Abrir el CRM</a></p>` : "")
+    + `<p style="color:#717a90;font-size:11.5px;margin-top:18px">`
+    + `Aviso automático del portal HydraTech · oportunidad #${leadId}</p></div>`;
+
+  try {
+    const mailId = await executeKw("mail.mail", "create", [{
+      subject: `Nueva oportunidad: ${titulo || "sin título"}`,
+      body_html: cuerpo,
+      email_to: destino,
+      auto_delete: true,
+    }]);
+    // send_mail entrega de inmediato en vez de esperar al cron de Odoo
+    await executeKw("mail.mail", "send", [[mailId]]).catch(() => {});
+    return true;
+  } catch (e) {
+    console.error("No se pudo enviar el aviso de oportunidad:", e.message || e);
+    return false;   // nunca tumbar la creación de la oportunidad por un correo
+  }
+}
