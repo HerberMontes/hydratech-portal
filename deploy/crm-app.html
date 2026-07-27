@@ -1083,7 +1083,7 @@ async function guardarNuevo(tipo){
     const cli=document.getElementById("o-cliente").value.trim();
     if(!nom){toast("Falta el nombre de la oportunidad.");return;}
     if(!cli){toast("Indica el cliente.");return;}
-    body={type:"opportunity",name:nom,partner_name:clienteSel?"":cli,
+    body={type:"opportunity",name:nom,partner_name:cli,
       expected_revenue:Number(document.getElementById("o-monto").value)||0,
       date_deadline:document.getElementById("o-fecha").value||"",
       priority:document.getElementById("o-prio").value,stage:"Nuevo",repEmail};
