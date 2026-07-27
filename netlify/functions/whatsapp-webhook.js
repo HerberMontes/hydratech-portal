@@ -19,7 +19,7 @@
 //   VENDEDORES_WHATSAPP (opcional) -> JSON {"7":"5215533333333","Luis García":"5215544444444"} (llave: id o nombre del usuario Odoo)
 import crypto from "node:crypto";
 import { getStore } from "@netlify/blobs";
-import { executeKw, json, duenoPipeline, tagOrigen, fuenteUTM, etapaPorNombre } from "./lib/odoo.js";
+import { executeKw, json, duenoPipeline, tagOrigen, fuenteUTM, etapaPorNombre, avisarOportunidadNueva } from "./lib/odoo.js";
 import { enviarTexto, enviarBotones, enviarLista, descargarMedia, leerMensaje } from "./lib/whatsapp.js";
 import { transcribirAudio, generarReporteIA, estructurarVozCliente } from "./lib/reporte-ia.js";
 import { crearOportunidadDePlan } from "./lib/crm-plan.js";
@@ -585,6 +585,16 @@ async function guardarVozCliente(tel, st, msg) {
 
   await borrarEstado(tel);
   await limpiarMedia(tel);
+  // Aviso por correo, solo para oportunidades reales (el prospecto sin cliente
+  // todavía no es una venta potencial: primero hay que darlo de alta).
+  if (esOportunidad) {
+    await avisarOportunidadNueva({
+      leadId, titulo: lead.name, cliente: nombreLibre, monto: 0,
+      origen: tec, canal: "Voz del cliente",
+      detalle: [v.resumen || "", ...(v.quejas || []).map((q) => "⚠ " + q)].filter(Boolean).join("\n"),
+    });
+  }
+
   const queEs = esOportunidad ? "oportunidad" : "prospecto por contactar";
   await enviarTexto(tel, `✅ Guardado como *${queEs}*${asignado ? ` — lo trabaja *${asignado.name}*` : ""}.${esOportunidad ? "" : "\n\n📌 Como el cliente no está en el sistema, primero hay que darlo de alta."}${hayQuejas ? "\n⚠️ Ya se avisó de la queja." : ""}\n\n¡Nada se pierde! Escribe *menu* para otra cosa.`);
 
